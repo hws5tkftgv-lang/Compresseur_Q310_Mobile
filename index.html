@@ -85,6 +85,8 @@ html,body{
 <div id="editorBadge">MODE ÉDITEUR</div>
 
 <script>
+  let zoneObjects = [];
+
 /* ================= CONFIG ================= */
 const IMAGE_URL = "actif/compresseur_bg.png";
 const ZONES_URL = "zones_mobile.json";
@@ -143,25 +145,49 @@ function computeScale(){
 
 function drawZones(){
   canvas.clear();
-  const {sx,sy,ox,oy}=computeScale();
+  zoneObjects = [];
+
+  const {sx,sy,ox,oy} = computeScale();
+
   zones.forEach(z=>{
-    const r=new fabric.Rect({
-      left:ox+z.x*sx, top:oy+z.y*sy,
-      width:z.w*sx, height:z.h*sy,
-      fill:"rgba(0,0,0,0)",
-      stroke:isEditor?"orange":"#fff",
-      strokeWidth:2,
-      selectable:isEditor,
-      hasControls:isEditor,
-      lockRotation:true
+    const r = new fabric.Rect({
+      left: ox + z.x * sx,
+      top:  oy + z.y * sy,
+      width:  z.w * sx,
+      height: z.h * sy,
+
+      fill: "rgba(0,0,0,0)",
+      stroke: isEditor ? "orange" : "rgba(255,255,255,0.9)",
+      strokeWidth: 3,
+
+      selectable: isEditor,
+      evented: true,
+      hasControls: isEditor,
+      hasBorders: isEditor,
+
+      lockRotation: true,
+      lockScalingFlip: true,
+      transparentCorners: false,
+      cornerColor: "#ff9800",
+      cornerStyle: "circle"
     });
-    r.partId=z.partId;
-    r.on("mousedown",()=>{
-      const p=parts.get(r.partId);
-      if(p) setInfo(p.nom,p.role,p.desc);
+
+    r.partId = z.partId;
+
+    r.on("mousedown", ()=>{
+      const p = parts.get(r.partId);
+      if(p){
+        setInfo(p.nom, p.role, p.desc);
+      }else{
+        setInfo(r.partId);
+      }
     });
+
+    zoneObjects.push(r);
     canvas.add(r);
   });
+
+  canvas.requestRenderAll();
 }
 
 function exportZones(){
@@ -177,18 +203,30 @@ function exportZones(){
 }
 
 /* ================= EDITOR ================= */
-t("btnEditor").onclick=()=>{
+t("btnEditor").onclick = ()=>{
   if(!isEditor){
-    if(prompt("Mot de passe")!==EDITOR_PASSWORD) return;
+    if(prompt("Mot de passe") !== EDITOR_PASSWORD) return;
+    isEditor = true;
+  }else{
+    isEditor = false;
   }
-  isEditor=!isEditor;
-  t("btnEditor").classList.toggle("active",isEditor);
-  t("editorBadge").style.display=isEditor?"block":"none";
-  drawZones();
-  if(isEditor){
-    setTimeout(exportZones,300);
-  }
+
+  t("btnEditor").classList.toggle("active", isEditor);
+  t("editorBadge").style.display = isEditor ? "block" : "none";
+
+  // 🔑 activer / désactiver les zones EXISTANTES
+  zoneObjects.forEach(o=>{
+    o.selectable   = isEditor;
+    o.hasControls  = isEditor;
+    o.hasBorders   = isEditor;
+    o.stroke       = isEditor ? "orange" : "rgba(255,255,255,0.9)";
+  });
+
+  canvas.selection = isEditor;
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
 };
+
 
 /* ================= BOOT ================= */
 (async()=>{
