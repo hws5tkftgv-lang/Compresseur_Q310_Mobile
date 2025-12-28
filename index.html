@@ -1,187 +1,295 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Q310 – MOBILE iPhone</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
 
-<script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+  <title>Q310 – Mobile</title>
 
-<style>
-html,body{
-  margin:0;
-  background:#0b1436;
-  color:#eaf1ff;
-  font-family:Arial,Segoe UI,sans-serif;
-  overscroll-behavior:none;
-  touch-action:none;
-}
+  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
-#infoPanel{
-  padding:10px 12px;
-  background:#0f1a44;
-  border-bottom:1px solid rgba(255,255,255,.15);
-}
+  <style>
+    html,body{
+      margin:0;
+      background:#0b1436;
+      color:#eaf1ff;
+      font-family:Arial,Segoe UI,sans-serif;
+      overscroll-behavior:none;
+      touch-action:none;
+    }
 
-#infoTitle{font-size:18px;font-weight:700}
-#infoRole,#infoDesc{font-size:15px;line-height:1.4}
+    #infoPanel{
+      padding:10px 12px;
+      background:#0f1a44;
+      border-bottom:1px solid rgba(255,255,255,.15);
+    }
+    #infoTitle{
+      font-size:18px;
+      font-weight:700;
+      margin-bottom:4px;
+    }
+    #infoRole{
+      font-size:15px;
+      opacity:.95;
+      margin-bottom:4px;
+    }
+    #infoDesc{
+      font-size:15px;
+      line-height:1.4;
+      opacity:.9;
+    }
 
-.stage{
-  position:relative;
-  height:65vh;
-  background:#0b1536;
-  overflow:hidden;
-}
+    .stage{
+      position:relative;
+      height:78vh;
+      background:#0b1536;
+      overflow:hidden;
+    }
 
-.media-layer,canvas{
-  position:absolute;
-  inset:0;
-}
+    .media-layer, canvas{
+      position:absolute;
+      inset:0;
+    }
 
-#btnEditor{
-  position:fixed;
-  bottom:8px;
-  left:8px;
-  width:36px;
-  height:36px;
-  border-radius:6px;
-  background:#1b2553;
-  color:#fff;
-  border:1px solid rgba(255,255,255,.3);
-  font-size:16px;
-  z-index:9999;
-}
+    /* l'image sert juste de fond visible */
+    #imgLayer{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+      user-select:none;
+      -webkit-user-drag:none;
+      pointer-events:none;
+    }
 
-#editorBadge{
-  position:fixed;
-  top:8px;
-  right:8px;
-  padding:6px 10px;
-  background:#ff9800;
-  color:#000;
-  font-weight:700;
-  font-size:13px;
-  display:none;
-  z-index:9999;
-}
-</style>
+    /* évite sélection texte */
+    *{ -webkit-tap-highlight-color: rgba(0,0,0,0); }
+  </style>
 </head>
 
 <body>
 
-<div id="infoPanel">
-  <div id="infoTitle">Sélectionne une zone</div>
-  <div id="infoRole"></div>
-  <div id="infoDesc"></div>
-</div>
-
-<div class="stage" id="stage">
-  <div class="media-layer">
-    <img id="imgLayer">
+  <div id="infoPanel">
+    <div id="infoTitle">Sélectionne une zone</div>
+    <div id="infoRole"></div>
+    <div id="infoDesc"></div>
   </div>
-  <canvas id="c"></canvas>
-</div>
 
-<button id="btnEditor">✎</button>
-<div id="editorBadge">MODE ÉDITEUR</div>
+  <div class="stage" id="stage">
+    <div class="media-layer">
+      <img id="imgLayer" alt="Fond compresseur">
+    </div>
+    <canvas id="c"></canvas>
+  </div>
 
 <script>
-/* ================= CONFIG ================= */
+/* ================== FICHIERS (doivent exister) ================== */
 const IMAGE_URL = "actif/compresseur_bg.png";
-const JSON_URL  = "quincy_310L_parts.json";
-const EDITOR_PASSWORD = "comp";
+const PARTS_URL = "quincy_310L_parts.json";
+const ZONES_URL = "zones_mobile.json";
 
-/* ================= CANVAS ================= */
+/* ================== UI ================== */
+const infoTitle = document.getElementById("infoTitle");
+const infoRole  = document.getElementById("infoRole");
+const infoDesc  = document.getElementById("infoDesc");
+
+function setInfo(title, role="", desc=""){
+  infoTitle.textContent = title || "";
+  infoRole.textContent  = role  || "";
+  infoDesc.textContent  = desc  || "";
+}
+
+/* ================== CANVAS ================== */
+const stage  = document.getElementById("stage");
+const imgEl  = document.getElementById("imgLayer");
+
 const canvas = new fabric.Canvas("c",{
-  selection:true,
+  selection:false,
+  allowTouchScrolling:false,
   preserveObjectStacking:true
 });
 
-const stage = document.getElementById("stage");
-const imgEl  = document.getElementById("imgLayer");
+/* Fabric: sur iOS, on veut une sélection facile */
+fabric.Object.prototype.perPixelTargetFind = true;
+fabric.Object.prototype.targetFindTolerance = 12;
 
-let isEditor = false;
+/* ================== DONNÉES ================== */
+let partsById = new Map();
+let imgNaturalW = 1, imgNaturalH = 1;
 
-/* ================= IMAGE ================= */
-imgEl.src = IMAGE_URL;
+function normalizeZone(z){
+  // Supporte plusieurs formats :
+  // A) { partId, imgBox:{x,y,w,h} }
+  // B) { partId, x,y,w,h }
+  if(z && z.imgBox) {
+    return { partId: z.partId, x:+z.imgBox.x, y:+z.imgBox.y, w:+z.imgBox.w, h:+z.imgBox.h };
+  }
+  return { partId: z.partId, x:+z.x, y:+z.y, w:+z.w, h:+z.h };
+}
 
-imgEl.onload = async ()=>{
-  resizeAll();
-  await loadZonesFromJSON();
-};
-
+/* ================== LAYOUT / RESIZE ================== */
 function resizeAll(){
   canvas.setWidth(stage.clientWidth);
   canvas.setHeight(stage.clientHeight);
-  imgEl.style.width  = stage.clientWidth+"px";
-  imgEl.style.height = stage.clientHeight+"px";
-}
-
-/* ================= ZONES ================= */
-function makeZone(x,y,w,h,part){
-  const r = new fabric.Rect({
-    left:x, top:y, width:w, height:h,
-    fill:"rgba(255,255,255,0.05)",
-    stroke:"rgba(255,255,255,0.9)",
-    strokeWidth:2,
-    selectable:true,
-    evented:true,
-    hasControls:false
-  });
-
-  r.part = part;
-
-  r.on("mousedown", ()=>{
-    document.getElementById("infoTitle").textContent = part.nom || part.id;
-    document.getElementById("infoRole").textContent  = part.role || "";
-    document.getElementById("infoDesc").textContent  = part.desc || "";
-  });
-
-  canvas.add(r);
-}
-
-/* ================= JSON (CORRIGÉ) ================= */
-async function loadZonesFromJSON(){
-  const res = await fetch(JSON_URL);
-  const parts = await res.json();
-
-  const scaleX = stage.clientWidth  / imgEl.naturalWidth;
-  const scaleY = stage.clientHeight / imgEl.naturalHeight;
-
-  parts.forEach(p=>{
-    if(!p.imgBox) return;
-
-    makeZone(
-      p.imgBox.x * scaleX,
-      p.imgBox.y * scaleY,
-      p.imgBox.w * scaleX,
-      p.imgBox.h * scaleY,
-      p
-    );
-  });
-
+  canvas.calcOffset();
   canvas.requestRenderAll();
 }
 
-/* ================= MODE ÉDITEUR ================= */
-document.getElementById("btnEditor").onclick = ()=>{
-  if(!isEditor){
-    const p = prompt("Mot de passe éditeur");
-    if(p !== EDITOR_PASSWORD) return;
-    isEditor = true;
+window.addEventListener("resize", ()=>{
+  resizeAll();
+  // recharger zones pour recalculer l’échelle
+  loadAndRenderZones().catch(()=>{});
+});
+
+/* ================== ZONES (RENDER) ================== */
+function clearZonesOnly(){
+  // On supprime tout ce qui est zone
+  canvas.getObjects().slice().forEach(o => canvas.remove(o));
+}
+
+function makeZoneRect(px){
+  const rect = new fabric.Rect({
+    left: px.left,
+    top: px.top,
+    width: px.width,
+    height: px.height,
+    fill: "rgba(0,0,0,0)",
+    stroke: "rgba(255,255,255,.85)",
+    strokeWidth: 2,
+    selectable: false,
+    evented: true,
+    hasControls: false,
+    hasBorders: false,
+    lockRotation: true
+  });
+
+  rect.partId = px.partId;
+
+  // Sur iPhone, "mouse:down" fonctionne aussi pour le touch
+  rect.on("mousedown", ()=>{
+    const p = partsById.get(rect.partId);
+    if(p){
+      setInfo(p.nom || rect.partId, p.role || "", p.desc || "");
+    }else{
+      setInfo(rect.partId, "", "");
+    }
+  });
+
+  canvas.add(rect);
+  rect.bringToFront();
+}
+
+async function fetchJson(url){
+  const res = await fetch(url, { cache:"no-store" });
+  if(!res.ok) throw new Error(url+" HTTP "+res.status);
+  return await res.json();
+}
+
+async function loadParts(){
+  const parts = await fetchJson(PARTS_URL);
+  partsById = new Map();
+  (parts || []).forEach(p=>{
+    if(p && p.id) partsById.set(p.id, p);
+  });
+}
+
+function computeScaleToStage(){
+  // L'image est affichée en object-fit:contain
+  // On doit retrouver la zone “réelle” occupée par l’image dans le stage
+  const stageW = stage.clientWidth;
+  const stageH = stage.clientHeight;
+
+  const imgRatio = imgNaturalW / imgNaturalH;
+  const stageRatio = stageW / stageH;
+
+  let drawW, drawH, offsetX, offsetY;
+
+  if(stageRatio > imgRatio){
+    // stage plus large -> hauteur = stageH, largeur ajustée
+    drawH = stageH;
+    drawW = stageH * imgRatio;
+    offsetX = (stageW - drawW) / 2;
+    offsetY = 0;
   }else{
-    isEditor = false;
+    // stage plus haut -> largeur = stageW, hauteur ajustée
+    drawW = stageW;
+    drawH = stageW / imgRatio;
+    offsetX = 0;
+    offsetY = (stageH - drawH) / 2;
   }
 
-  document.getElementById("editorBadge").style.display = isEditor ? "block" : "none";
+  const scaleX = drawW / imgNaturalW;
+  const scaleY = drawH / imgNaturalH;
 
-  canvas.forEachObject(o=>{
-    o.hasControls = isEditor;
-    o.stroke = isEditor ? "orange" : "rgba(255,255,255,0.9)";
+  return { scaleX, scaleY, offsetX, offsetY };
+}
+
+async function loadAndRenderZones(){
+  clearZonesOnly();
+
+  let zones;
+  try{
+    zones = await fetchJson(ZONES_URL);
+  }catch(e){
+    setInfo("⚠️ zones_mobile.json introuvable", "Crée le fichier à la racine", "Contenu minimal: []");
+    return;
+  }
+
+  if(!Array.isArray(zones) || zones.length === 0){
+    setInfo("Aucune zone", "zones_mobile.json est vide", "Quand tu activeras l’éditeur, tu pourras en créer.");
+    return;
+  }
+
+  const { scaleX, scaleY, offsetX, offsetY } = computeScaleToStage();
+
+  zones.map(normalizeZone).forEach(z=>{
+    if(!z || !z.partId) return;
+
+    // z.x/y/w/h sont en PIXELS IMAGE (référence = taille originale image)
+    const left   = offsetX + z.x * scaleX;
+    const top    = offsetY + z.y * scaleY;
+    const width  = z.w * scaleX;
+    const height = z.h * scaleY;
+
+    makeZoneRect({ partId: z.partId, left, top, width, height });
   });
 
+  setInfo("Sélectionne une zone");
   canvas.requestRenderAll();
-};
+}
+
+/* ================== BOOT ================== */
+async function boot(){
+  setInfo("Chargement…");
+  resizeAll();
+
+  // Charger parts en premier (sinon clic zone n’a pas nom/role/desc)
+  try{
+    await loadParts();
+  }catch(e){
+    setInfo("⚠️ Erreur parts JSON", "Vérifie quincy_310L_parts.json", String(e));
+    // on continue quand même (zones peuvent s’afficher)
+  }
+
+  // Charger image
+  await new Promise((resolve, reject)=>{
+    imgEl.onload = () => {
+      imgNaturalW = imgEl.naturalWidth || 1;
+      imgNaturalH = imgEl.naturalHeight || 1;
+      resolve();
+    };
+    imgEl.onerror = () => reject(new Error("Image introuvable: "+IMAGE_URL));
+    imgEl.src = IMAGE_URL;
+  });
+
+  // Zones
+  await loadAndRenderZones();
+}
+
+boot().catch(e=>{
+  setInfo("⚠️ Erreur boot", "", String(e));
+});
 </script>
 
 </body>
