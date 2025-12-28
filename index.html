@@ -91,10 +91,6 @@ const IMAGE_URL = "actif/compresseur_bg.png";
 const JSON_URL  = "quincy_310L_parts.json";
 const EDITOR_PASSWORD = "comp";
 
-// ⚠️ dimensions réelles de l’image PC
-const PC_IMAGE_WIDTH  = 1200;
-const PC_IMAGE_HEIGHT = 1600;
-
 /* ================= CANVAS ================= */
 const canvas = new fabric.Canvas("c",{
   selection:true,
@@ -108,9 +104,10 @@ let isEditor = false;
 
 /* ================= IMAGE ================= */
 imgEl.src = IMAGE_URL;
-imgEl.onload = ()=>{
+
+imgEl.onload = async ()=>{
   resizeAll();
-  loadZonesFromJSON();
+  await loadZonesFromJSON();
 };
 
 function resizeAll(){
@@ -138,26 +135,18 @@ function makeZone(x,y,w,h,part){
     document.getElementById("infoTitle").textContent = part.nom || part.id;
     document.getElementById("infoRole").textContent  = part.role || "";
     document.getElementById("infoDesc").textContent  = part.desc || "";
-
-    if(isEditor){
-      const n = prompt("Renommer la pièce :", part.nom || part.id);
-      if(n){
-        part.nom = n;
-        document.getElementById("infoTitle").textContent = n;
-      }
-    }
   });
 
   canvas.add(r);
 }
 
-/* ================= JSON ================= */
+/* ================= JSON (CORRIGÉ) ================= */
 async function loadZonesFromJSON(){
   const res = await fetch(JSON_URL);
   const parts = await res.json();
 
-  const scaleX = stage.clientWidth  / PC_IMAGE_WIDTH;
-  const scaleY = stage.clientHeight / PC_IMAGE_HEIGHT;
+  const scaleX = stage.clientWidth  / imgEl.naturalWidth;
+  const scaleY = stage.clientHeight / imgEl.naturalHeight;
 
   parts.forEach(p=>{
     if(!p.imgBox) return;
