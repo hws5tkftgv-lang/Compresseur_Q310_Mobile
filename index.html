@@ -9,15 +9,19 @@
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
 <style>
+/* ================= BASE ================= */
 html,body{
   margin:0;
   background:#0b1436;
   color:#eaf1ff;
   font-family:Arial,Segoe UI,sans-serif;
   overscroll-behavior:none;
-  touch-action:none;
 }
 
+/* 🔑 NE PAS BLOQUER TOUCH GLOBALEMENT SUR iOS */
+/* touch-action supprimé volontairement */
+
+/* ================= INFO PANEL ================= */
 #infoPanel{
   padding:10px 12px;
   background:#0f1a44;
@@ -27,22 +31,40 @@ html,body{
 #infoRole{font-size:15px;margin-top:4px;}
 #infoDesc{font-size:15px;margin-top:4px;line-height:1.4;}
 
+/* ================= STAGE ================= */
 .stage{
   position:relative;
   height:75vh;
   overflow:hidden;
 }
-.media-layer,canvas{position:absolute;inset:0;}
-#imgLayer{
-  width:100%;height:100%;
-  object-fit:contain;
-  pointer-events:none;
+.media-layer,canvas{
+  position:absolute;
+  inset:0;
 }
 
+/* image de fond */
+#imgLayer{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+/* 🔑 iOS SAFARI — CIBLE CORRECTE FABRIC */
+.canvas-container,
+.canvas-container canvas{
+  touch-action:none !important;
+}
+
+/* ================= UI ÉDITEUR ================= */
 #btnEditor{
   position:fixed;
-  bottom:10px;left:10px;
-  width:38px;height:38px;
+  bottom:10px;
+  left:10px;
+  width:38px;
+  height:38px;
   background:#ffffff22;
   border:1px solid #ffffff55;
   color:#fff;
@@ -50,11 +72,15 @@ html,body{
   border-radius:6px;
   z-index:999;
 }
-#btnEditor.active{background:#ff9800;color:#000;}
+#btnEditor.active{
+  background:#ff9800;
+  color:#000;
+}
 
 #editorBadge{
   position:fixed;
-  top:10px;right:10px;
+  top:10px;
+  right:10px;
   background:#ff9800;
   color:#000;
   font-weight:700;
@@ -63,21 +89,19 @@ html,body{
   display:none;
   z-index:999;
 }
-  canvas {
-  touch-action: manipulation !important;
-}
-
 </style>
 </head>
 
 <body>
 
+<!-- ================= INFO ================= -->
 <div id="infoPanel">
   <div id="infoTitle">Sélectionne une zone</div>
   <div id="infoRole"></div>
   <div id="infoDesc"></div>
 </div>
 
+<!-- ================= SCÈNE ================= -->
 <div class="stage" id="stage">
   <div class="media-layer">
     <img id="imgLayer">
@@ -85,43 +109,56 @@ html,body{
   <canvas id="c"></canvas>
 </div>
 
+<!-- ================= UI ================= -->
 <button id="btnEditor">✎</button>
 <div id="editorBadge">MODE ÉDITEUR</div>
 
 <script>
-  let zoneObjects = [];
-
 /* ================= CONFIG ================= */
 const IMAGE_URL = "actif/compresseur_bg.png";
 const ZONES_URL = "zones_mobile.json";
 const PARTS_URL = "quincy_310L_parts.json";
 const EDITOR_PASSWORD = "comp";
 
-/* ================= UI ================= */
-const infoTitle = infoRole = infoDesc = null;
-const t = id=>document.getElementById(id);
-const setInfo=(a,b="",c="")=>{
-  t("infoTitle").textContent=a||"";
-  t("infoRole").textContent=b||"";
-  t("infoDesc").textContent=c||"";
+/* ================= UTILS ================= */
+const t = id => document.getElementById(id);
+const setInfo = (a,b="",c="")=>{
+  t("infoTitle").textContent = a || "";
+  t("infoRole").textContent  = b || "";
+  t("infoDesc").textContent  = c || "";
 };
 
 /* ================= CANVAS ================= */
 const stage = t("stage");
 const imgEl = t("imgLayer");
-const canvas = new fabric.Canvas("c",{selection:false});
-fabric.Object.prototype.perPixelTargetFind=true;
-fabric.Object.prototype.targetFindTolerance=12;
+
+const canvas = new fabric.Canvas("c",{
+  selection:false,
+  preserveObjectStacking:true
+});
+
+/* 🔑 iOS SAFARI — BLOQUER LE NAVIGATEUR */
+canvas.upperCanvasEl.style.touchAction = "none";
+canvas.upperCanvasEl.style.webkitUserSelect = "none";
+canvas.upperCanvasEl.style.webkitTouchCallout = "none";
+
+fabric.util.addListener(canvas.upperCanvasEl, "touchstart", e=>{
+  e.preventDefault();
+});
+
+fabric.Object.prototype.perPixelTargetFind = true;
+fabric.Object.prototype.targetFindTolerance = 15;
 
 /* ================= DATA ================= */
-let parts=new Map();
-let zones=[];
-let isEditor=false;
-let imgW=1,imgH=1;
+let parts = new Map();
+let zones = [];
+let zoneObjects = [];
+let isEditor = false;
+let imgW = 1, imgH = 1;
 
 /* ================= LOAD ================= */
 async function fetchJSON(url){
-  const r=await fetch(url,{cache:"no-store"});
+  const r = await fetch(url,{cache:"no-store"});
   return await r.json();
 }
 
@@ -130,7 +167,7 @@ async function loadParts(){
 }
 
 async function loadZones(){
-  zones=await fetchJSON(ZONES_URL);
+  zones = await fetchJSON(ZONES_URL);
 }
 
 function resize(){
@@ -138,15 +175,30 @@ function resize(){
   canvas.setHeight(stage.clientHeight);
 }
 
+/* ================= SCALE ================= */
 function computeScale(){
-  const sw=stage.clientWidth, sh=stage.clientHeight;
-  const ir=imgW/imgH, sr=sw/sh;
-  let dw,dh,ox,oy;
-  if(sr>ir){dh=sh;dw=sh*ir;ox=(sw-dw)/2;oy=0;}
-  else{dw=sw;dh=sw/ir;ox=0;oy=(sh-dh)/2;}
-  return {sx:dw/imgW,sy:dh/imgH,ox,oy};
+  const sw = stage.clientWidth;
+  const sh = stage.clientHeight;
+  const ir = imgW / imgH;
+  const sr = sw / sh;
+
+  let dw, dh, ox, oy;
+
+  if(sr > ir){
+    dh = sh;
+    dw = sh * ir;
+    ox = (sw - dw) / 2;
+    oy = 0;
+  }else{
+    dw = sw;
+    dh = sw / ir;
+    ox = 0;
+    oy = (sh - dh) / 2;
+  }
+  return {sx:dw/imgW, sy:dh/imgH, ox, oy};
 }
 
+/* ================= DRAW ================= */
 function drawZones(){
   canvas.clear();
   zoneObjects = [];
@@ -159,29 +211,24 @@ function drawZones(){
       top:  oy + z.y * sy,
       width:  z.w * sx,
       height: z.h * sy,
-
-      fill: "rgba(0,0,0,0)",
+      fill:"rgba(0,0,0,0)",
       stroke: isEditor ? "orange" : "rgba(255,255,255,0.9)",
-      strokeWidth: 3,
-
-      selectable: isEditor,
-      evented: true,
-      hasControls: isEditor,
-      hasBorders: isEditor,
-
-      lockRotation: true,
-      lockScalingFlip: true,
-      transparentCorners: false,
-      cornerColor: "#ff9800",
-      cornerStyle: "circle"
+      strokeWidth:3,
+      selectable:isEditor,
+      hasControls:isEditor,
+      hasBorders:isEditor,
+      lockRotation:true,
+      lockScalingFlip:true,
+      cornerColor:"#ff9800",
+      cornerStyle:"circle"
     });
 
     r.partId = z.partId;
 
-    r.on("mousedown", ()=>{
+    r.on("mousedown",()=>{
       const p = parts.get(r.partId);
       if(p){
-        setInfo(p.nom, p.role, p.desc);
+        setInfo(p.nom,p.role,p.desc);
       }else{
         setInfo(r.partId);
       }
@@ -194,19 +241,20 @@ function drawZones(){
   canvas.requestRenderAll();
 }
 
+/* ================= EXPORT ================= */
 function exportZones(){
-  const {sx,sy,ox,oy}=computeScale();
-  const out=canvas.getObjects().map(o=>({
-    partId:o.partId||"nouvelle_zone",
+  const {sx,sy,ox,oy} = computeScale();
+  const out = canvas.getObjects().map(o=>({
+    partId:o.partId || "nouvelle_zone",
     x:Math.round((o.left-ox)/sx),
     y:Math.round((o.top-oy)/sy),
     w:Math.round(o.width*o.scaleX/sx),
     h:Math.round(o.height*o.scaleY/sy)
   }));
-  prompt("Copie ce JSON :",JSON.stringify(out,null,2));
+  prompt("Copie ce JSON :", JSON.stringify(out,null,2));
 }
 
-/* ================= EDITOR ================= */
+/* ================= ÉDITEUR ================= */
 t("btnEditor").onclick = ()=>{
   if(!isEditor){
     if(prompt("Mot de passe") !== EDITOR_PASSWORD) return;
@@ -218,19 +266,21 @@ t("btnEditor").onclick = ()=>{
   t("btnEditor").classList.toggle("active", isEditor);
   t("editorBadge").style.display = isEditor ? "block" : "none";
 
-  // 🔑 activer / désactiver les zones EXISTANTES
   zoneObjects.forEach(o=>{
-    o.selectable   = isEditor;
-    o.hasControls  = isEditor;
-    o.hasBorders   = isEditor;
-    o.stroke       = isEditor ? "orange" : "rgba(255,255,255,0.9)";
+    o.selectable = isEditor;
+    o.hasControls = isEditor;
+    o.hasBorders = isEditor;
+    o.stroke = isEditor ? "orange" : "rgba(255,255,255,0.9)";
   });
 
   canvas.selection = isEditor;
   canvas.discardActiveObject();
   canvas.requestRenderAll();
-};
 
+  if(isEditor){
+    setTimeout(exportZones,300);
+  }
+};
 
 /* ================= BOOT ================= */
 (async()=>{
@@ -238,12 +288,14 @@ t("btnEditor").onclick = ()=>{
   resize();
   await loadParts();
   await loadZones();
-  imgEl.onload=()=>{
-    imgW=imgEl.naturalWidth;imgH=imgEl.naturalHeight;
+
+  imgEl.onload = ()=>{
+    imgW = imgEl.naturalWidth;
+    imgH = imgEl.naturalHeight;
     drawZones();
     setInfo("Sélectionne une zone");
   };
-  imgEl.src=IMAGE_URL;
+  imgEl.src = IMAGE_URL;
 })();
 </script>
 
