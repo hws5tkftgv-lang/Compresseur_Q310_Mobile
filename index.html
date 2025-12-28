@@ -78,7 +78,14 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
   <button id="btnDraw" class="btn" disabled>➕ Nouvelle zone</button>
 </div>
 
-<div id="editorState">MODE ÉDITEUR</div>
+<div id="editorState"
+     style="position:fixed;top:10px;left:10px;
+            background:#ff9800;color:#000;
+            padding:6px 10px;border-radius:8px;
+            font-weight:900;z-index:9999;
+            display:none;">
+  ✏️ MODE ÉDITEUR
+</div>
 
 <script>
 const EDITOR_PASSWORD = "comp";
@@ -90,6 +97,8 @@ let drawing = false, start = null, tempRect = null;
 
 const canvas = new fabric.Canvas("c", { selection:false });
 fabric.Object.prototype.perPixelTargetFind = true;
+fabric.Object.prototype.targetFindTolerance = 25; // ← TRÈS IMPORTANT iPhone
+fabric.Object.prototype.perPixelTargetFind = true;
 fabric.Object.prototype.targetFindTolerance = 22;
 fabric.Object.prototype.cornerSize = 34;
 fabric.Object.prototype.cornerStyle = "circle";
@@ -97,6 +106,9 @@ fabric.Object.prototype.transparentCorners = false;
 fabric.Object.prototype.padding = 8;
 fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 30;
+fabric.Object.prototype.cornerSize = 30;
+fabric.Object.prototype.cornerStyle = "circle";
+fabric.Object.prototype.transparentCorners = false;
 function resize(){
   canvas.setWidth($("stage").clientWidth);
   canvas.setHeight($("stage").clientHeight);
@@ -134,7 +146,7 @@ function applyMode(){
     }else{
       // editor
       o.stroke = "orange";
-      o.strokeWidth = 4;
+      o.strokeWidth = 5;
       o.lockMovementX = false;
       o.lockMovementY = false;
 
@@ -174,6 +186,9 @@ $("btnEditor").onclick = ()=>{
   isEditor = true;
   tool = "move";
   setUI();
+  // 👇 AJOUTE CES 2 LIGNES
+$("editorState").style.display = "block";
+$("editorState").textContent = "✏️ MODE ÉDITEUR";
 };
 
 /* Editor OFF */
@@ -181,6 +196,10 @@ $("btnExit").onclick = ()=>{
   isEditor = false;
   tool = "view";
   setUI();
+  
+
+// 👇 AJOUTE CES 2 LIGNES
+$("editorState").style.display = "none";
 };
 
 /* Tools */
@@ -250,6 +269,19 @@ canvas.add(new fabric.Rect({
 }));
 setUI();
 </script>
-
+<div id="editorState"
+     style="
+       position:fixed;
+       top:10px;
+       left:10px;
+       background:#ff9800;
+       color:#000;
+       padding:6px 10px;
+       border-radius:8px;
+       font-weight:900;
+       z-index:9999;
+       display:none;">
+  ✏️ MODE ÉDITEUR
+</div>
 </body>
 </html>
