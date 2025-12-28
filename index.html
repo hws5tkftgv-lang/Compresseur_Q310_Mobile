@@ -96,6 +96,15 @@ let tool = "view";
 let drawing = false, start = null, tempRect = null;
 
 const canvas = new fabric.Canvas("c", { selection:false });
+// 🔑 iPhone : détection tactile beaucoup plus permissive
+fabric.Object.prototype.perPixelTargetFind = true;
+fabric.Object.prototype.targetFindTolerance = 25;
+
+// 🔑 grosses poignées (doigt)
+fabric.Object.prototype.cornerSize = 34;
+fabric.Object.prototype.cornerStyle = "circle";
+fabric.Object.prototype.transparentCorners = false;
+fabric.Object.prototype.padding = 10;
 fabric.Object.prototype.perPixelTargetFind = true;
 fabric.Object.prototype.targetFindTolerance = 25; // ← TRÈS IMPORTANT iPhone
 fabric.Object.prototype.perPixelTargetFind = true;
@@ -129,6 +138,13 @@ function setUI(){
   $("btnDraw").disabled   = !isEditor;
 
   applyMode();
+}
+function showAllResizeHandles(obj, on){
+  obj.setControlsVisibility({
+    tl:on, tr:on, bl:on, br:on,
+    ml:on, mt:on, mr:on, mb:on,
+    mtr:false
+  });
 }
 
 function applyMode(){
@@ -206,19 +222,59 @@ $("editorState").style.display = "none";
 $("btnMove").onclick = ()=>{ tool="move"; applyMode(); };
 $("btnResize").onclick = ()=>{ tool="resize"; applyMode(); };
 $("btnDraw").onclick = ()=>{ tool="draw"; applyMode(); };
+function selectObj(obj){
+  if(!obj) return;
 
-/* Draw tool */
-canvas.on("mouse:down", opt=>{
-  if(!(isEditor && tool==="draw")) return;
-  drawing = true;
-  const p = canvas.getPointer(opt.e);
-  start = p;
-  tempRect = new fabric.Rect({
-    left:p.x, top:p.y, width:2, height:2,
-    fill:"rgba(255,255,255,0.08)", stroke:"#00a2ff", strokeWidth:4,
-    selectable:false, evented:false
+  // Désélection précédente
+  if(selected && selected !== obj){
+    showAllResizeHandles(selected, false);
+    selected.set({
+      stroke: "rgba(255,255,255,0.85)",
+      strokeWidth: 3
+    });
+  }
+
+  selected = obj;
+
+  obj.set({
+    stroke: "orange",
+    strokeWidth: 4,
+    selectable: true,
+    hasControls: true,
+    hasBorders: true
   });
-  canvas.add(tempRect);
+
+  // 🔑 8 poignées (coins + côtés)
+  showAllResizeHandles(obj, true);
+
+  canvas.setActiveObject(obj);
+  canvas.requestRenderAll();
+}
+function clearSelection(){
+  if(!selected) return;
+
+  showAllResizeHandles(selected, false);
+
+  selected.set({
+    stroke: "rgba(255,255,255,0.85)",
+    strokeWidth: 3
+  });
+
+  selected = null;
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+}
+canvas.on("mouse:down", opt => {
+  const obj = opt.target;
+
+  // Mode dessin → ne pas sélectionner
+  if(tool === "draw" && isEditor) return;
+
+  if(obj){
+    selectObj(obj);
+  }else{
+    clearSelection();
+  }
 });
 
 canvas.on("mouse:move", opt=>{
