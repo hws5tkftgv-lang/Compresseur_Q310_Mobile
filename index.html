@@ -9,152 +9,113 @@
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
 <style>
-  :root{ color-scheme: dark; }
-  html,body{
-    margin:0;
-    background:#0b1436;
-    color:#eaf1ff;
-    font-family:Arial,Segoe UI,sans-serif;
-    overscroll-behavior:none;
-  }
+:root{ color-scheme: dark; }
+html,body{
+  margin:0;
+  background:#0b1436;
+  color:#eaf1ff;
+  font-family:Arial,Segoe UI,sans-serif;
+  overscroll-behavior:none;
+}
 
-  /* ===== Info panel (élève) ===== */
-  #infoPanel{
-    padding:10px 12px;
-    background:#0f1a44;
-    border-bottom:1px solid rgba(255,255,255,.15);
-  }
-  #infoTitle{ font-size:18px; font-weight:800; }
-  #infoRole{ font-size:15px; margin-top:4px; opacity:.95; }
-  #infoDesc{ font-size:15px; margin-top:4px; line-height:1.45; opacity:.9; white-space:pre-wrap; }
+/* ===== Info panel ===== */
+#infoPanel{
+  padding:10px 12px;
+  background:#0f1a44;
+  border-bottom:1px solid rgba(255,255,255,.15);
+}
+#infoTitle{ font-size:18px; font-weight:800; }
+#infoRole{ font-size:15px; margin-top:4px; }
+#infoDesc{ font-size:15px; margin-top:4px; line-height:1.45; white-space:pre-wrap; }
 
-  /* ===== Stage ===== */
+/* ===== Stage ===== */
 .stage{
   position:relative;
   height:calc(100dvh - 120px);
   overflow:hidden;
   background:#0b1536;
 }
+.media-layer, canvas{ position:absolute; inset:0; }
 
-  .media-layer, canvas{ position:absolute; inset:0; }
-  #imgLayer{
-    width:100%; height:100%;
-    object-fit:contain;
-    pointer-events:none;
-    user-select:none;
-    -webkit-user-drag:none;
-  }
+#imgLayer{
+  width:100%; height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
 
-  /* 🔑 iOS Safari: laisser Fabric gérer pointer events sans scroll */
-  .stage, .canvas-container, .canvas-container canvas{
-    touch-action:none !important;
-  }
+/* 🔑 iOS SAFARI : UNIQUEMENT le canvas */
+.canvas-container,
+.canvas-container canvas{
+  touch-action:none !important;
+}
 
-  /* ===== Floating button ===== */
-  #fab{
-    position:fixed;
-    left:10px;
-    bottom:10px;
-    width:44px;
-    height:44px;
-    border-radius:10px;
-    border:1px solid rgba(255,255,255,.35);
-    background:rgba(255,255,255,.14);
-    color:#fff;
-    font-size:20px;
-    z-index:9999;
-  }
-  #fab.active{ background:#0078ff; border-color:#0053ad; }
+/* ===== Floating button ===== */
+#fab{
+  position:fixed;
+  left:10px;
+  bottom:10px;
+  width:44px;
+  height:44px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.14);
+  color:#fff;
+  font-size:20px;
+  z-index:2147483647;
+}
+#fab.active{ background:#0078ff; }
 
-  /* ===== Floating panel ===== */
-  #panel{
-    position:fixed;
-    left:10px;
-    bottom:64px;
-    width:min(360px, calc(100vw - 20px));
-    background:#0f1a44;
-    border:1px solid rgba(255,255,255,.18);
-    box-shadow:0 10px 30px rgba(0,0,0,.35);
-    z-index:9999;
-    display:none;
-    max-height:70dvh;              /* 🔑 */
-  overflow-y:auto;               /* 🔑 */
-  -webkit-overflow-scrolling:touch; /* 🔑 iOS */
-  }
-  #panelHeader{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
-    padding:10px 10px;
-    border-bottom:1px solid rgba(255,255,255,.12);
-  }
-  #panelHeader b{ font-size:14px; }
-  #closePanel{
-    width:34px;height:34px;
-    border-radius:8px;
-    border:1px solid rgba(255,255,255,.25);
-    background:rgba(255,255,255,.10);
-    color:#fff;
-    font-size:18px;
-  }
+/* ===== Floating panel ===== */
+#panel{
+  position:fixed;
+  left:10px;
+  bottom:64px;
+  width:min(360px, calc(100vw - 20px));
+  background:#0f1a44;
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+  z-index:2147483647;
+  display:none;
+  max-height:70dvh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
 
-  #panelBody{ padding:10px; display:flex; flex-direction:column; gap:10px; }
+#panelHeader{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
 
-  .row{ display:flex; gap:8px; align-items:center; }
-  .row > *{ flex:1; }
+#panelBody{ padding:10px; display:flex; flex-direction:column; gap:10px; }
 
-  .btn{
-    min-height:44px;
-    font-size:14px;
-    font-weight:800;
-    background:#1b2553;
-    color:#fff;
-    border:1px solid rgba(255,255,255,.18);
-    border-radius:10px;
-  }
-  .btn.active{ background:#ff9800; color:#000; border-color:rgba(255,255,255,.0); }
-  .btn.danger{ background:#7f1d2d; border-color:#5f1622; }
+.btn{
+  min-height:44px;
+  font-size:14px;
+  font-weight:800;
+  background:#1b2553;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:10px;
+}
+.btn.active{ background:#ff9800; color:#000; }
+.btn.danger{ background:#7f1d2d; }
 
-  select,input,textarea{
-    width:100%;
-    background:#101a40;
-    color:#fff;
-    border:1px solid rgba(255,255,255,.18);
-    border-radius:10px;
-    padding:10px;
-    font-size:14px;
-  }
-  textarea{ min-height:76px; resize:vertical; }
-
-  .hint{
-    font-size:12px;
-    opacity:.85;
-    line-height:1.35;
-  }
-
-  #editorBadge{
-    position:fixed;
-    top:10px;
-    right:10px;
-    background:#ff9800;
-    color:#000;
-    font-weight:900;
-    padding:6px 10px;
-    border-radius:8px;
-    display:none;
-    z-index:9999;
-  }
-
-  /* Zone selection highlight */
-  .pill{
-    display:inline-block;
-    padding:4px 8px;
-    border:1px solid rgba(255,255,255,.16);
-    border-radius:999px;
-    font-size:12px;
-    opacity:.9;
-  }
+#editorBadge{
+  position:fixed;
+  top:10px;
+  right:10px;
+  background:#ff9800;
+  color:#000;
+  font-weight:900;
+  padding:6px 10px;
+  border-radius:8px;
+  display:none;
+  z-index:2147483647;
+}
 </style>
 </head>
 
@@ -168,728 +129,118 @@
 
 <div class="stage" id="stage">
   <div class="media-layer">
-    <img id="imgLayer" alt="">
+    <img id="imgLayer">
   </div>
   <canvas id="c"></canvas>
 </div>
 
-<button id="fab" title="Menu">☰</button>
+<button id="fab">☰</button>
 
 <div id="panel">
   <div id="panelHeader">
-    <b>🧰 Menu (iPhone)</b>
-    <button id="closePanel" title="Fermer">×</button>
+    <b>🧰 Menu</b>
+    <button id="closePanel">×</button>
   </div>
-
   <div id="panelBody">
-
-    <div class="row">
-      <button id="btnEditor" class="btn">🔒 Activer éditeur</button>
-      <button id="btnExit" class="btn">🚪 Quitter</button>
-    </div>
-
-    <div class="hint" id="editorHint">
-      <span class="pill">Mode élève</span> Tap sur une zone = affiche la fiche.
-    </div>
-
-    <div class="row">
-      <select id="mediaSelect"></select>
-      <button id="btnReload" class="btn">↻ Recharger</button>
-    </div>
-
-    <div class="row">
-      <button id="toolMove" class="btn">✋ Déplacer</button>
-      <button id="toolResize" class="btn">⬍ Redimensionner</button>
-    </div>
-
-    <div class="row">
-      <button id="toolDraw" class="btn">➕ Nouvelle zone</button>
-      <button id="btnDelete" class="btn danger">🗑 Supprimer</button>
-    </div>
-
-    <div class="hint">
-      💡 Astuce : “Nouvelle zone” = tap + glisser pour créer.  
-      “Redimensionner” = coins géants (plus facile au doigt).
-    </div>
-
-    <div class="row">
-      <input id="fieldId" placeholder="ID (ex: cylindre_lp)" />
-    </div>
-
-    <div class="row">
-      <input id="fieldNom" placeholder="Nom (affiché à l’élève)" />
-    </div>
-
-    <div class="row">
-      <textarea id="fieldRole" placeholder="Rôle"></textarea>
-    </div>
-
-    <div class="row">
-      <textarea id="fieldDesc" placeholder="Description"></textarea>
-    </div>
-
-    <div class="row">
-      <button id="btnApplyText" class="btn">💾 Appliquer à la zone</button>
-      <button id="btnClearText" class="btn">⟲ Effacer champs</button>
-    </div>
-
-    <div class="row">
-      <button id="btnSaveLocal" class="btn">💾 Sauver (local iPhone)</button>
-      <button id="btnExport" class="btn">📤 Export JSON</button>
-    </div>
-
-    <div class="hint">
-      ⚠️ GitHub Pages ne peut pas écrire dans tes fichiers.  
-      “Sauver” = LocalStorage (sur cet iPhone).  
-      “Export JSON” = copie/colle dans <b>zones_mobile.json</b>.
-    </div>
-
+    <button id="btnEditor" class="btn">🔒 Activer éditeur</button>
+    <button id="toolMove" class="btn">✋ Déplacer</button>
+    <button id="toolResize" class="btn">⬍ Redimensionner</button>
+    <button id="toolDraw" class="btn">➕ Nouvelle zone</button>
+    <button id="btnDelete" class="btn danger">🗑 Supprimer</button>
   </div>
 </div>
 
 <div id="editorBadge">MODE ÉDITEUR</div>
 
 <script>
-/* ================= CONFIG ================= */
-const EDITOR_PASSWORD = "comp";
-const PARTS_URL = "quincy_310L_parts.json";
-const ZONES_URL = "zones_mobile.json";
+const EDITOR_PASSWORD="comp";
+const ZONES_URL="zones_mobile.json";
+const IMAGE_URL="actif/compresseur_bg.png";
 
-/* Mets ici tes images iPhone-only */
-const MEDIAS = [
-  { label:"Fond référence", url:"actif/compresseur_bg.png" },
-  { label:"Vue générale", url:"actif/VUE_GENERAL.jpeg" },
-  { label:"Vue générale 2", url:"actif/VUE_GENERAL_2.jpeg" },
-  { label:"Vue côté", url:"actif/VUE_1.jpeg" },
-  { label:"Vue pompe", url:"actif/VUE_POMPE.jpeg" },
-  { label:"Dessus (TOP)", url:"actif/TOP.jpeg" },
-  { label:"Tête", url:"actif/TETE.jpeg" },
-  { label:"Tête 2", url:"actif/TETE_2.jpeg" },
-  { label:"Côté charge (LOAD)", url:"actif/LOAD_SIDE.jpeg" },
-  { label:"Vers réservoir", url:"actif/VERS_RESERVOIR.jpeg" },
-  { label:"Poulie", url:"actif/POULIE.jpeg" },
-  { label:"Filtre air", url:"actif/FILTRE_AIR_COUVERCLE.jpeg" },
-  { label:"Soupape unloader", url:"actif/SOUPAPE_UNLOADER.jpeg" }
-];
+const $=id=>document.getElementById(id);
+let isEditor=false, tool="view", selected=null, drawing=false, drawStart=null, tempRect=null;
+let zoneData=[];
 
-/* ================= HELPERS ================= */
-const $ = id => document.getElementById(id);
-const setInfo = (title, role="", desc="")=>{
-  $("infoTitle").textContent = title || "";
-  $("infoRole").textContent  = role || "";
-  $("infoDesc").textContent  = desc || "";
+const canvas=new fabric.Canvas("c",{ selection:false, enablePointerEvents:true });
+
+fabric.Object.prototype.cornerSize=30;
+fabric.Object.prototype.cornerStyle="circle";
+fabric.Object.prototype.transparentCorners=false;
+fabric.Object.prototype.perPixelTargetFind=true;
+fabric.Object.prototype.targetFindTolerance=18;
+
+$("fab").onclick=()=> $("panel").style.display = $("panel").style.display==="block"?"none":"block";
+$("closePanel").onclick=()=> $("panel").style.display="none";
+
+$("btnEditor").onclick=()=>{
+  if(isEditor) return;
+  if(prompt("Mot de passe")!==EDITOR_PASSWORD) return;
+  isEditor=true;
+  $("editorBadge").style.display="block";
+  tool="move";
+  applyInteractivity();
 };
 
-function safeStr(v){ return (v ?? "").toString(); }
-function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+$("toolMove").onclick=()=>{ tool="move"; applyInteractivity(); };
+$("toolResize").onclick=()=>{ tool="resize"; applyInteractivity(); };
+$("toolDraw").onclick=()=>{ tool="draw"; applyInteractivity(); };
 
-/* ================= STATE ================= */
-let isEditor = false;
-let tool = "view"; // view | move | resize | draw
-let currentMedia = MEDIAS[0].url;
-
-let parts = new Map(); // id -> {id,nom,role,desc,circuit}
-let zoneData = [];     // {partId, x,y,w,h, nom?, role?, desc?} in IMAGE PIXELS (not stage)
-let selected = null;
-
-let imgW = 1, imgH = 1;
-let imgEl = $("imgLayer");
-let stage = $("stage");
-
-/* local overrides per media */
-const LS_KEY = (media)=> `q310_ios_editor_v1::${media}`;
-
-/* ================= FABRIC ================= */
-const canvas = new fabric.Canvas("c",{
-  selection:false,
-  preserveObjectStacking:true,
-  enablePointerEvents:true
-});
-
-/* iOS: block scroll/selection on canvas element only (not global) */
-canvas.upperCanvasEl.style.touchAction = "none";
-canvas.upperCanvasEl.style.webkitUserSelect = "none";
-canvas.upperCanvasEl.style.webkitTouchCallout = "none";
-
-/* Make controls big for fingers */
-fabric.Object.prototype.transparentCorners = false;
-fabric.Object.prototype.cornerStyle = "circle";
-fabric.Object.prototype.cornerSize = 30;
-fabric.Object.prototype.padding = 8;
-fabric.Object.prototype.perPixelTargetFind = true;
-fabric.Object.prototype.targetFindTolerance = 18;
-
-/* Only show corner controls (no rotation) */
-function setCornerOnlyControls(obj, on){
-  obj.setControlsVisibility({
-    mt:false, mb:false, ml:false, mr:false,
-    bl:on, br:on, tl:on, tr:on,
-    mtr:false
+function applyInteractivity(){
+  canvas.forEachObject(o=>{
+    o.selectable = isEditor && tool!=="draw";
+    o.evented = true;
+    o.hasControls = isEditor && tool==="resize";
+    o.hasBorders = isEditor;
   });
-}
-
-/* ================= UI WIRING ================= */
-function openPanel(on){
-  $("panel").style.display = on ? "block" : "none";
-  $("fab").classList.toggle("active", on);
-}
-$("fab").onclick = ()=> openPanel($("panel").style.display !== "block");
-$("closePanel").onclick = ()=> openPanel(false);
-
-function setEditorUI(){
-  $("editorBadge").style.display = isEditor ? "block" : "none";
-  $("btnEditor").textContent = isEditor ? "🔓 Éditeur actif" : "🔒 Activer éditeur";
-  $("btnEditor").classList.toggle("active", isEditor);
-  $("btnExit").disabled = !isEditor;
-
-  $("editorHint").innerHTML = isEditor
-    ? `<span class="pill">Mode éditeur</span> Sélectionne une zone puis utilise les outils.`
-    : `<span class="pill">Mode élève</span> Tap sur une zone = affiche la fiche.`;
-
-  // Tools buttons enabled only in editor
-  ["toolMove","toolResize","toolDraw","btnDelete","btnApplyText","btnClearText","btnSaveLocal","btnExport"]
-    .forEach(id => $(id).disabled = !isEditor);
-
-  // default tool
-  if(!isEditor){
-    tool = "view";
-    clearSelection();
-  }else{
-    tool = "move";
-  }
-  paintToolButtons();
-  applyZoneInteractivity();
-}
-
-function paintToolButtons(){
-  const map = { move:"toolMove", resize:"toolResize", draw:"toolDraw" };
-  ["toolMove","toolResize","toolDraw"].forEach(id=> $(id).classList.remove("active"));
-  if(map[tool]) $(map[tool]).classList.add("active");
-}
-
-$("btnEditor").onclick = ()=>{
-  if(isEditor){
-    // already on -> keep on
-    openPanel(true);
-    return;
-  }
-  const p = prompt("Mot de passe éditeur:");
-  if(p !== EDITOR_PASSWORD) return;
-  isEditor = true;
-  setEditorUI();
-};
-
-$("btnExit").onclick = ()=>{
-  if(!isEditor) return;
-  isEditor = false;
-  setEditorUI();
-};
-
-$("toolMove").onclick = ()=>{ if(!isEditor) return; tool="move"; paintToolButtons(); applyZoneInteractivity(); };
-$("toolResize").onclick = ()=>{ if(!isEditor) return; tool="resize"; paintToolButtons(); applyZoneInteractivity(); };
-$("toolDraw").onclick = ()=>{ if(!isEditor) return; tool="draw"; paintToolButtons(); applyZoneInteractivity(); };
-
-$("btnDelete").onclick = ()=>{
-  if(!isEditor) return;
-  if(!selected) return alert("Sélectionne une zone d’abord.");
-  if(!confirm("Supprimer cette zone ?")) return;
-
-  // remove from canvas and data
-  const idx = zoneData.findIndex(z => z._obj === selected);
-  if(idx >= 0) zoneData.splice(idx,1);
-  canvas.remove(selected);
-  clearSelection();
-  canvas.requestRenderAll();
-};
-
-$("btnReload").onclick = ()=> boot(); // re-load JSON + local overrides
-$("btnClearText").onclick = ()=> clearFields();
-
-$("btnApplyText").onclick = ()=>{
-  if(!isEditor) return;
-  if(!selected) return alert("Sélectionne une zone.");
-  const z = zoneData.find(z=> z._obj === selected);
-  if(!z) return;
-
-  // apply to zone object + data
-  z.partId = safeStr($("fieldId").value).trim();
-  z.nom   = safeStr($("fieldNom").value).trim();
-  z.role  = safeStr($("fieldRole").value).trim();
-  z.desc  = safeStr($("fieldDesc").value).trim();
-
-  // update info panel immediately
-  setInfo(z.nom || z.partId || "Zone", z.role || "", z.desc || "");
-
-  // visually mark selected
-  canvas.requestRenderAll();
-};
-
-$("btnSaveLocal").onclick = ()=>{
-  if(!isEditor) return;
-  // update zoneData geometry from Fabric objects
-  syncDataFromObjects();
-  localStorage.setItem(LS_KEY(currentMedia), JSON.stringify(zoneData.map(stripInternal)));
-  alert("Sauvegardé sur cet iPhone (LocalStorage).");
-};
-
-$("btnExport").onclick = ()=>{
-  if(!isEditor) return;
-  syncDataFromObjects();
-  const clean = zoneData.map(z=>({
-    partId: z.partId || "",
-    x: Math.round(z.x),
-    y: Math.round(z.y),
-    w: Math.round(z.w),
-    h: Math.round(z.h),
-    nom: z.nom || "",
-    role: z.role || "",
-    desc: z.desc || ""
-  }));
-  prompt("Copie-colle ce JSON dans zones_mobile.json :", JSON.stringify(clean, null, 2));
-};
-
-/* ================= MEDIA SELECT ================= */
-function fillMediaSelect(){
-  $("mediaSelect").innerHTML = "";
-  MEDIAS.forEach(m=>{
-    const o=document.createElement("option");
-    o.value=m.url; o.textContent=m.label;
-    $("mediaSelect").appendChild(o);
-  });
-  $("mediaSelect").value = currentMedia;
-}
-$("mediaSelect").onchange = async ()=>{
-  currentMedia = $("mediaSelect").value;
-  await showMedia(currentMedia);
-};
-
-/* ================= FIELDS ================= */
-function clearFields(){
-  $("fieldId").value = "";
-  $("fieldNom").value = "";
-  $("fieldRole").value = "";
-  $("fieldDesc").value = "";
-}
-function fillFieldsFromZone(z){
-  $("fieldId").value = z.partId || "";
-  $("fieldNom").value = z.nom || "";
-  $("fieldRole").value = z.role || "";
-  $("fieldDesc").value = z.desc || "";
-}
-
-/* ================= LOAD JSON ================= */
-async function fetchJSON(url){
-  const r = await fetch(url, {cache:"no-store"});
-  if(!r.ok) throw new Error(`fetch failed ${url} (${r.status})`);
-  return await r.json();
-}
-
-async function loadParts(){
-  parts.clear();
-  const arr = await fetchJSON(PARTS_URL);
-  (Array.isArray(arr) ? arr : []).forEach(p=>{
-    if(!p || !p.id) return;
-    parts.set(safeStr(p.id), {
-      id: safeStr(p.id),
-      nom: safeStr(p.nom),
-      role: safeStr(p.role),
-      desc: safeStr(p.desc),
-      circuit: safeStr(p.circuit)
-    });
-  });
-}
-
-async function loadZonesBase(){
-  const arr = await fetchJSON(ZONES_URL);
-  return Array.isArray(arr) ? arr : [];
-}
-
-function loadZonesLocal(){
-  try{
-    const raw = localStorage.getItem(LS_KEY(currentMedia));
-    if(!raw) return null;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : null;
-  }catch{
-    return null;
-  }
-}
-
-/* ================= IMAGE + FIT ================= */
-function resizeCanvas(){
-  canvas.setWidth(stage.clientWidth);
-  canvas.setHeight(stage.clientHeight);
-  canvas.calcOffset();
-}
-
-function computeContainBox(){
-  const sw = stage.clientWidth, sh = stage.clientHeight;
-  const ir = imgW/imgH, sr = sw/sh;
-  let dw,dh,ox,oy;
-  if(sr > ir){
-    dh = sh; dw = sh * ir; ox = (sw - dw)/2; oy = 0;
-  }else{
-    dw = sw; dh = sw / ir; ox = 0; oy = (sh - dh)/2;
-  }
-  return {ox,oy,dw,dh,sx:dw/imgW, sy:dh/imgH};
-}
-
-function imgToStageRect(z){
-  const {ox,oy,sx,sy} = computeContainBox();
-  return {
-    left: ox + z.x * sx,
-    top:  oy + z.y * sy,
-    width: z.w * sx,
-    height:z.h * sy
-  };
-}
-
-function stageToImgRect(obj){
-  const {ox,oy,sx,sy} = computeContainBox();
-  const left = obj.left;
-  const top = obj.top;
-  const w = obj.width * obj.scaleX;
-  const h = obj.height * obj.scaleY;
-
-  return {
-    x: (left - ox) / sx,
-    y: (top  - oy) / sy,
-    w: w / sx,
-    h: h / sy
-  };
-}
-
-/* ================= ZONES RENDER ================= */
-function stripInternal(z){
-  const out = {...z};
-  delete out._obj;
-  return out;
-}
-
-function clearSelection(){
-  if(selected){
-    selected.set({ stroke:"rgba(255,255,255,0.85)", strokeWidth:3 });
-    setCornerOnlyControls(selected, false);
-  }
-  selected = null;
-  canvas.discardActiveObject();
-  clearFields();
-}
-
-function selectObj(obj){
-  if(!obj) return;
-  if(selected && selected !== obj) clearSelection();
-
-  selected = obj;
-  canvas.setActiveObject(obj);
-
-  obj.set({ stroke:"orange", strokeWidth:4 });
-
-  // show corner controls only if resize tool (and editor)
-  if(isEditor && tool === "resize"){
-    obj.selectable = true;
-    obj.hasControls = true;
-    obj.hasBorders = true;
-    setCornerOnlyControls(obj, true);
-  }else{
-    obj.hasControls = false;
-    obj.hasBorders = true;
-    setCornerOnlyControls(obj, false);
-  }
-
-  // fill fields from data
-  const z = zoneData.find(z=> z._obj === obj);
-  if(z){
-    fillFieldsFromZone(z);
-    // info panel: prefer zone custom text, else parts json, else id
-    const p = parts.get(z.partId);
-    const title = z.nom || (p?.nom) || z.partId || "Zone";
-    const role  = z.role || (p?.role) || "";
-    const desc  = z.desc || (p?.desc) || "";
-    setInfo(title, role, desc);
-  }else{
-    setInfo("Zone", "", "");
-  }
-
   canvas.requestRenderAll();
 }
 
-function applyZoneInteractivity(){
-  // In view mode: objects not movable/scalable, but tappable
-  // In editor:
-  // - move: selectable true, controls off, allow drag
-  // - resize: selectable true, controls on (corners only), no move? (allow both is OK)
-  // - draw: existing zones not selectable (avoid accidental selection)
+async function loadZones(){
+  const r=await fetch(ZONES_URL,{cache:"no-store"});
+  zoneData=await r.json();
   zoneData.forEach(z=>{
-    const o = z._obj;
-    if(!o) return;
-
-    if(!isEditor){
-      o.selectable = false;
-      o.evented = true;
-      o.hasControls = false;
-      o.hasBorders = false;
-      setCornerOnlyControls(o,false);
-    }else{
-      if(tool === "draw"){
-        o.selectable = false;
-        o.evented = true;
-        o.hasControls = false;
-        o.hasBorders = true;
-        setCornerOnlyControls(o,false);
-      }else if(tool === "move"){
-        o.selectable = true;
-        o.evented = true;
-        o.hasControls = false;
-        o.hasBorders = true;
-        setCornerOnlyControls(o,false);
-      }else{ // resize
-        o.selectable = true;
-        o.evented = true;
-        o.hasControls = true;
-        o.hasBorders = true;
-        setCornerOnlyControls(o,true);
-      }
-    }
-
-    // base style if not selected
-    if(o !== selected){
-      o.set({ stroke:"rgba(255,255,255,0.85)", strokeWidth:3 });
-    }
-  });
-
-  if(selected){
-    // keep selected style consistent
-    selectObj(selected);
-  }else{
-    canvas.requestRenderAll();
-  }
-}
-
-function renderZones(){
-  canvas.clear();
-  zoneData.forEach(z=>{
-    const r = imgToStageRect(z);
-
-    const rect = new fabric.Rect({
-      left: r.left,
-      top:  r.top,
-      width:r.width,
-      height:r.height,
-      fill:"rgba(0,0,0,0)",
-      stroke:"rgba(255,255,255,0.85)",
-      strokeWidth:3,
-      hasControls:false,
-      hasBorders:false,
-      lockRotation:true,
-      lockScalingFlip:true
+    const o=new fabric.Rect({
+      left:z.x, top:z.y, width:z.w, height:z.h,
+      fill:"rgba(0,0,0,0)", stroke:"white", strokeWidth:3
     });
-
-    z._obj = rect;
-    setCornerOnlyControls(rect, false);
-
-    canvas.add(rect);
-  });
-
-  clearSelection();
-  applyZoneInteractivity();
-  canvas.requestRenderAll();
-}
-
-function syncDataFromObjects(){
-  // save geometry back to image pixels
-  zoneData.forEach(z=>{
-    const o = z._obj;
-    if(!o) return;
-
-    // ensure coords
-    o.setCoords();
-
-    const ir = stageToImgRect(o);
-    z.x = clamp(ir.x, 0, imgW);
-    z.y = clamp(ir.y, 0, imgH);
-    z.w = clamp(ir.w, 1, imgW);
-    z.h = clamp(ir.h, 1, imgH);
-
-    // reset scaling on object to keep stable editing cycle
-    const {ox,oy,sx,sy} = computeContainBox();
-    o.set({
-      left: ox + z.x * sx,
-      top:  oy + z.y * sy,
-      width: z.w * sx,
-      height:z.h * sy,
-      scaleX:1,
-      scaleY:1
-    });
-    o.setCoords();
+    z._obj=o;
+    canvas.add(o);
   });
 }
 
-/* ================= TOOL: DRAW NEW ================= */
-let drawing = false;
-let drawStart = null;
-let tempRect = null;
-
-canvas.on("mouse:down", (opt)=>{
-  const obj = opt.target;
-
-  if(tool === "draw" && isEditor){
-    drawing = true;
-    const p = canvas.getPointer(opt.e);
-
-    drawStart = {x:p.x, y:p.y};
-    tempRect = new fabric.Rect({
-      left:p.x, top:p.y,
-      width:2, height:2,
-      fill:"rgba(0,0,0,0)",
-      stroke:"#00a2ff",
-      strokeWidth:3,
-      selectable:false,
-      evented:false
-    });
+canvas.on("mouse:down",opt=>{
+  const obj=opt.target;
+  if(tool==="draw" && isEditor){
+    drawing=true;
+    const p=canvas.getPointer(opt.e);
+    drawStart=p;
+    tempRect=new fabric.Rect({ left:p.x, top:p.y, width:2, height:2, stroke:"#00a2ff", fill:"transparent", strokeWidth:3 });
     canvas.add(tempRect);
-    canvas.requestRenderAll();
     return;
   }
-
-  // tap to select in view/editor modes
-  if(obj){
-    selectObj(obj);
-  }else{
-    // tap empty -> deselect (only if not drawing)
-    clearSelection();
-    setInfo("Sélectionne une zone", "", "");
-    canvas.requestRenderAll();
-  }
+  if(obj){ selected=obj; canvas.setActiveObject(obj); }
 });
 
-canvas.on("mouse:move", (opt)=>{
-  if(!(tool === "draw" && isEditor && drawing && tempRect)) return;
-  const p = canvas.getPointer(opt.e);
-
-  const left = Math.min(drawStart.x, p.x);
-  const top  = Math.min(drawStart.y, p.y);
-  const w = Math.abs(p.x - drawStart.x);
-  const h = Math.abs(p.y - drawStart.y);
-
-  tempRect.set({ left, top, width:Math.max(2,w), height:Math.max(2,h) });
-  tempRect.setCoords();
+canvas.on("mouse:move",opt=>{
+  if(!(drawing && tempRect)) return;
+  const p=canvas.getPointer(opt.e);
+  tempRect.set({ width:Math.abs(p.x-drawStart.x), height:Math.abs(p.y-drawStart.y) });
   canvas.requestRenderAll();
 });
 
-canvas.on("mouse:up", ()=>{
-  if(!(tool === "draw" && isEditor && drawing)) return;
-  drawing = false;
-
-  if(!tempRect) return;
-
-  // minimal size guard
-  if(tempRect.width < 12 || tempRect.height < 12){
-    canvas.remove(tempRect);
-    tempRect = null;
-    canvas.requestRenderAll();
-    return;
-  }
-
-  // convert temp rect to image space and push to data
-  tempRect.setCoords();
-  const ir = stageToImgRect(tempRect);
-
-  const z = {
-    partId: "nouvelle_zone",
-    x: ir.x, y: ir.y, w: ir.w, h: ir.h,
-    nom:"", role:"", desc:""
-  };
-  zoneData.push(z);
-
-  // rerender zones (recreates objects with proper handlers)
-  renderZones();
-
-  // select last created
-  const last = zoneData[zoneData.length-1];
-  if(last && last._obj) selectObj(last._obj);
-
-  canvas.requestRenderAll();
+canvas.on("mouse:up",()=>{
+  if(!drawing) return;
+  drawing=false;
+  tempRect=null;
 });
 
-/* When object modified (move/scale), sync in memory (not file) */
-canvas.on("object:modified", ()=>{
-  if(!isEditor) return;
-  syncDataFromObjects();
-});
-
-/* ================= MEDIA ================= */
-async function showMedia(url){
-  currentMedia = url;
-  $("mediaSelect").value = currentMedia;
-
-  clearSelection();
-  setInfo("Chargement…", "", "");
-  canvas.clear();
-  canvas.requestRenderAll();
-
-  // load image natural size
-  await new Promise((resolve,reject)=>{
-    imgEl.onload = ()=>resolve();
-    imgEl.onerror = ()=>reject(new Error("Image introuvable: "+url));
-    imgEl.src = url;
-  });
-
-  imgW = imgEl.naturalWidth || 1;
-  imgH = imgEl.naturalHeight || 1;
-
-  // load zones: local overrides first, else base file
-  const local = loadZonesLocal();
-  if(local){
-    zoneData = local.map(z=>({
-      partId: safeStr(z.partId),
-      x: +z.x || 0, y: +z.y || 0,
-      w: +z.w || 10, h: +z.h || 10,
-      nom: safeStr(z.nom),
-      role: safeStr(z.role),
-      desc: safeStr(z.desc)
-    }));
-  }else{
-    const base = await loadZonesBase();
-    zoneData = base.map(z=>({
-      partId: safeStr(z.partId),
-      x: +z.x || 0, y: +z.y || 0,
-      w: +z.w || 10, h: +z.h || 10,
-      nom: safeStr(z.nom),
-      role: safeStr(z.role),
-      desc: safeStr(z.desc)
-    }));
-  }
-
-  resizeCanvas();
-  renderZones();
-  setInfo("Sélectionne une zone", "", "");
-}
-
-/* ================= BOOT ================= */
-async function boot(){
-  try{
-    fillMediaSelect();
-    await loadParts();
-    await showMedia(currentMedia);
-    setEditorUI();
-  }catch(e){
-    console.error(e);
-    alert("Erreur: " + e.message);
-    setInfo("Erreur de chargement", "", e.message);
-  }
-}
-
-/* Resize handler */
-window.addEventListener("resize", ()=>{
-  resizeCanvas();
-  // re-fit zones after resize
-  if(zoneData.length){
-    renderZones();
-  }
-});
-
-boot();
+const img=$("imgLayer");
+img.onload=()=>{
+  canvas.setWidth($("stage").clientWidth);
+  canvas.setHeight($("stage").clientHeight);
+  loadZones();
+};
+img.src=IMAGE_URL;
 </script>
 
 </body>
