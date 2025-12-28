@@ -1,0 +1,177 @@
+[
+  {
+    "id": "filtre_air",
+    "nom": "Filtre à air",
+    "role": "Filtrer l’air entrant",
+    "desc": "Retient les poussières et impuretés avant l’admission.",
+    "circuit": "LP"
+  },
+  {
+    "id": "silencieux_admission",
+    "nom": "Silencieux d’admission",
+    "role": "Réduire le bruit d’aspiration",
+    "desc": "Lisse le flux d’air et atténue le bruit à l’entrée.",
+    "circuit": "LP"
+  },
+  {
+    "id": "cylindre_lp",
+    "nom": "Cylindre basse pression (LP)",
+    "role": "Compression initiale",
+    "desc": "Première étape de compression volumétrique.",
+    "circuit": "LP"
+  },
+  {
+    "id": "soupape_admission_lp",
+    "nom": "Soupape d’admission LP",
+    "role": "Entrée d’air",
+    "desc": "S’ouvre par dépression lors de l’admission.",
+    "circuit": "LP"
+  },
+  {
+    "id": "soupape_refoulement_lp",
+    "nom": "Soupape de refoulement LP",
+    "role": "Sortie vers l’intercooler",
+    "desc": "S’ouvre en fin de compression LP.",
+    "circuit": "LP"
+  },
+  {
+    "id": "intercooler",
+    "nom": "Intercooler",
+    "role": "Refroidir l’air entre étages",
+    "desc": "Abaisse la température et augmente le rendement global.",
+    "circuit": "HP"
+  },
+  {
+    "id": "cylindre_hp",
+    "nom": "Cylindre haute pression (HP)",
+    "role": "Compression finale",
+    "desc": "Porte l’air à la pression de service.",
+    "circuit": "HP"
+  },
+  {
+    "id": "soupape_admission_hp",
+    "nom": "Soupape d’admission HP",
+    "role": "Entrée vers l’étage HP",
+    "desc": "Admet l’air refroidi en provenance de l’intercooler.",
+    "circuit": "HP"
+  },
+  {
+    "id": "soupape_decharge_hp",
+    "nom": "Soupape de décharge HP",
+    "role": "Sortie haute pression",
+    "desc": "Refoulement vers l’aftercooler/réservoir.",
+    "circuit": "HP"
+  },
+  {
+    "id": "anti_retour_sortie",
+    "nom": "Clapet anti-retour sortie",
+    "role": "Empêcher le retour d’air",
+    "desc": "Isole le réservoir lors de l’arrêt.",
+    "circuit": "HP"
+  },
+  {
+    "id": "aftercooler",
+    "nom": "Aftercooler",
+    "role": "Refroidir après compression",
+    "desc": "Condense l’humidité et protège le réseau.",
+    "circuit": "HP"
+  },
+  {
+    "id": "carter",
+    "nom": "Carter",
+    "role": "Réservoir d’huile",
+    "desc": "Contient l’huile de lubrification et baigne le vilebrequin.",
+    "circuit": "LUB"
+  },
+  {
+    "id": "pompe_huile",
+    "nom": "Pompe à huile",
+    "role": "Distribuer l’huile",
+    "desc": "Alimente paliers et bielles sous pression.",
+    "circuit": "LUB"
+  },
+  {
+    "id": "filtre_huile",
+    "nom": "Filtre à huile",
+    "role": "Filtrer l’huile",
+    "desc": "Retient particules et boues, protège les paliers.",
+    "circuit": "LUB"
+  },
+  {
+    "id": "regulateur_debit_huile",
+    "nom": "Régulateur de débit d’huile",
+    "role": "Stabiliser la lubrification",
+    "desc": "Maintient un débit/pression d’huile adéquats.",
+    "circuit": "LUB"
+  },
+  {
+    "id": "pressostat",
+    "nom": "Pressostat",
+    "role": "Commande moteur",
+    "desc": "Arrêt/démarrage selon pressions cut-in / cut-out.",
+    "circuit": "CTRL"
+  },
+  {
+    "id": "valve_pilote",
+    "nom": "Valve pilote (unloader)",
+    "role": "Décharger à vide",
+    "desc": "Contrôle les déchargeurs pour limiter la charge.",
+    "circuit": "CTRL"
+  },
+  {
+    "id": "soupape_securite",
+    "nom": "Soupape de sûreté",
+    "role": "Protection surpression",
+    "desc": "S’ouvre si la pression dépasse le tarage.",
+    "circuit": "CTRL"
+  },
+  {
+    "id": "manometre_hp",
+    "nom": "Manomètre HP",
+    "role": "Indiquer la pression",
+    "desc": "Lecture de la pression de service en sortie.",
+    "circuit": "CTRL"
+  },
+  {
+    "id": "volant",
+    "nom": "Volant",
+    "role": "Inertie et ventilation",
+    "desc": "Stabilise la rotation et ventile les cylindres.",
+    "circuit": "TR"
+  },
+  {
+    "id": "poulie_moteur",
+    "nom": "Poulie moteur",
+    "role": "Adapter la vitesse",
+    "desc": "Détermine le rapport de transmission.",
+    "circuit": "TR"
+  },
+  {
+    "id": "courroies",
+    "nom": "Courroies",
+    "role": "Transmettre la puissance",
+    "desc": "Relient moteur et vilebrequin du compresseur.",
+    "circuit": "TR"
+  },
+  {
+    "id": "tendeur_courroies",
+    "nom": "Tendeur de courroies",
+    "role": "Maintenir la tension",
+    "desc": "Assure l’adhérence et la longévité des courroies.",
+    "circuit": "TR"
+  },
+  {
+    "id": "reservoir",
+    "nom": "Réservoir d’air",
+    "role": "Stocker l’air comprimé",
+    "desc": "Stabilise la pression et amortit les pulsations.",
+    "circuit": "HP"
+  },
+  {
+    "id": "purge_condensats",
+    "nom": "Purge de condensats",
+    "role": "Évacuer l’eau",
+    "desc": "Retire l’humidité accumulée dans le réservoir.",
+    "circuit": "CTRL"
+  }
+]
