@@ -57,10 +57,19 @@ html,body{
 
 <script>
 /* ================= CONFIG ================= */
+
+// Image mobile
 const IMAGE_URL = "actif/compresseur_bg.png";
+
+// JSON zones (PC)
 const ZONES_JSON_URL = "quincy_310L_parts.json";
 
+// 🔴 DIMENSIONS RÉELLES DE L’IMAGE PC (CLÉ DE TOUT)
+const PC_IMAGE_WIDTH  = 1200;
+const PC_IMAGE_HEIGHT = 1600;
+
 /* ================= CANVAS ================= */
+
 const canvas = new fabric.Canvas("c",{
   selection:false,
   allowTouchScrolling:false,
@@ -71,7 +80,9 @@ const stage = document.getElementById("stage");
 const imgEl  = document.getElementById("imgLayer");
 
 /* ================= IMAGE ================= */
+
 imgEl.src = IMAGE_URL;
+
 imgEl.onload = ()=>{
   resizeAll();
   loadZonesFromJSON();
@@ -86,6 +97,7 @@ function resizeAll(){
 }
 
 /* ================= ZONES ================= */
+
 function makeZone(x,y,w,h,text){
   const r = new fabric.Rect({
     left:x,
@@ -115,12 +127,15 @@ async function loadZonesFromJSON(){
 
   canvas.clear();
 
+  const scaleX = stage.clientWidth  / PC_IMAGE_WIDTH;
+  const scaleY = stage.clientHeight / PC_IMAGE_HEIGHT;
+
   data.forEach(z=>{
     makeZone(
-      z.imgBox.x * stage.clientWidth,
-      z.imgBox.y * stage.clientHeight,
-      z.imgBox.w * stage.clientWidth,
-      z.imgBox.h * stage.clientHeight,
+      z.imgBox.x * scaleX,
+      z.imgBox.y * scaleY,
+      z.imgBox.w * scaleX,
+      z.imgBox.h * scaleY,
       z.partId
     );
   });
