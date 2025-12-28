@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<title>Q310 – iPhone (Éditeur mobile)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Q310 – iPhone Éditeur</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
@@ -18,7 +18,7 @@ html,body{
   overscroll-behavior:none;
 }
 
-/* ===== Info panel ===== */
+/* ===== Info élève ===== */
 #infoPanel{
   padding:10px 12px;
   background:#0f1a44;
@@ -26,32 +26,31 @@ html,body{
 }
 #infoTitle{ font-size:18px; font-weight:800; }
 #infoRole{ font-size:15px; margin-top:4px; }
-#infoDesc{ font-size:15px; margin-top:4px; line-height:1.45; white-space:pre-wrap; }
+#infoDesc{ font-size:15px; margin-top:4px; line-height:1.45; }
 
 /* ===== Stage ===== */
 .stage{
   position:relative;
   height:calc(100dvh - 120px);
-  overflow:hidden;
   background:#0b1536;
+  overflow:hidden;
 }
 .media-layer, canvas{ position:absolute; inset:0; }
 
 #imgLayer{
-  width:100%; height:100%;
+  width:100%;
+  height:100%;
   object-fit:contain;
   pointer-events:none;
   user-select:none;
-  -webkit-user-drag:none;
 }
 
-/* 🔑 iOS SAFARI : UNIQUEMENT le canvas */
-.canvas-container,
-.canvas-container canvas{
+/* IMPORTANT iOS */
+.stage, .canvas-container, canvas{
   touch-action:none !important;
 }
 
-/* ===== Floating button ===== */
+/* ===== Bouton menu ===== */
 #fab{
   position:fixed;
   left:10px;
@@ -63,46 +62,44 @@ html,body{
   background:rgba(255,255,255,.14);
   color:#fff;
   font-size:20px;
-  z-index:2147483647;
+  z-index:9999;
 }
-#fab.active{ background:#0078ff; }
+#fab.editor{ background:#ff9800; color:#000; }
 
-/* ===== Floating panel ===== */
+/* ===== Menu ===== */
 #panel{
   position:fixed;
   left:10px;
   bottom:64px;
   width:min(360px, calc(100vw - 20px));
   background:#0f1a44;
-  border:1px solid rgba(255,255,255,.18);
-  box-shadow:0 10px 30px rgba(0,0,0,.35);
-  z-index:2147483647;
+  border:1px solid rgba(255,255,255,.2);
   display:none;
+  z-index:9999;
   max-height:70dvh;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
+  overflow:auto;
 }
 
 #panelHeader{
-  display:flex;
-  justify-content:space-between;
   padding:10px;
-  border-bottom:1px solid rgba(255,255,255,.12);
+  border-bottom:1px solid rgba(255,255,255,.15);
+}
+#editorStateText{
+  font-size:12px;
+  font-weight:900;
 }
 
-#panelBody{ padding:10px; display:flex; flex-direction:column; gap:10px; }
-
-.btn{
+.panelBtn{
+  width:100%;
   min-height:44px;
-  font-size:14px;
+  margin:6px 0;
   font-weight:800;
   background:#1b2553;
   color:#fff;
-  border:1px solid rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.2);
   border-radius:10px;
 }
-.btn.active{ background:#ff9800; color:#000; }
-.btn.danger{ background:#7f1d2d; }
+.panelBtn.active{ background:#ff9800; color:#000; }
 
 #editorBadge{
   position:fixed;
@@ -114,7 +111,7 @@ html,body{
   padding:6px 10px;
   border-radius:8px;
   display:none;
-  z-index:2147483647;
+  z-index:9999;
 }
 </style>
 </head>
@@ -138,47 +135,68 @@ html,body{
 
 <div id="panel">
   <div id="panelHeader">
-    <b>🧰 Menu</b>
-    <button id="closePanel">×</button>
+    🧰 Menu<br>
+    <span id="editorStateText">MODE ÉLÈVE</span>
   </div>
-  <div id="panelBody">
-    <button id="btnEditor" class="btn">🔒 Activer éditeur</button>
-    <button id="toolMove" class="btn">✋ Déplacer</button>
-    <button id="toolResize" class="btn">⬍ Redimensionner</button>
-    <button id="toolDraw" class="btn">➕ Nouvelle zone</button>
-    <button id="btnDelete" class="btn danger">🗑 Supprimer</button>
-  </div>
+
+  <button id="btnEditor" class="panelBtn">🔒 Activer éditeur</button>
+  <button id="toolMove" class="panelBtn">✋ Déplacer</button>
+  <button id="toolResize" class="panelBtn">⬍ Redimensionner</button>
+  <button id="toolDraw" class="panelBtn">➕ Nouvelle zone</button>
 </div>
 
 <div id="editorBadge">MODE ÉDITEUR</div>
 
 <script>
-const EDITOR_PASSWORD="comp";
-const ZONES_URL="zones_mobile.json";
-const IMAGE_URL="actif/compresseur_bg.png";
+/* ================= CONFIG ================= */
+const IMAGE_URL = "actif/compresseur_bg.png";
+const ZONES_URL = "zones_mobile.json";
+const EDITOR_PASSWORD = "comp";
 
-const $=id=>document.getElementById(id);
-let isEditor=false, tool="view", selected=null, drawing=false, drawStart=null, tempRect=null;
+/* ================= HELPERS ================= */
+const $ = id => document.getElementById(id);
+const setInfo = (t,r="",d="")=>{
+  $("infoTitle").textContent=t;
+  $("infoRole").textContent=r;
+  $("infoDesc").textContent=d;
+};
+
+/* ================= STATE ================= */
+let isEditor=false;
+let tool="view";
+let drawing=false;
+let drawStart=null;
+let tempRect=null;
 let zoneData=[];
 
-const canvas=new fabric.Canvas("c",{ selection:false, enablePointerEvents:true });
-
+/* ================= CANVAS ================= */
+const canvas=new fabric.Canvas("c",{ selection:false });
 fabric.Object.prototype.cornerSize=30;
 fabric.Object.prototype.cornerStyle="circle";
 fabric.Object.prototype.transparentCorners=false;
 fabric.Object.prototype.perPixelTargetFind=true;
 fabric.Object.prototype.targetFindTolerance=18;
 
-$("fab").onclick=()=> $("panel").style.display = $("panel").style.display==="block"?"none":"block";
-$("closePanel").onclick=()=> $("panel").style.display="none";
+/* ================= UI ================= */
+$("fab").onclick=()=>{
+  $("panel").style.display = $("panel").style.display==="block"?"none":"block";
+};
 
+function updateEditorUI(){
+  $("editorStateText").textContent = isEditor ? "MODE ÉDITEUR" : "MODE ÉLÈVE";
+  $("editorStateText").style.color = isEditor ? "#ff9800" : "#ffffff";
+  $("editorBadge").style.display = isEditor ? "block" : "none";
+  $("fab").classList.toggle("editor", isEditor);
+  applyInteractivity();
+}
+
+/* ================= EDITOR ================= */
 $("btnEditor").onclick=()=>{
   if(isEditor) return;
   if(prompt("Mot de passe")!==EDITOR_PASSWORD) return;
   isEditor=true;
-  $("editorBadge").style.display="block";
   tool="move";
-  applyInteractivity();
+  updateEditorUI();
 };
 
 $("toolMove").onclick=()=>{ tool="move"; applyInteractivity(); };
@@ -188,52 +206,62 @@ $("toolDraw").onclick=()=>{ tool="draw"; applyInteractivity(); };
 function applyInteractivity(){
   canvas.forEachObject(o=>{
     o.selectable = isEditor && tool!=="draw";
-    o.evented = true;
+    o.evented=true;
     o.hasControls = isEditor && tool==="resize";
     o.hasBorders = isEditor;
   });
   canvas.requestRenderAll();
 }
 
+/* ================= ZONES ================= */
 async function loadZones(){
   const r=await fetch(ZONES_URL,{cache:"no-store"});
   zoneData=await r.json();
   zoneData.forEach(z=>{
     const o=new fabric.Rect({
       left:z.x, top:z.y, width:z.w, height:z.h,
-      fill:"rgba(0,0,0,0)", stroke:"white", strokeWidth:3
+      fill:"rgba(0,0,0,0)",
+      stroke:"white",
+      strokeWidth:3
     });
-    z._obj=o;
     canvas.add(o);
   });
 }
 
+/* ================= DRAW ================= */
 canvas.on("mouse:down",opt=>{
-  const obj=opt.target;
   if(tool==="draw" && isEditor){
     drawing=true;
     const p=canvas.getPointer(opt.e);
     drawStart=p;
-    tempRect=new fabric.Rect({ left:p.x, top:p.y, width:2, height:2, stroke:"#00a2ff", fill:"transparent", strokeWidth:3 });
+    tempRect=new fabric.Rect({
+      left:p.x, top:p.y,
+      width:2, height:2,
+      fill:"rgba(0,0,0,0)",
+      stroke:"#00a2ff",
+      strokeWidth:3
+    });
     canvas.add(tempRect);
     return;
   }
-  if(obj){ selected=obj; canvas.setActiveObject(obj); }
 });
 
 canvas.on("mouse:move",opt=>{
   if(!(drawing && tempRect)) return;
   const p=canvas.getPointer(opt.e);
-  tempRect.set({ width:Math.abs(p.x-drawStart.x), height:Math.abs(p.y-drawStart.y) });
+  tempRect.set({
+    width:Math.abs(p.x-drawStart.x),
+    height:Math.abs(p.y-drawStart.y)
+  });
   canvas.requestRenderAll();
 });
 
 canvas.on("mouse:up",()=>{
-  if(!drawing) return;
   drawing=false;
   tempRect=null;
 });
 
+/* ================= IMAGE ================= */
 const img=$("imgLayer");
 img.onload=()=>{
   canvas.setWidth($("stage").clientWidth);
