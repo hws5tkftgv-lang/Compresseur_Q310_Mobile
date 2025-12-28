@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Q310 – Mobile iPhone</title>
+<title>Q310 – MOBILE iPhone</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
@@ -23,14 +23,12 @@ html,body{
   border-bottom:1px solid rgba(255,255,255,.15);
 }
 
-#infoTitle{
-  font-size:18px;
-  font-weight:700;
-}
+#infoTitle{font-size:18px;font-weight:700}
+#infoRole,#infoDesc{font-size:15px;line-height:1.4}
 
 .stage{
   position:relative;
-  height:70vh;
+  height:65vh;
   background:#0b1536;
   overflow:hidden;
 }
@@ -39,16 +37,42 @@ html,body{
   position:absolute;
   inset:0;
 }
+
+#btnEditor{
+  position:fixed;
+  bottom:8px;
+  left:8px;
+  width:36px;
+  height:36px;
+  border-radius:6px;
+  background:#1b2553;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.3);
+  font-size:16px;
+  z-index:9999;
+}
+
+#editorBadge{
+  position:fixed;
+  top:8px;
+  right:8px;
+  padding:6px 10px;
+  background:#ff9800;
+  color:#000;
+  font-weight:700;
+  font-size:13px;
+  display:none;
+  z-index:9999;
+}
 </style>
 </head>
 
 <body>
-<div style="position:fixed;top:0;left:0;z-index:99999;background:red;color:white;padding:6px">
-  VERSION MOBILE – TEST OK
-</div>
 
 <div id="infoPanel">
   <div id="infoTitle">Sélectionne une zone</div>
+  <div id="infoRole"></div>
+  <div id="infoDesc"></div>
 </div>
 
 <div class="stage" id="stage">
@@ -58,27 +82,32 @@ html,body{
   <canvas id="c"></canvas>
 </div>
 
+<button id="btnEditor">✎</button>
+<div id="editorBadge">MODE ÉDITEUR</div>
+
 <script>
 /* ================= CONFIG ================= */
-
 const IMAGE_URL = "actif/compresseur_bg.png";
-const ZONES_JSON_URL = "quincy_310L_parts.json";
+const JSON_URL  = "quincy_310L_parts.json";
+const EDITOR_PASSWORD = "comp";
+
+// ⚠️ dimensions réelles de l’image PC
+const PC_IMAGE_WIDTH  = 1200;
+const PC_IMAGE_HEIGHT = 1600;
 
 /* ================= CANVAS ================= */
-
 const canvas = new fabric.Canvas("c",{
-  selection:false,
-  allowTouchScrolling:false,
+  selection:true,
   preserveObjectStacking:true
 });
 
 const stage = document.getElementById("stage");
 const imgEl  = document.getElementById("imgLayer");
 
+let isEditor = false;
+
 /* ================= IMAGE ================= */
-
 imgEl.src = IMAGE_URL;
-
 imgEl.onload = ()=>{
   resizeAll();
   loadZonesFromJSON();
@@ -87,61 +116,83 @@ imgEl.onload = ()=>{
 function resizeAll(){
   canvas.setWidth(stage.clientWidth);
   canvas.setHeight(stage.clientHeight);
-
-  imgEl.style.width  = stage.clientWidth + "px";
-  imgEl.style.height = stage.clientHeight + "px";
+  imgEl.style.width  = stage.clientWidth+"px";
+  imgEl.style.height = stage.clientHeight+"px";
 }
 
 /* ================= ZONES ================= */
-
-function makeZone(x,y,w,h,text){
+function makeZone(x,y,w,h,part){
   const r = new fabric.Rect({
-    left:x,
-    top:y,
-    width:w,
-    height:h,
-    fill:"rgba(0,0,0,0)",
-    stroke:"rgba(255,255,255,.8)",
+    left:x, top:y, width:w, height:h,
+    fill:"rgba(255,255,255,0.05)",
+    stroke:"rgba(255,255,255,0.9)",
     strokeWidth:2,
-    selectable:false,
-    evented:true
+    selectable:true,
+    evented:true,
+    hasControls:false
   });
 
-  r.partId = text;
+  r.part = part;
 
   r.on("mousedown", ()=>{
-    document.getElementById("infoTitle").textContent = r.partId;
+    document.getElementById("infoTitle").textContent = part.nom || part.id;
+    document.getElementById("infoRole").textContent  = part.role || "";
+    document.getElementById("infoDesc").textContent  = part.desc || "";
+
+    if(isEditor){
+      const n = prompt("Renommer la pièce :", part.nom || part.id);
+      if(n){
+        part.nom = n;
+        document.getElementById("infoTitle").textContent = n;
+      }
+    }
   });
 
   canvas.add(r);
-  r.bringToFront();
 }
 
+/* ================= JSON ================= */
 async function loadZonesFromJSON(){
-  const res = await fetch(ZONES_JSON_URL);
-  const data = await res.json();
+  const res = await fetch(JSON_URL);
+  const parts = await res.json();
 
-  canvas.clear();
+  const scaleX = stage.clientWidth  / PC_IMAGE_WIDTH;
+  const scaleY = stage.clientHeight / PC_IMAGE_HEIGHT;
 
-  // 🔑 LA CLÉ : dimensions réelles de l'image PC
-  const imgW = imgEl.naturalWidth;
-  const imgH = imgEl.naturalHeight;
+  parts.forEach(p=>{
+    if(!p.imgBox) return;
 
-  const scaleX = stage.clientWidth  / imgW;
-  const scaleY = stage.clientHeight / imgH;
-
-  data.forEach(z=>{
     makeZone(
-      z.imgBox.x * scaleX,
-      z.imgBox.y * scaleY,
-      z.imgBox.w * scaleX,
-      z.imgBox.h * scaleY,
-      z.partId
+      p.imgBox.x * scaleX,
+      p.imgBox.y * scaleY,
+      p.imgBox.w * scaleX,
+      p.imgBox.h * scaleY,
+      p
     );
   });
 
   canvas.requestRenderAll();
 }
+
+/* ================= MODE ÉDITEUR ================= */
+document.getElementById("btnEditor").onclick = ()=>{
+  if(!isEditor){
+    const p = prompt("Mot de passe éditeur");
+    if(p !== EDITOR_PASSWORD) return;
+    isEditor = true;
+  }else{
+    isEditor = false;
+  }
+
+  document.getElementById("editorBadge").style.display = isEditor ? "block" : "none";
+
+  canvas.forEachObject(o=>{
+    o.hasControls = isEditor;
+    o.stroke = isEditor ? "orange" : "rgba(255,255,255,0.9)";
+  });
+
+  canvas.requestRenderAll();
+};
 </script>
 
 </body>
