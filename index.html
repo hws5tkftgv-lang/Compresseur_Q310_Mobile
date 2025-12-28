@@ -58,15 +58,8 @@ html,body{
 <script>
 /* ================= CONFIG ================= */
 
-// Image mobile
 const IMAGE_URL = "actif/compresseur_bg.png";
-
-// JSON zones (PC)
 const ZONES_JSON_URL = "quincy_310L_parts.json";
-
-// 🔴 DIMENSIONS RÉELLES DE L’IMAGE PC (CLÉ DE TOUT)
-const PC_IMAGE_WIDTH  = 1200;
-const PC_IMAGE_HEIGHT = 1600;
 
 /* ================= CANVAS ================= */
 
@@ -127,8 +120,12 @@ async function loadZonesFromJSON(){
 
   canvas.clear();
 
-  const scaleX = stage.clientWidth  / PC_IMAGE_WIDTH;
-  const scaleY = stage.clientHeight / PC_IMAGE_HEIGHT;
+  // 🔑 LA CLÉ : dimensions réelles de l'image PC
+  const imgW = imgEl.naturalWidth;
+  const imgH = imgEl.naturalHeight;
+
+  const scaleX = stage.clientWidth  / imgW;
+  const scaleY = stage.clientHeight / imgH;
 
   data.forEach(z=>{
     makeZone(
