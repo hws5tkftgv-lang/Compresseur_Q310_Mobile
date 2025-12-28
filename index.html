@@ -9,221 +9,235 @@
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
 <style>
-html,body{
-  margin:0;
-  background:#0b1436;
-  color:#eaf1ff;
-  font-family:Arial,Segoe UI,sans-serif;
-}
-
-#infoPanel{
-  padding:10px;
-  background:#0f1a44;
-  border-bottom:1px solid rgba(255,255,255,.15);
-}
+html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,sans-serif;}
+#infoPanel{padding:10px;background:#0f1a44;border-bottom:1px solid rgba(255,255,255,.15);}
 #infoTitle{font-size:18px;font-weight:800;}
 
-.stage{
-  position:relative;
-  height:calc(100dvh - 120px);
-  overflow:hidden;
-}
+.stage{position:relative;height:calc(100dvh - 120px);overflow:hidden;background:#0b1536;}
 .media-layer,canvas{position:absolute;inset:0;}
-#imgLayer{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  pointer-events:none;
-}
+#imgLayer{width:100%;height:100%;object-fit:contain;pointer-events:none;}
 
-/* iOS SAFARI CRITICAL */
-.stage, .canvas-container, canvas{
-  touch-action:none !important;
-}
+.stage,.canvas-container,canvas{touch-action:none !important;}
 
-/* FAB */
 #fab{
-  position:fixed;
-  bottom:10px;
-  left:10px;
-  width:46px;
-  height:46px;
-  border-radius:10px;
-  background:#ffffff22;
-  border:1px solid #ffffff55;
-  color:#fff;
-  font-size:22px;
-  z-index:9999;
+  position:fixed;bottom:10px;left:10px;width:46px;height:46px;border-radius:10px;
+  background:#ffffff22;border:1px solid #ffffff55;color:#fff;font-size:22px;z-index:9999;
 }
 
-/* PANEL */
 #panel{
-  position:fixed;
-  left:10px;
-  bottom:70px;
-  width:calc(100vw - 20px);
-  max-height:70dvh;
-  overflow:auto;
-  background:#0f1a44;
-  border:1px solid rgba(255,255,255,.2);
-  display:none;
-  z-index:9999;
+  position:fixed;left:10px;bottom:70px;width:calc(100vw - 20px);
+  max-height:70dvh;overflow:auto;background:#0f1a44;border:1px solid rgba(255,255,255,.2);
+  display:none;z-index:9999;padding:10px;border-radius:12px;
 }
 
 .btn{
-  width:100%;
-  min-height:44px;
-  margin-top:8px;
-  background:#1b2553;
-  color:#fff;
-  border:1px solid rgba(255,255,255,.2);
-  border-radius:10px;
-  font-size:15px;
-  font-weight:700;
+  width:100%;min-height:44px;margin-top:8px;background:#1b2553;color:#fff;
+  border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:15px;font-weight:800;
 }
+.btn.active{background:#ff9800;color:#000;}
 
-.btn.active{
-  background:#ff9800;
-  color:#000;
+.input{
+  width:100%;min-height:44px;margin-top:8px;background:#101a40;color:#fff;
+  border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:15px;
+  padding:10px;box-sizing:border-box;
 }
 
 #editorState{
-  position:fixed;
-  top:10px;
-  right:10px;
-  background:#ff9800;
-  color:#000;
-  padding:6px 10px;
-  font-weight:900;
-  border-radius:8px;
-  display:none;
-  z-index:9999;
+  position:fixed;top:10px;right:10px;background:#ff9800;color:#000;padding:6px 10px;
+  font-weight:900;border-radius:8px;display:none;z-index:9999;
 }
+
+.small{font-size:12px;opacity:.85;line-height:1.35;margin-top:8px;}
 </style>
 </head>
 
 <body>
-
-<div id="infoPanel">
-  <div id="infoTitle">Sélectionne une zone</div>
-</div>
+<div id="infoPanel"><div id="infoTitle">Sélectionne une zone</div></div>
 
 <div class="stage" id="stage">
-  <div class="media-layer">
-    <img id="imgLayer" src="actif/compresseur_bg.png">
-  </div>
+  <div class="media-layer"><img id="imgLayer" src="actif/compresseur_bg.png" alt=""></div>
   <canvas id="c"></canvas>
 </div>
 
 <button id="fab">☰</button>
 
 <div id="panel">
+  <div style="font-weight:900;margin-bottom:6px;">🧰 Menu</div>
+
+  <div id="stateLine" style="font-weight:900;opacity:.9;">MODE ÉLÈVE</div>
+
+  <input id="pw" class="input" type="password" placeholder="Mot de passe éditeur (comp)">
   <button id="btnEditor" class="btn">🔒 Activer éditeur</button>
-  <button id="btnMove" class="btn">✋ Déplacer</button>
-  <button id="btnResize" class="btn">⬍ Redimensionner</button>
-  <button id="btnDraw" class="btn">➕ Nouvelle zone</button>
+  <button id="btnExit" class="btn" style="display:none;">🚪 Quitter éditeur</button>
+
+  <div class="small">Outils (actifs seulement en mode éditeur)</div>
+  <button id="btnMove" class="btn" disabled>✋ Déplacer</button>
+  <button id="btnResize" class="btn" disabled>⬍ Redimensionner</button>
+  <button id="btnDraw" class="btn" disabled>➕ Nouvelle zone</button>
 </div>
 
 <div id="editorState">MODE ÉDITEUR</div>
 
 <script>
-const EDITOR_PASSWORD="comp";
-const IMAGE_URL="actif/compresseur_bg.png";
+const EDITOR_PASSWORD = "comp";
+const $ = id => document.getElementById(id);
 
-const $=id=>document.getElementById(id);
+let isEditor = false;
+let tool = "view";
+let drawing = false, start = null, tempRect = null;
 
-let isEditor=false;
-let tool="view";
-let drawing=false;
-let start=null;
-let tempRect=null;
-
-/* ===== FABRIC ===== */
-const canvas=new fabric.Canvas("c",{selection:false});
-fabric.Object.prototype.perPixelTargetFind=true;
-fabric.Object.prototype.targetFindTolerance=20;
-fabric.Object.prototype.cornerSize=30;
-fabric.Object.prototype.cornerStyle="circle";
-fabric.Object.prototype.transparentCorners=false;
+const canvas = new fabric.Canvas("c", { selection:false });
+fabric.Object.prototype.perPixelTargetFind = true;
+fabric.Object.prototype.targetFindTolerance = 22;
+fabric.Object.prototype.cornerSize = 34;
+fabric.Object.prototype.cornerStyle = "circle";
+fabric.Object.prototype.transparentCorners = false;
+fabric.Object.prototype.padding = 8;
 
 function resize(){
   canvas.setWidth($("stage").clientWidth);
   canvas.setHeight($("stage").clientHeight);
+  canvas.calcOffset();
 }
-window.addEventListener("resize",resize);
+window.addEventListener("resize", resize);
 resize();
 
-/* ===== MENU ===== */
-$("fab").onclick=()=>{
-  $("panel").style.display = $("panel").style.display==="block"?"none":"block";
-};
+function setUI(){
+  $("editorState").style.display = isEditor ? "block" : "none";
+  $("stateLine").textContent = isEditor ? "MODE ÉDITEUR" : "MODE ÉLÈVE";
 
-/* ===== MODE ÉDITEUR ===== */
-$("btnEditor").onclick=()=>{
-  if(!isEditor){
-    if(prompt("Mot de passe")!==EDITOR_PASSWORD) return;
-    isEditor=true;
-    $("editorState").style.display="block";
-    $("btnEditor").textContent="🔓 Éditeur actif";
-  }else{
-    isEditor=false;
-    $("editorState").style.display="none";
-    $("btnEditor").textContent="🔒 Activer éditeur";
-  }
+  $("btnEditor").style.display = isEditor ? "none" : "block";
+  $("btnExit").style.display   = isEditor ? "block" : "none";
+
+  $("btnMove").disabled   = !isEditor;
+  $("btnResize").disabled = !isEditor;
+  $("btnDraw").disabled   = !isEditor;
+
   applyMode();
-};
-
-$("btnMove").onclick=()=>{tool="move";applyMode();};
-$("btnResize").onclick=()=>{tool="resize";applyMode();};
-$("btnDraw").onclick=()=>{tool="draw";applyMode();};
+}
 
 function applyMode(){
   canvas.forEachObject(o=>{
-    o.selectable = isEditor && tool!=="draw";
-    o.hasControls = isEditor && tool==="resize";
-    o.hasBorders = isEditor;
-    o.stroke = isEditor ? "orange" : "white";
+    o.evented = true;
+
+    if(!isEditor){
+      o.selectable = false;
+      o.hasControls = false;
+      o.hasBorders = false;
+      o.stroke = "white";
+      o.strokeWidth = 3;
+      o.lockMovementX = true;
+      o.lockMovementY = true;
+    }else{
+      // editor
+      o.stroke = "orange";
+      o.strokeWidth = 4;
+      o.lockMovementX = false;
+      o.lockMovementY = false;
+
+      if(tool === "draw"){
+        o.selectable = false;
+        o.hasControls = false;
+        o.hasBorders = true;
+      }else if(tool === "move"){
+        o.selectable = true;
+        o.hasControls = false;
+        o.hasBorders = true;
+      }else{ // resize
+        o.selectable = true;
+        o.hasControls = true;
+        o.hasBorders = true;
+        // no rotation
+        o.setControlsVisibility({ mtr:false, mt:false, mb:false, ml:false, mr:false });
+        o.lockRotation = true;
+      }
+    }
   });
   canvas.requestRenderAll();
 }
 
-/* ===== DRAW ===== */
-canvas.on("mouse:down",opt=>{
+/* Menu open/close */
+$("fab").onclick = ()=> {
+  $("panel").style.display = ($("panel").style.display==="block") ? "none" : "block";
+};
+
+/* Editor ON (no prompt) */
+$("btnEditor").onclick = ()=>{
+  const p = ($("pw").value || "").trim();
+  if(p !== EDITOR_PASSWORD){
+    alert("Mot de passe incorrect.");
+    return;
+  }
+  isEditor = true;
+  tool = "move";
+  setUI();
+};
+
+/* Editor OFF */
+$("btnExit").onclick = ()=>{
+  isEditor = false;
+  tool = "view";
+  setUI();
+};
+
+/* Tools */
+$("btnMove").onclick = ()=>{ tool="move"; applyMode(); };
+$("btnResize").onclick = ()=>{ tool="resize"; applyMode(); };
+$("btnDraw").onclick = ()=>{ tool="draw"; applyMode(); };
+
+/* Draw tool */
+canvas.on("mouse:down", opt=>{
   if(!(isEditor && tool==="draw")) return;
-  drawing=true;
-  const p=canvas.getPointer(opt.e);
-  start=p;
-  tempRect=new fabric.Rect({
-    left:p.x, top:p.y,
-    width:2, height:2,
-    fill:"transparent",
-    stroke:"#00a2ff",
-    strokeWidth:3
+  drawing = true;
+  const p = canvas.getPointer(opt.e);
+  start = p;
+  tempRect = new fabric.Rect({
+    left:p.x, top:p.y, width:2, height:2,
+    fill:"transparent", stroke:"#00a2ff", strokeWidth:4,
+    selectable:false, evented:false
   });
   canvas.add(tempRect);
 });
 
-canvas.on("mouse:move",opt=>{
-  if(!drawing || !tempRect) return;
-  const p=canvas.getPointer(opt.e);
-  tempRect.set({
-    width:Math.abs(p.x-start.x),
-    height:Math.abs(p.y-start.y)
-  });
+canvas.on("mouse:move", opt=>{
+  if(!(drawing && tempRect)) return;
+  const p = canvas.getPointer(opt.e);
+  const left = Math.min(start.x, p.x);
+  const top  = Math.min(start.y, p.y);
+  const w = Math.abs(p.x - start.x);
+  const h = Math.abs(p.y - start.y);
+  tempRect.set({ left, top, width:Math.max(2,w), height:Math.max(2,h) });
   canvas.requestRenderAll();
 });
 
-canvas.on("mouse:up",()=>{
-  drawing=false;
-  tempRect=null;
+canvas.on("mouse:up", ()=>{
+  if(!(drawing && tempRect)) return;
+  drawing = false;
+  // convert tempRect into real editable zone
+  const r = tempRect;
+  canvas.remove(tempRect);
+  tempRect = null;
+
+  if(r.width < 12 || r.height < 12){
+    canvas.requestRenderAll();
+    return;
+  }
+
+  const zone = new fabric.Rect({
+    left:r.left, top:r.top, width:r.width, height:r.height,
+    fill:"transparent", stroke:"orange", strokeWidth:4
+  });
+  canvas.add(zone);
+  applyMode();
 });
 
-/* ===== DEMO ZONE ===== */
-const z=new fabric.Rect({
-  left:100, top:100, width:160, height:200,
+/* Demo zone (juste pour confirmer que tout fonctionne) */
+canvas.add(new fabric.Rect({
+  left:120, top:140, width:180, height:240,
   fill:"transparent", stroke:"white", strokeWidth:3
-});
-canvas.add(z);
+}));
+
+setUI();
 </script>
 
 </body>
