@@ -450,6 +450,10 @@ function clearSelection(){
 /* ===== Draw + Tap handling : UN SEUL HANDLER (IMPORTANT) ===== */
 canvas.on("mouse:down", opt => {
   const obj = opt.target;
+  // ✅ EN MODE MOVE : laisser Fabric gérer le drag
+  if(isEditor && tool === "move"){
+    return;
+  }
 
   if(isEditor && tool === "draw"){
     drawing = true;
