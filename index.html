@@ -32,9 +32,24 @@ html, body{
 }
 
 #panel{
-  position:fixed;left:10px;bottom:70px;width:calc(100vw - 20px);
-  max-height:70dvh;overflow:auto;background:#0f1a44;border:1px solid rgba(255,255,255,.2);
-  display:none;z-index:9999;padding:10px;border-radius:12px;
+  position:fixed;
+  left:10px;
+  bottom:70px;
+  width:calc(100vw - 20px);
+
+  max-height:65vh;            /* ✅ limite verticale */
+  overflow-y:auto;            /* ✅ SCROLL ICI */
+  overflow-x:hidden;
+
+  -webkit-overflow-scrolling:touch;
+
+  background:#0f1a44;
+  border:1px solid rgba(255,255,255,.2);
+  padding:10px;
+  border-radius:12px;
+
+  display:none;
+  z-index:10000;
 }
 
 .btn{
