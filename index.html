@@ -35,7 +35,7 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
   border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:15px;font-weight:800;
 }
 .btn.active{background:#ff9800;color:#000;}
-
+<button class="btn" onclick="exportZonesJSON()">💾 Export zones JSON</button>
 .input{
   width:100%;min-height:44px;margin-top:8px;background:#101a40;color:#fff;
   border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:15px;
@@ -447,6 +447,36 @@ ZONES.forEach(z => {
 });
 
 setUI();
+
+function exportZonesJSON(){
+  const zones = [];
+
+  canvas.getObjects().forEach(o=>{
+    if(!o.zoneId) return;
+
+    zones.push({
+      id: o.zoneId,
+      x: Math.round(o.left),
+      y: Math.round(o.top),
+      w: Math.round(o.width * o.scaleX),
+      h: Math.round(o.height * o.scaleY)
+    });
+  });
+
+  const json = JSON.stringify(zones, null, 2);
+
+  // téléchargement iPhone / Safari
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "zones_mobile.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 </script>
 
 </body>
