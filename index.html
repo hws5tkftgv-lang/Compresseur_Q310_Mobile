@@ -17,13 +17,7 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
 .media-layer,canvas{position:absolute;inset:0;}
 #imgLayer{width:100%;height:100%;object-fit:contain;pointer-events:none;}
 
-.canvas-container canvas{
-  touch-action:none !important;
-}
-
-/* 🔑 FIX MENU iOS */
-.canvas-container{ pointer-events:none; }
-#fab, #panel{ pointer-events:auto; }
+.stage,.canvas-container,canvas{touch-action:none !important;}
 
 #fab{
   position:fixed;bottom:10px;left:10px;width:46px;height:46px;border-radius:10px;
@@ -48,22 +42,15 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
   padding:10px;box-sizing:border-box;
 }
 
-#editorState{
-  position:fixed;top:10px;left:10px;background:#ff9800;color:#000;
-  padding:6px 10px;font-weight:900;border-radius:8px;display:none;z-index:9999;
-}
 .small{font-size:12px;opacity:.85;line-height:1.35;margin-top:8px;}
 </style>
 </head>
 
 <body>
-
 <div id="infoPanel"><div id="infoTitle">Sélectionne une zone</div></div>
 
 <div class="stage" id="stage">
-  <div class="media-layer">
-    <img id="imgLayer" src="actif/compresseur_bg.png">
-  </div>
+  <div class="media-layer"><img id="imgLayer" src="actif/compresseur_bg.png" alt=""></div>
   <canvas id="c"></canvas>
 </div>
 
@@ -72,177 +59,322 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
 <div id="panel">
   <div style="font-weight:900;margin-bottom:6px;">🧰 Menu</div>
 
-  <div id="stateLine" style="font-weight:900;">MODE ÉLÈVE</div>
+  <div id="stateLine" style="font-weight:900;opacity:.9;">MODE ÉLÈVE</div>
 
-  <input id="pw" class="input" placeholder="Mot de passe éditeur (comp)">
+  <input id="pw" class="input" type="password" placeholder="Mot de passe éditeur (comp)">
   <button id="btnEditor" class="btn">🔒 Activer éditeur</button>
   <button id="btnExit" class="btn" style="display:none;">🚪 Quitter éditeur</button>
 
-  <div class="small">Outils</div>
+  <div class="small">Outils (actifs seulement en mode éditeur)</div>
   <button id="btnMove" class="btn" disabled>✋ Déplacer</button>
   <button id="btnResize" class="btn" disabled>⬍ Redimensionner</button>
   <button id="btnDraw" class="btn" disabled>➕ Nouvelle zone</button>
 </div>
 
-<div id="editorState">✏️ MODE ÉDITEUR</div>
+<div id="editorState"
+     style="position:fixed;top:10px;left:10px;
+            background:#ff9800;color:#000;
+            padding:6px 10px;border-radius:8px;
+            font-weight:900;z-index:9999;
+            display:none;">
+  ✏️ MODE ÉDITEUR
+</div>
 
 <script>
-let partsMap = new Map();
-const EDITOR_PASSWORD="comp";
-const $=id=>document.getElementById(id);
-const PARTS = [
-  {
-    id: "filtre_air",
-    nom: "Filtre à air",
-    role: "Filtrer l’air entrant",
-    desc: "Retient les poussières et impuretés avant l’admission."
-  },
-  {
-    id: "cylindre_lp",
-    nom: "Cylindre basse pression (LP)",
-    role: "Compression initiale",
-    desc: "Première étape de compression volumétrique."
-  },
-  {
-    id: "manometre_hp",
-    nom: "Manomètre HP",
-    role: "Indiquer la pression",
-    desc: "Lecture de la pression de service en sortie."
-  }
+const EDITOR_PASSWORD = "comp";
+const $ = id => document.getElementById(id);
+
+let isEditor = false;
+let tool = "view"; // view | move | resize | draw
+let selected = null;
+
+let drawing = false;
+let start = null;
+let tempRect = null;
+
+/* ✅ ZONES : UNE SEULE DÉCLARATION (IMPORTANT) */
+const ZONES = [
+  { id: "cylindre_lp", x: 420, y: 180, w: 120, h: 260 },
+  { id: "filtre_air",  x: 120, y: 220, w:  80, h: 200 },
+  { id: "manometre_hp",x: 520, y: 360, w: 110, h: 110 }
 ];
 
-const ZONES=[
-  {id:"cylindre_lp",x:420,y:180,w:120,h:260},
-  {id:"filtre_air",x:120,y:220,w:80,h:200},
-  {id:"manometre_hp",x:520,y:360,w:110,h:110}
-];
+const canvas = new fabric.Canvas("c", { selection:false });
 
-const partsMap = new Map();
-PARTS.forEach(p => partsMap.set(p.id, p));
-let isEditor=false,tool="view",selected=null;
-let drawing=false,start=null,tempRect=null;
-
-const canvas=new fabric.Canvas("c",{selection:false});
+/* ✅ iPhone / iOS : empêche Safari d'intercepter les gestes */
 canvas.upperCanvasEl.style.touchAction = "none";
 canvas.upperCanvasEl.style.webkitUserSelect = "none";
 canvas.upperCanvasEl.style.webkitTouchCallout = "none";
-fabric.Object.prototype.cornerSize=36;
-fabric.Object.prototype.cornerStyle="circle";
-fabric.Object.prototype.transparentCorners=false;
-fabric.Object.prototype.targetFindTolerance=30;
 
-// 🔑 Laisser Fabric capter les events
-canvas.upperCanvasEl.style.pointerEvents = "auto";
+/* ✅ ergonomie tactile */
+fabric.Object.prototype.cornerSize = 36;
+fabric.Object.prototype.cornerStyle = "circle";
+fabric.Object.prototype.transparentCorners = false;
+fabric.Object.prototype.padding = 10;
 
-// 🔑 Laisser passer les clics UI au-dessus
-canvas.lowerCanvasEl.style.pointerEvents = "none";
+/* ✅ sélection plus facile sur iPhone */
+fabric.Object.prototype.perPixelTargetFind = false;
+fabric.Object.prototype.targetFindTolerance = 30;
 
 function resize(){
   canvas.setWidth($("stage").clientWidth);
   canvas.setHeight($("stage").clientHeight);
   canvas.calcOffset();
 }
-window.addEventListener("resize",resize);
+window.addEventListener("resize", resize);
 resize();
 
-/* UI */
-$("fab").onclick=()=>{$("panel").style.display=$("panel").style.display==="block"?"none":"block";};
+/* ===== UI ===== */
+function setUI(){
+  $("editorState").style.display = isEditor ? "block" : "none";
+  $("stateLine").textContent = isEditor ? "MODE ÉDITEUR" : "MODE ÉLÈVE";
 
-$("btnEditor").onclick=()=>{
-  if($("pw").value.trim()!==EDITOR_PASSWORD){alert("Mot de passe incorrect");return;}
-  isEditor=true;tool="move";updateUI();
-};
-$("btnExit").onclick=()=>{
-  isEditor=false;tool="view";clearSelection();updateUI();
-};
-$("btnMove").onclick=()=>{tool="move";applyMode();};
-$("btnResize").onclick=()=>{tool="resize";applyMode();};
-$("btnDraw").onclick=()=>{tool="draw";applyMode();};
+  $("btnEditor").style.display = isEditor ? "none" : "block";
+  $("btnExit").style.display   = isEditor ? "block" : "none";
 
-function updateUI(){
-  $("editorState").style.display=isEditor?"block":"none";
-  $("stateLine").textContent=isEditor?"MODE ÉDITEUR":"MODE ÉLÈVE";
-  $("btnEditor").style.display=isEditor?"none":"block";
-  $("btnExit").style.display=isEditor?"block":"none";
-  $("btnMove").disabled=!isEditor;
-  $("btnResize").disabled=!isEditor;
-  $("btnDraw").disabled=!isEditor;
+  $("btnMove").disabled   = !isEditor;
+  $("btnResize").disabled = !isEditor;
+  $("btnDraw").disabled   = !isEditor;
+
   applyMode();
+}
+
+function showAllResizeHandles(obj, on){
+  obj.setControlsVisibility({
+    tl:on, tr:on, bl:on, br:on,
+    ml:on, mt:on, mr:on, mb:on,
+    mtr:false
+  });
 }
 
 function applyMode(){
   canvas.forEachObject(o=>{
-    o.selectable=isEditor && tool!=="draw";
-    o.hasControls=isEditor && tool==="resize";
-    o.hasBorders=isEditor;
-    o.stroke=(o===selected && isEditor)?"orange":"white";
-    o.strokeWidth=3;
-    o.lockRotation=true;
+    o.evented = true;
+
+    if(!isEditor){
+      // MODE ÉLÈVE
+      o.selectable = false;
+      o.hasControls = false;
+      o.hasBorders = false;
+
+      o.stroke = "white";
+      o.strokeWidth = 3;
+
+      o.lockMovementX = true;
+      o.lockMovementY = true;
+      o.lockScalingX = true;
+      o.lockScalingY = true;
+      o.lockRotation = true;
+
+      showAllResizeHandles(o,false);
+    }else{
+      // MODE ÉDITEUR
+      o.lockMovementX = false;
+      o.lockMovementY = false;
+      o.lockScalingX = false;
+      o.lockScalingY = false;
+      o.lockRotation = true;
+
+      // IMPORTANT : en éditeur, la couleur ORANGE = zone sélectionnée seulement
+      // sinon ça devient illisible. On met blanc par défaut, et orange sur sélection.
+      if(o !== selected){
+        o.stroke = "white";
+        o.strokeWidth = 3;
+      }
+
+      if(tool === "draw"){
+        o.selectable = false;
+        o.hasControls = false;
+        o.hasBorders = true;
+        showAllResizeHandles(o,false);
+      }else if(tool === "move"){
+        o.selectable = true;
+        o.hasControls = false;
+        o.hasBorders = true;
+        showAllResizeHandles(o,false);
+      }else if(tool === "resize"){
+        o.selectable = true;
+        o.hasControls = true;
+        o.hasBorders = true;
+        showAllResizeHandles(o,true);
+      }
+    }
   });
+
   canvas.requestRenderAll();
 }
 
-/* Selection */
+/* ===== Menu ===== */
+$("fab").onclick = ()=> {
+  $("panel").style.display = ($("panel").style.display==="block") ? "none" : "block";
+};
+
+/* ===== Editor ON/OFF ===== */
+$("btnEditor").onclick = ()=>{
+  const p = ($("pw").value || "").trim();
+  if(p !== EDITOR_PASSWORD){
+    alert("Mot de passe incorrect.");
+    return;
+  }
+  isEditor = true;
+  tool = "move";
+  setUI();
+};
+$("btnExit").onclick = ()=>{
+  isEditor = false;
+  tool = "view";
+  clearSelection();
+  setUI();
+};
+
+/* ===== Tools ===== */
+$("btnMove").onclick = ()=>{ if(!isEditor) return; tool="move"; applyMode(); };
+$("btnResize").onclick = ()=>{ if(!isEditor) return; tool="resize"; applyMode(); };
+$("btnDraw").onclick = ()=>{ if(!isEditor) return; tool="draw"; clearSelection(); applyMode(); };
+
+/* ===== Selection ===== */
 function selectObj(obj){
-  if(selected && selected!==obj) selected.stroke="white";
-  selected=obj;
-  obj.stroke="orange";
+  if(!obj) return;
+
+  if(selected && selected !== obj){
+    selected.set({ stroke:"white", strokeWidth:3 });
+    showAllResizeHandles(selected,false);
+  }
+
+  selected = obj;
   canvas.setActiveObject(obj);
+
+  // highlight
+  obj.set({ stroke:"orange", strokeWidth:5 });
+
+  if(isEditor && tool === "resize"){
+    showAllResizeHandles(obj,true);
+    obj.hasControls = true;
+  }else{
+    showAllResizeHandles(obj,false);
+    obj.hasControls = false;
+  }
+
+  // info (au lieu de alert qui “gèle”)
+  $("infoTitle").textContent = "Zone : " + (obj.zoneId || "(sans id)");
+
   canvas.requestRenderAll();
 }
+
 function clearSelection(){
   if(!selected) return;
-  selected.stroke="white";
-  selected=null;
+  selected.set({ stroke:"white", strokeWidth:3 });
+  showAllResizeHandles(selected,false);
+  selected = null;
   canvas.discardActiveObject();
   canvas.requestRenderAll();
 }
 
+/* ===== Draw + Tap handling : UN SEUL HANDLER (IMPORTANT) ===== */
+canvas.on("mouse:down", opt => {
+  const obj = opt.target;
 
+  if(isEditor && tool === "draw"){
+    drawing = true;
+    start = canvas.getPointer(opt.e);
 
-  if(obj) selectObj(obj);
-  else clearSelection();
+    tempRect = new fabric.Rect({
+      left: start.x,
+      top: start.y,
+      width: 2,
+      height: 2,
+      fill: "rgba(255,255,255,0.10)",
+      stroke: "#00a2ff",
+      strokeWidth: 3,
+      selectable: false,
+      evented: false
+    });
+
+    canvas.add(tempRect);
+    canvas.requestRenderAll();
+    return;
+  }
+
+  if(obj){
+    selectObj(obj);
+  }else{
+    clearSelection();
+    $("infoTitle").textContent = "Sélectionne une zone";
+  }
 });
 
-canvas.on("mouse:move",opt=>{
-  if(!(drawing&&tempRect)) return;
-  const p=canvas.getPointer(opt.e);
-  tempRect.set({
-    left:Math.min(start.x,p.x),
-    top:Math.min(start.y,p.y),
-    width:Math.abs(p.x-start.x),
-    height:Math.abs(p.y-start.y)
-  });
+canvas.on("mouse:move", opt=>{
+  if(!(drawing && tempRect)) return;
+  const p = canvas.getPointer(opt.e);
+
+  const left = Math.min(start.x, p.x);
+  const top  = Math.min(start.y, p.y);
+  const w = Math.abs(p.x - start.x);
+  const h = Math.abs(p.y - start.y);
+
+  tempRect.set({ left, top, width:Math.max(2,w), height:Math.max(2,h) });
+  tempRect.setCoords();
   canvas.requestRenderAll();
 });
 
-canvas.on("mouse:up",()=>{
-  if(!(drawing&&tempRect)) return;
-  drawing=false;
-  const r=tempRect;
-  canvas.remove(tempRect);tempRect=null;
-  if(r.width<12||r.height<12) return;
+canvas.on("mouse:up", ()=>{
+  if(!(drawing && tempRect)) return;
+  drawing = false;
 
-  const zone=new fabric.Rect({
-    left:r.left,top:r.top,width:r.width,height:r.height,
-    fill:"rgba(255,255,255,0.08)",stroke:"white",strokeWidth:3
+  const r = tempRect;
+  canvas.remove(tempRect);
+  tempRect = null;
+
+  if(r.width < 12 || r.height < 12){
+    canvas.requestRenderAll();
+    return;
+  }
+
+  // créer vraie zone
+  const zone = new fabric.Rect({
+    left: r.left,
+    top: r.top,
+    width: r.width,
+    height: r.height,
+    fill: "rgba(255,255,255,0.08)", // hitbox tactile
+    stroke: "white",
+    strokeWidth: 3,
+    selectable: true,
+    hasControls: false,
+    hasBorders: true,
+    lockRotation: true
   });
-  zone.zoneId="nouvelle_zone";
+
+  // id temporaire
+  zone.zoneId = "nouvelle_zone";
+
   canvas.add(zone);
+  tool = "move";
   applyMode();
+  selectObj(zone);
 });
 
-/* Load zones */
-ZONES.forEach(z=>{
-  const r=new fabric.Rect({
-    left:z.x,top:z.y,width:z.w,height:z.h,
-    fill:"rgba(255,255,255,0.08)",stroke:"white",strokeWidth:3
+/* ===== Load initial zones ===== */
+ZONES.forEach(z => {
+  const rect = new fabric.Rect({
+    left: z.x,
+    top: z.y,
+    width: z.w,
+    height: z.h,
+    fill: "rgba(255,255,255,0.08)", // hitbox tactile
+    stroke: "white",
+    strokeWidth: 3,
+    selectable: false,
+    hasControls: false,
+    hasBorders: false,
+    lockRotation: true
   });
-  r.zoneId=z.id;
-  canvas.add(r);
+  rect.zoneId = z.id;
+  canvas.add(rect);
 });
 
-updateUI();
+setUI();
 </script>
+
 </body>
 </html>
