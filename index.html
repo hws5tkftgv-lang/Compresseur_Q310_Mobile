@@ -316,37 +316,61 @@ function showAllResizeHandles(obj, on){
 }
 
 function applyMode(){
+
   canvas.forEachObject(o=>{
 
-    if(tool === "draw"){
-      o.selectable = false;
-      o.evented = false;   // pas de sélection pendant le dessin
-    }
-    else if(tool === "move"){
+    /* ===== PAR DÉFAUT : MODE ÉLÈVE ===== */
+    o.evented = false;
+    o.selectable = false;
+    o.hasControls = false;
+    o.hasBorders = false;
+
+    o.lockMovementX = true;
+    o.lockMovementY = true;
+    o.lockScalingX  = true;
+    o.lockScalingY  = true;
+    o.lockRotation = true;
+
+    showAllResizeHandles(o,false);
+
+    /* ===== MODE ÉDITEUR ===== */
+    if(isEditor){
+
       o.evented = true;
-      o.selectable = true;
-      o.hasControls = false;
-      o.hasBorders = true;
-      showAllResizeHandles(o,false);
-    }
-    else if(tool === "resize"){
-      o.evented = true;
-      o.selectable = true;
-      o.hasControls = true;
-      o.hasBorders = true;
-      showAllResizeHandles(o,true);
-    }
-    else{ // view
-      o.evented = true;
-      o.selectable = false;
-      o.hasControls = false;
-      o.hasBorders = false;
-      showAllResizeHandles(o,false);
+      o.lockRotation = true;
+
+      if(tool === "draw"){
+        o.selectable = false;
+        o.evented = false;   // IMPORTANT
+      }
+
+      else if(tool === "move"){
+        o.selectable = true;
+        o.hasBorders = true;
+
+        o.lockMovementX = false;
+        o.lockMovementY = false;
+
+        showAllResizeHandles(o,false);
+      }
+
+      else if(tool === "resize"){
+        o.selectable = true;
+        o.hasBorders = true;
+        o.hasControls = true;
+
+        o.lockMovementX = false;
+        o.lockMovementY = false;
+        o.lockScalingX  = false;
+        o.lockScalingY  = false;
+
+        showAllResizeHandles(o,true);
+      }
     }
 
-  }); // ← FIN DU forEach (OBLIGATOIRE)
+  });
 
-  canvas.requestRenderAll(); // ← DOIT ÊTRE ICI
+  canvas.requestRenderAll();
 }
 /* ===== Menu ===== */
 $("fab").onclick = ()=> {
