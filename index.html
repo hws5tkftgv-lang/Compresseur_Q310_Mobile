@@ -4,211 +4,167 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Q310 – Éditeur iPhone</title>
+<title>Q310 – iPhone Éditeur</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
 <style>
-html,body{
-  margin:0;
-  background:#0b1436;
-  color:#eaf1ff;
-  font-family:Arial,Segoe UI,sans-serif;
-}
+html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,sans-serif;}
+#infoPanel{padding:10px;background:#0f1a44;border-bottom:1px solid rgba(255,255,255,.15);}
+#infoTitle{font-size:18px;font-weight:800;}
 
-/* ==== UI ==== */
+.stage{position:relative;height:calc(100dvh - 120px);overflow:hidden;background:#0b1536;}
+.media-layer,canvas{position:absolute;inset:0;}
+#imgLayer{width:100%;height:100%;object-fit:contain;pointer-events:none;}
+
+.stage,.canvas-container,canvas{touch-action:none !important;}
+
+/* 🔑 FIX MENU iOS */
+.canvas-container{ pointer-events:none; }
+#fab, #panel{ pointer-events:auto; }
+
 #fab{
-  position:fixed;
-  bottom:10px;
-  left:10px;
-  width:46px;
-  height:46px;
-  font-size:22px;
-  z-index:10000;
+  position:fixed;bottom:10px;left:10px;width:46px;height:46px;border-radius:10px;
+  background:#ffffff22;border:1px solid #ffffff55;color:#fff;font-size:22px;z-index:9999;
 }
 
 #panel{
-  position:fixed;
-  left:10px;
-  bottom:70px;
-  width:calc(100vw - 20px);
-  max-height:70vh;
-  overflow:auto;
-  background:#0f1a44;
-  padding:10px;
-  display:none;
-  z-index:10000;
+  position:fixed;left:10px;bottom:70px;width:calc(100vw - 20px);
+  max-height:70dvh;overflow:auto;background:#0f1a44;border:1px solid rgba(255,255,255,.2);
+  display:none;z-index:9999;padding:10px;border-radius:12px;
 }
 
 .btn{
-  width:100%;
-  min-height:44px;
-  margin-top:8px;
-  font-weight:800;
+  width:100%;min-height:44px;margin-top:8px;background:#1b2553;color:#fff;
+  border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:15px;font-weight:800;
+}
+.btn.active{background:#ff9800;color:#000;}
+
+.input{
+  width:100%;min-height:44px;margin-top:8px;background:#101a40;color:#fff;
+  border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:15px;
+  padding:10px;box-sizing:border-box;
 }
 
-#editorBadge{
-  position:fixed;
-  top:10px;
-  left:10px;
-  background:#ff9800;
-  color:#000;
-  padding:6px 10px;
-  font-weight:900;
-  display:none;
-  z-index:10000;
+#editorState{
+  position:fixed;top:10px;left:10px;background:#ff9800;color:#000;
+  padding:6px 10px;font-weight:900;border-radius:8px;display:none;z-index:9999;
 }
-
-/* ==== CANVAS ==== */
-.stage{
-  position:relative;
-  height:100vh;
-}
-
-canvas{
-  position:absolute;
-  inset:0;
-}
-
-/* 🔑 FIX CRITIQUE MENU IPHONE */
-.canvas-container{
-  pointer-events:none;
-}
-#fab, #panel{
-  pointer-events:auto;
-}
+.small{font-size:12px;opacity:.85;line-height:1.35;margin-top:8px;}
 </style>
 </head>
 
 <body>
 
-<div class="stage">
+<div id="infoPanel"><div id="infoTitle">Sélectionne une zone</div></div>
+
+<div class="stage" id="stage">
+  <div class="media-layer">
+    <img id="imgLayer" src="actif/compresseur_bg.png">
+  </div>
   <canvas id="c"></canvas>
 </div>
 
 <button id="fab">☰</button>
 
 <div id="panel">
-  <div style="font-weight:900;">🧰 Menu</div>
+  <div style="font-weight:900;margin-bottom:6px;">🧰 Menu</div>
 
-  <input id="pw" placeholder="Mot de passe (comp)">
-  <button id="btnEditor" class="btn">Activer éditeur</button>
-  <button id="btnExit" class="btn" style="display:none;">Quitter éditeur</button>
+  <div id="stateLine" style="font-weight:900;">MODE ÉLÈVE</div>
 
-  <button id="btnMove" class="btn" disabled>Déplacer</button>
-  <button id="btnResize" class="btn" disabled>Redimensionner</button>
-  <button id="btnDraw" class="btn" disabled>Nouvelle zone</button>
+  <input id="pw" class="input" placeholder="Mot de passe éditeur (comp)">
+  <button id="btnEditor" class="btn">🔒 Activer éditeur</button>
+  <button id="btnExit" class="btn" style="display:none;">🚪 Quitter éditeur</button>
+
+  <div class="small">Outils</div>
+  <button id="btnMove" class="btn" disabled>✋ Déplacer</button>
+  <button id="btnResize" class="btn" disabled>⬍ Redimensionner</button>
+  <button id="btnDraw" class="btn" disabled>➕ Nouvelle zone</button>
 </div>
 
-<div id="editorBadge">✏️ MODE ÉDITEUR</div>
+<div id="editorState">✏️ MODE ÉDITEUR</div>
 
 <script>
-/* =========================
-   CONFIG
-========================= */
-const EDITOR_PASSWORD = "comp";
-const ZONES_JSON = [
-  { id:"cylindre_lp", x:420, y:180, w:120, h:260 },
-  { id:"filtre_air", x:120, y:220, w:80,  h:200 },
-  { id:"manometre_hp", x:520, y:360, w:110, h:110 }
+const EDITOR_PASSWORD="comp";
+const $=id=>document.getElementById(id);
+
+const ZONES=[
+  {id:"cylindre_lp",x:420,y:180,w:120,h:260},
+  {id:"filtre_air",x:120,y:220,w:80,h:200},
+  {id:"manometre_hp",x:520,y:360,w:110,h:110}
 ];
 
-/* =========================
-   SETUP
-========================= */
-const $ = id => document.getElementById(id);
-let isEditor=false, tool="view", selected=null;
-let drawing=false, start=null, tempRect=null;
+let isEditor=false,tool="view",selected=null;
+let drawing=false,start=null,tempRect=null;
 
-const canvas = new fabric.Canvas("c",{ selection:false });
-canvas.setWidth(window.innerWidth);
-canvas.setHeight(window.innerHeight);
+const canvas=new fabric.Canvas("c",{selection:false});
+fabric.Object.prototype.cornerSize=36;
+fabric.Object.prototype.cornerStyle="circle";
+fabric.Object.prototype.transparentCorners=false;
+fabric.Object.prototype.targetFindTolerance=30;
 
-/* Touch-friendly */
-fabric.Object.prototype.cornerSize = 36;
-fabric.Object.prototype.cornerStyle = "circle";
-fabric.Object.prototype.transparentCorners = false;
-fabric.Object.prototype.targetFindTolerance = 30;
+function resize(){
+  canvas.setWidth($("stage").clientWidth);
+  canvas.setHeight($("stage").clientHeight);
+  canvas.calcOffset();
+}
+window.addEventListener("resize",resize);
+resize();
 
-/* =========================
-   UI
-========================= */
-$("fab").onclick = () => {
-  $("panel").style.display =
-    $("panel").style.display==="block" ? "none":"block";
+/* UI */
+$("fab").onclick=()=>{$("panel").style.display=$("panel").style.display==="block"?"none":"block";};
+
+$("btnEditor").onclick=()=>{
+  if($("pw").value.trim()!==EDITOR_PASSWORD){alert("Mot de passe incorrect");return;}
+  isEditor=true;tool="move";updateUI();
 };
-
-$("btnEditor").onclick = () => {
-  if($("pw").value.trim()!==EDITOR_PASSWORD){
-    alert("Mot de passe incorrect");
-    return;
-  }
-  isEditor=true;
-  tool="move";
-  updateUI();
+$("btnExit").onclick=()=>{
+  isEditor=false;tool="view";clearSelection();updateUI();
 };
-
-$("btnExit").onclick = () => {
-  isEditor=false;
-  tool="view";
-  clearSelection();
-  updateUI();
-};
-
-$("btnMove").onclick = ()=>{ tool="move"; applyMode(); };
-$("btnResize").onclick = ()=>{ tool="resize"; applyMode(); };
-$("btnDraw").onclick = ()=>{ tool="draw"; applyMode(); };
+$("btnMove").onclick=()=>{tool="move";applyMode();};
+$("btnResize").onclick=()=>{tool="resize";applyMode();};
+$("btnDraw").onclick=()=>{tool="draw";applyMode();};
 
 function updateUI(){
-  $("editorBadge").style.display = isEditor?"block":"none";
-  $("btnEditor").style.display = isEditor?"none":"block";
-  $("btnExit").style.display   = isEditor?"block":"none";
-  $("btnMove").disabled   = !isEditor;
-  $("btnResize").disabled = !isEditor;
-  $("btnDraw").disabled   = !isEditor;
+  $("editorState").style.display=isEditor?"block":"none";
+  $("stateLine").textContent=isEditor?"MODE ÉDITEUR":"MODE ÉLÈVE";
+  $("btnEditor").style.display=isEditor?"none":"block";
+  $("btnExit").style.display=isEditor?"block":"none";
+  $("btnMove").disabled=!isEditor;
+  $("btnResize").disabled=!isEditor;
+  $("btnDraw").disabled=!isEditor;
   applyMode();
 }
 
-/* =========================
-   MODES
-========================= */
 function applyMode(){
   canvas.forEachObject(o=>{
-    o.selectable = isEditor && tool!=="draw";
-    o.hasControls = isEditor && tool==="resize";
-    o.hasBorders = isEditor;
-    o.stroke = (o===selected && isEditor)?"orange":"white";
-    o.strokeWidth = 3;
-    o.lockRotation = true;
+    o.selectable=isEditor && tool!=="draw";
+    o.hasControls=isEditor && tool==="resize";
+    o.hasBorders=isEditor;
+    o.stroke=(o===selected && isEditor)?"orange":"white";
+    o.strokeWidth=3;
+    o.lockRotation=true;
   });
   canvas.requestRenderAll();
 }
 
-/* =========================
-   SELECTION
-========================= */
+/* Selection */
 function selectObj(obj){
-  if(selected && selected!==obj){
-    selected.stroke="white";
-  }
+  if(selected && selected!==obj) selected.stroke="white";
   selected=obj;
   obj.stroke="orange";
   canvas.setActiveObject(obj);
   canvas.requestRenderAll();
 }
-
 function clearSelection(){
-  if(selected){
-    selected.stroke="white";
-    selected=null;
-    canvas.discardActiveObject();
-    canvas.requestRenderAll();
-  }
+  if(!selected) return;
+  selected.stroke="white";
+  selected=null;
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
 }
 
-/* =========================
-   EVENTS
-========================= */
+/* Events */
 canvas.on("mouse:down",opt=>{
   const obj=opt.target;
 
@@ -216,14 +172,11 @@ canvas.on("mouse:down",opt=>{
     drawing=true;
     start=canvas.getPointer(opt.e);
     tempRect=new fabric.Rect({
-      left:start.x, top:start.y,
-      width:2, height:2,
-      fill:"rgba(255,255,255,0.08)",
-      stroke:"#00a2ff", strokeWidth:3,
-      selectable:false, evented:false
+      left:start.x,top:start.y,width:2,height:2,
+      fill:"rgba(255,255,255,0.1)",stroke:"#00a2ff",strokeWidth:3,
+      selectable:false,evented:false
     });
-    canvas.add(tempRect);
-    return;
+    canvas.add(tempRect);return;
   }
 
   if(obj) selectObj(obj);
@@ -231,7 +184,7 @@ canvas.on("mouse:down",opt=>{
 });
 
 canvas.on("mouse:move",opt=>{
-  if(!(drawing && tempRect)) return;
+  if(!(drawing&&tempRect)) return;
   const p=canvas.getPointer(opt.e);
   tempRect.set({
     left:Math.min(start.x,p.x),
@@ -243,34 +196,26 @@ canvas.on("mouse:move",opt=>{
 });
 
 canvas.on("mouse:up",()=>{
-  if(!(drawing && tempRect)) return;
+  if(!(drawing&&tempRect)) return;
   drawing=false;
   const r=tempRect;
-  canvas.remove(tempRect);
-  tempRect=null;
-
+  canvas.remove(tempRect);tempRect=null;
   if(r.width<12||r.height<12) return;
 
   const zone=new fabric.Rect({
-    left:r.left, top:r.top,
-    width:r.width, height:r.height,
-    fill:"rgba(255,255,255,0.08)",
-    stroke:"white", strokeWidth:3
+    left:r.left,top:r.top,width:r.width,height:r.height,
+    fill:"rgba(255,255,255,0.08)",stroke:"white",strokeWidth:3
   });
   zone.zoneId="nouvelle_zone";
   canvas.add(zone);
   applyMode();
 });
 
-/* =========================
-   LOAD ZONES
-========================= */
-ZONES_JSON.forEach(z=>{
+/* Load zones */
+ZONES.forEach(z=>{
   const r=new fabric.Rect({
-    left:z.x, top:z.y,
-    width:z.w, height:z.h,
-    fill:"rgba(255,255,255,0.08)",
-    stroke:"white", strokeWidth:3
+    left:z.x,top:z.y,width:z.w,height:z.h,
+    fill:"rgba(255,255,255,0.08)",stroke:"white",strokeWidth:3
   });
   r.zoneId=z.id;
   canvas.add(r);
