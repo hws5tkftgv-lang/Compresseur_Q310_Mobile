@@ -48,6 +48,7 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
 
 <body>
 <div id="infoPanel"><div id="infoTitle">Sélectionne une zone</div></div>
+<div id="infoText" style="font-size:14px; opacity:.9; margin-top:4px;"></div>
 
 <div class="stage" id="stage">
   <div class="media-layer"><img id="imgLayer" src="actif/compresseur_bg.png" alt=""></div>
@@ -317,11 +318,14 @@ canvas.on("mouse:down", opt => {
 
     if(obj.zoneId && PARTS[obj.zoneId]){
       $("infoTitle").textContent = PARTS[obj.zoneId].nom;
+$("infoText").textContent =
+  PARTS[obj.zoneId].role + " — " + PARTS[obj.zoneId].desc;
     }
   }else{
-    clearSelection();
-    $("infoTitle").textContent = "Sélectionne une zone";
-  }
+  clearSelection();
+  $("infoTitle").textContent = "Sélectionne une zone";
+  $("infoText").textContent = "";
+}
 });
 
 canvas.on("mouse:move", opt=>{
