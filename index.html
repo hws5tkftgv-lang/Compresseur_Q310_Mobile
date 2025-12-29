@@ -81,7 +81,7 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
   ✏️ MODE ÉDITEUR
 </div>
 <div class="small">Édition de la zone sélectionnée</div>
-
+<button id="btnExport" class="btn">📤 Export JSON</button>
 <input id="editNom" class="input" placeholder="Nom">
 <textarea id="editRole" class="input" placeholder="Rôle"></textarea>
 <textarea id="editDesc" class="input" placeholder="Description"></textarea>
@@ -152,6 +152,28 @@ $("btnApply").onclick = ()=>{
   $("infoText").textContent =
     (selected.role || "") +
     (selected.desc ? " — " + selected.desc : "");
+};
+
+$("btnExport").onclick = ()=>{
+  const data = [];
+
+  canvas.getObjects().forEach(o=>{
+    if(!o.zoneId) return;
+
+    data.push({
+      id: o.zoneId,
+      x: Math.round(o.left),
+      y: Math.round(o.top),
+      w: Math.round(o.width * o.scaleX),
+      h: Math.round(o.height * o.scaleY),
+      nom: o.nom || "",
+      role: o.role || "",
+      desc: o.desc || ""
+    });
+  });
+
+  const json = JSON.stringify(data, null, 2);
+  prompt("Copie-colle ce JSON :", json);
 };
 
 function resize(){
