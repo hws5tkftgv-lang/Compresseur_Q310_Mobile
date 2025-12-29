@@ -90,6 +90,11 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
 <script>
 const EDITOR_PASSWORD = "comp";
 const $ = id => document.getElementById(id);
+const ZONES = [
+  { id: "cylindre_lp", x: 420, y: 180, w: 120, h: 260 },
+  { id: "filtre_air", x: 120, y: 220, w: 80,  h: 200 },
+  { id: "manometre_hp", x: 520, y: 360, w: 110, h: 110 }
+];
 
 let isEditor = false;
 let tool = "view";
@@ -335,16 +340,37 @@ canvas.on("mouse:up", ()=>{
   applyMode();
 });
 
-canvas.add(new fabric.Rect({
-  left: 120,
-  top: 140,
-  width: 180,
-  height: 240,
-  fill: "rgba(255,255,255,0.08)", // 🔑
-  stroke: "white",
-  strokeWidth: 3
-}));
+const ZONES = [
+  { id: "cylindre_lp", x: 420, y: 180, w: 120, h: 260 },
+  { id: "filtre_air", x: 120, y: 220, w: 80,  h: 200 },
+  { id: "manometre_hp", x: 520, y: 360, w: 110, h: 110 }
+];
+
+ZONES.forEach(z => {
+  const rect = new fabric.Rect({
+    left: z.x,
+    top: z.y,
+    width: z.w,
+    height: z.h,
+    fill: "rgba(255,255,255,0.08)", // hitbox tactile
+    stroke: "white",
+    strokeWidth: 3,
+    selectable: false,
+    hasControls: false,
+    hasBorders: false
+  });
+
+  // 🔗 LIAISON ZONE ↔ JSON MÉTIER
+  rect.zoneId = z.id;
+
+  canvas.add(rect);
+});
 setUI();
+canvas.on("mouse:down", opt => {
+  const obj = opt.target;
+  if (!obj) return;
+  alert("Zone cliquée : " + obj.zoneId);
+});
 </script>
 <div id="editorState"
      style="
