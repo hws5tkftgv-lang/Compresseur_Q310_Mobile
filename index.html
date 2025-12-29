@@ -170,20 +170,23 @@ fabric.Object.prototype.padding = 10;
 fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 30;
 
-$("btnApply").onclick = ()=>{
-  if(!isEditor || !selected) return;
+$("btnApply").onclick = () => {
+  if (!isEditor || !selected || !selected.zoneData) return;
 
-  if(!selected.zoneData) return;
+  // 1️⃣ écrire dans la donnée logique
+  selected.zoneData.nom  = $("editNom").value.trim();
+  selected.zoneData.role = $("editRole").value.trim();
+  selected.zoneData.desc = $("editDesc").value.trim();
 
-selected.zoneData.nom  = $("editNom").value.trim();
-selected.zoneData.role = $("editRole").value.trim();
-selected.zoneData.desc = $("editDesc").value.trim();
+  // 2️⃣ mise à jour immédiate du panneau élève
+  $("infoTitle").textContent =
+    selected.zoneData.nom || "Zone";
 
-  // mise à jour immédiate du panneau élève
-$("infoTitle").textContent = selected.zoneData.nom || "Zone";
-$("infoText").textContent =
-  (selected.zoneData.role || "") +
-  (selected.zoneData.desc ? " — " + selected.zoneData.desc : "");
+  $("infoText").textContent =
+    (selected.zoneData.role || "") +
+    (selected.zoneData.desc
+      ? " — " + selected.zoneData.desc
+      : "");
 };
 $("btnDelete").onclick = () => {
   if(!isEditor || !selected) return;
