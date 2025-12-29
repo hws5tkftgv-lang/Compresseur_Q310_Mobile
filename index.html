@@ -454,42 +454,39 @@ canvas.on("mouse:up", ()=>{
     return;
   }
 
-const zoneData = {
-  id: "nouvelle_zone",
-  x: r.left,
-  y: r.top,
-  w: r.width,
-  h: r.height,
-  nom: "",
-  role: "",
-  desc: ""
-};
+  // ✅ CRÉATION DU RECTANGLE
+  const zone = new fabric.Rect({
+    left: r.left,
+    top: r.top,
+    width: r.width,
+    height: r.height,
+    fill: "rgba(255,255,255,0.08)",
+    stroke: "white",
+    strokeWidth: 3,
+    lockRotation: true
+  });
 
-const zone = new fabric.Rect({
-  left: zoneData.x,
-  top: zoneData.y,
-  width: zoneData.w,
-  height: zoneData.h,
-  fill: "rgba(255,255,255,0.08)",
-  stroke: "white",
-  strokeWidth: 3,
-  lockRotation: true
-});
+  // ✅ DONNÉES LOGIQUES
+  const zoneData = {
+    id: "nouvelle_zone",
+    x: r.left,
+    y: r.top,
+    w: r.width,
+    h: r.height,
+    nom: "",
+    role: "",
+    desc: ""
+  };
 
-// 🔗 lien bidirectionnel
-zoneData._obj = zone;
-zone.zoneData = zoneData;
+  // 🔗 LIEN BIDIRECTIONNEL
+  zone.zoneData = zoneData;
+  zoneData._obj = zone;
 
-// 📦 stocker dans le tableau
-zonesData.push(zoneData);
+  zonesData.push(zoneData);
+  canvas.add(zone);
 
-canvas.add(zone);
-applyMode();
-selectObj(zone);
-/* ===== Load initial zones ===== */
-
-  rect.zoneId = z.id;
-  canvas.add(rect);
+  applyMode();
+  selectObj(zone);
 });
 
 setUI();
