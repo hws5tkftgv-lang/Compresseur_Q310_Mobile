@@ -81,7 +81,7 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
   ✏️ MODE ÉDITEUR
 </div>
 <div class="small">Édition de la zone sélectionnée</div>
-<button id="btnExport" class="btn">📤 Export JSON</button>
+
 <input id="editNom" class="input" placeholder="Nom">
 <textarea id="editRole" class="input" placeholder="Rôle"></textarea>
 <textarea id="editDesc" class="input" placeholder="Description"></textarea>
@@ -465,6 +465,17 @@ const zoneData = {
   desc: ""
 };
 
+const zone = new fabric.Rect({
+  left: zoneData.x,
+  top: zoneData.y,
+  width: zoneData.w,
+  height: zoneData.h,
+  fill: "rgba(255,255,255,0.08)",
+  stroke: "white",
+  strokeWidth: 3,
+  lockRotation: true
+});
+
 // 🔗 lien bidirectionnel
 zoneData._obj = zone;
 zone.zoneData = zoneData;
@@ -476,20 +487,7 @@ canvas.add(zone);
 applyMode();
 selectObj(zone);
 /* ===== Load initial zones ===== */
-ZONES.forEach(z => {
-  const rect = new fabric.Rect({
-    left: z.x,
-    top: z.y,
-    width: z.w,
-    height: z.h,
-    fill: "rgba(255,255,255,0.08)", // hitbox tactile
-    stroke: "white",
-    strokeWidth: 3,
-    selectable: false,
-    hasControls: false,
-    hasBorders: false,
-    lockRotation: true
-  });
+
   rect.zoneId = z.id;
   canvas.add(rect);
 });
