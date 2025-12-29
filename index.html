@@ -454,41 +454,41 @@ canvas.on("mouse:up", ()=>{
     return;
   }
 
-  // ✅ CRÉATION DU RECTANGLE
-  const zone = new fabric.Rect({
-    left: r.left,
-    top: r.top,
-    width: r.width,
-    height: r.height,
-    fill: "rgba(255,255,255,0.08)",
-    stroke: "white",
-    strokeWidth: 3,
-    lockRotation: true
-  });
+  // ✅ ID automatique unique
+const newId = "zone_" + Date.now();
 
-  // ✅ DONNÉES LOGIQUES
-  const zoneData = {
-    id: "nouvelle_zone",
-    x: r.left,
-    y: r.top,
-    w: r.width,
-    h: r.height,
-    nom: "",
-    role: "",
-    desc: ""
-  };
+// ✅ données pédagogiques
+const zoneData = {
+  id: newId,
+  nom: "",
+  role: "",
+  desc: ""
+};
 
-  // 🔗 LIEN BIDIRECTIONNEL
-  zone.zoneData = zoneData;
-  zoneData._obj = zone;
-
-  zonesData.push(zoneData);
-  canvas.add(zone);
-
-  applyMode();
-  selectObj(zone);
+// ✅ rectangle visuel
+const zone = new fabric.Rect({
+  left: r.left,
+  top: r.top,
+  width: r.width,
+  height: r.height,
+  fill: "rgba(255,255,255,0.08)",
+  stroke: "white",
+  strokeWidth: 3,
+  lockRotation: true
 });
 
+// 🔗 lien bidirectionnel (INDISPENSABLE)
+zone.zoneId = newId;
+zone.zoneData = zoneData;
+zoneData._obj = zone;
+
+// 📦 stockage
+zonesData.push(zoneData);
+canvas.add(zone);
+
+// 🎯 sélection immédiate
+applyMode();
+selectObj(zone);
 setUI();
 
 function exportZonesJSON(){
