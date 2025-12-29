@@ -88,6 +88,29 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
 </div>
 
 <script>
+function log(msg){
+  let el = document.getElementById("debug");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "debug";
+    el.style.cssText = `
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      max-height:35vh;
+      overflow:auto;
+      background:#000;
+      color:#0f0;
+      font-family:monospace;
+      font-size:12px;
+      padding:6px;
+      z-index:99999;
+    `;
+    document.body.appendChild(el);
+  }
+  el.innerHTML += msg + "<br>";
+}
 const EDITOR_PASSWORD = "comp";
 const $ = id => document.getElementById(id);
 const ZONES = [
