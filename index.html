@@ -17,7 +17,9 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
 .media-layer,canvas{position:absolute;inset:0;}
 #imgLayer{width:100%;height:100%;object-fit:contain;pointer-events:none;}
 
-.stage,.canvas-container,canvas{touch-action:none !important;}
+.canvas-container canvas{
+  touch-action:none !important;
+}
 
 /* 🔑 FIX MENU iOS */
 .canvas-container{ pointer-events:none; }
@@ -121,6 +123,9 @@ let isEditor=false,tool="view",selected=null;
 let drawing=false,start=null,tempRect=null;
 
 const canvas=new fabric.Canvas("c",{selection:false});
+canvas.upperCanvasEl.style.touchAction = "none";
+canvas.upperCanvasEl.style.webkitUserSelect = "none";
+canvas.upperCanvasEl.style.webkitTouchCallout = "none";
 fabric.Object.prototype.cornerSize=36;
 fabric.Object.prototype.cornerStyle="circle";
 fabric.Object.prototype.transparentCorners=false;
@@ -193,15 +198,7 @@ function clearSelection(){
   canvas.requestRenderAll();
 }
 
-canvas.on("mouse:down", opt => {
-  const obj = opt.target;
-  if (!obj || !obj.zoneId) return;
 
-  const part = partsMap.get(obj.zoneId);
-  if (!part) return;
-
-  $("infoTitle").textContent = part.nom;
-});
 
   if(obj) selectObj(obj);
   else clearSelection();
