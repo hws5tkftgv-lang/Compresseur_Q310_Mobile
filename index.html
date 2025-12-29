@@ -174,6 +174,10 @@ const ZONES = [
 ];
 
 const canvas = new fabric.Canvas("c", { selection:false });
+const canvas = new fabric.Canvas("c", { selection:false });
+
+canvas.selection = false;
+canvas.preserveObjectStacking = true;
 imgLayer.onload = fitCanvasToImage;
 window.addEventListener("resize", fitCanvasToImage);
 canvas.on("object:modified", () => {
@@ -219,7 +223,7 @@ fabric.Object.prototype.padding = 10;
 
 /* ✅ sélection plus facile sur iPhone */
 fabric.Object.prototype.perPixelTargetFind = false;
-fabric.Object.prototype.targetFindTolerance = 30;
+fabric.Object.prototype.targetFindTolerance = 40;
 
 $("btnApply").onclick = () => {
   if (!isEditor || !selected || !selected.zoneData) return;
@@ -348,7 +352,11 @@ function applyMode(){
 
       if(tool === "draw"){
   o.selectable = false;
-  o.evented = false;      // ⭐ LA LIGNE CLÉ
+  o.evented = false;
+}
+else{
+  o.evented = true;   // ✅ RÉACTIVE LE TOUCHER
+}
 
       }else if(tool === "move"){
         o.selectable = true;
