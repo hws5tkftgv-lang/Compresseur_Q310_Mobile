@@ -85,9 +85,10 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
 <input id="editNom" class="input" placeholder="Nom">
 <textarea id="editRole" class="input" placeholder="Rôle"></textarea>
 <textarea id="editDesc" class="input" placeholder="Description"></textarea>
-
+<button id="btnDelete" class="btn">🗑️ Supprimer la zone</button>
 <button id="btnApply" class="btn">💾 Appliquer à la zone</button>
 <script>
+let zonesData = [];
 const EDITOR_PASSWORD = "comp";
 const PARTS = {
   filtre_air: {
@@ -124,6 +125,35 @@ const ZONES = [
 ];
 
 const canvas = new fabric.Canvas("c", { selection:false });
+canvas.on("object:modified", () => {
+  if (!isEditor) return;
+
+  if (!selected) return;
+
+  // 🔗 retrouver la zone liée au rectangle
+  const zone = ZONES.find(z => z._obj === selected);
+  if (!zone) return;
+
+  // 🔄 mise à jour des dimensions
+  zone.x = Math.round(selected.left);
+  zone.y = Math.round(selected.top);
+  zone.w = Math.round(selected.width * selected.scaleX);
+  zone.h = Math.round(selected.height * selected.scaleY);
+
+  // 🔧 reset scale pour éviter l’accumulation
+  selected.set({
+    scaleX: 1,
+    scaleY: 1,
+    width: zone.w,
+    height: zone.h,
+    left: zone.x,
+    top: zone.y
+  });
+
+  selected.setCoords();
+
+  console.log("Zone mise à jour :", zone);
+});
 
 /* ✅ iPhone / iOS : empêche Safari d'intercepter les gestes */
 canvas.upperCanvasEl.style.touchAction = "none";
@@ -143,17 +173,37 @@ fabric.Object.prototype.targetFindTolerance = 30;
 $("btnApply").onclick = ()=>{
   if(!isEditor || !selected) return;
 
-  selected.nom  = $("editNom").value.trim();
-  selected.role = $("editRole").value.trim();
-  selected.desc = $("editDesc").value.trim();
+  if(!selected.zoneData) return;
+
+selected.zoneData.nom  = $("editNom").value.trim();
+selected.zoneData.role = $("editRole").value.trim();
+selected.zoneData.desc = $("editDesc").value.trim();
 
   // mise à jour immédiate du panneau élève
-  $("infoTitle").textContent = selected.nom || "Zone";
-  $("infoText").textContent =
-    (selected.role || "") +
-    (selected.desc ? " — " + selected.desc : "");
+$("infoTitle").textContent = selected.zoneData.nom || "Zone";
+$("infoText").textContent =
+  (selected.zoneData.role || "") +
+  (selected.zoneData.desc ? " — " + selected.zoneData.desc : "");
 };
+$("btnDelete").onclick = () => {
+  if(!isEditor || !selected) return;
 
+  // 1. Retirer du tableau JSON
+  const i = zonesData.indexOf(selected.zoneData);
+  if(i !== -1) zonesData.splice(i, 1);
+
+  // 2. Retirer du canvas
+  canvas.remove(selected);
+
+  // 3. Nettoyer la sélection
+  selected = null;
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+
+  // 4. Réinitialiser l’affichage élève
+  $("infoTitle").textContent = "Sélectionne une zone";
+  $("infoText").textContent = "";
+};
 $("btnExport").onclick = ()=>{
   const data = [];
 
@@ -161,15 +211,15 @@ $("btnExport").onclick = ()=>{
     if(!o.zoneId) return;
 
     data.push({
-      id: o.zoneId,
-      x: Math.round(o.left),
-      y: Math.round(o.top),
-      w: Math.round(o.width * o.scaleX),
-      h: Math.round(o.height * o.scaleY),
-      nom: o.nom || "",
-      role: o.role || "",
-      desc: o.desc || ""
-    });
+  id: o.zoneId,
+  x: Math.round(o.left),
+  y: Math.round(o.top),
+  w: Math.round(o.width * o.scaleX),
+  h: Math.round(o.height * o.scaleY),
+  nom: o.zoneData?.nom || "",
+  role: o.zoneData?.role || "",
+  desc: o.zoneData?.desc || ""
+});
   });
 
   const json = JSON.stringify(data, null, 2);
@@ -294,6 +344,7 @@ $("btnDraw").onclick = ()=>{ if(!isEditor) return; tool="draw"; clearSelection()
 
 /* ===== Selection ===== */
 function selectObj(obj){
+  if(!obj || !obj.zoneData) return;
   if(!obj) return;
 
   if(selected && selected !== obj){
@@ -316,9 +367,9 @@ function selectObj(obj){
   }
   if(isEditor && obj.zoneId){
   const part = PARTS[obj.zoneId] || {};
-  $("editNom").value  = obj.nom  || part.nom  || "";
-  $("editRole").value = obj.role || part.role || "";
-  $("editDesc").value = obj.desc || part.desc || "";
+$("infoTitle").textContent = obj.zoneData.nom || obj.zoneData.id;
+$("infoRole").textContent  = obj.zoneData.role || "";
+$("infoDesc").textContent  = obj.zoneData.desc || "";
 }
 
   // info (au lieu de alert qui “gèle”)
@@ -403,30 +454,27 @@ canvas.on("mouse:up", ()=>{
     return;
   }
 
-  // créer vraie zone
-  const zone = new fabric.Rect({
-    left: r.left,
-    top: r.top,
-    width: r.width,
-    height: r.height,
-    fill: "rgba(255,255,255,0.08)", // hitbox tactile
-    stroke: "white",
-    strokeWidth: 3,
-    selectable: true,
-    hasControls: false,
-    hasBorders: true,
-    lockRotation: true
-  });
+const zoneData = {
+  id: "nouvelle_zone",
+  x: r.left,
+  y: r.top,
+  w: r.width,
+  h: r.height,
+  nom: "",
+  role: "",
+  desc: ""
+};
 
-  // id temporaire
-  zone.zoneId = "nouvelle_zone";
+// 🔗 lien bidirectionnel
+zoneData._obj = zone;
+zone.zoneData = zoneData;
 
-  canvas.add(zone);
-  tool = "move";
-  applyMode();
-  selectObj(zone);
-});
+// 📦 stocker dans le tableau
+zonesData.push(zoneData);
 
+canvas.add(zone);
+applyMode();
+selectObj(zone);
 /* ===== Load initial zones ===== */
 ZONES.forEach(z => {
   const rect = new fabric.Rect({
