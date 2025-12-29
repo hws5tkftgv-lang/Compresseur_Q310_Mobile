@@ -376,8 +376,10 @@ $("infoDesc").textContent  = obj.zoneData.desc || "";
 }
 
   // info (au lieu de alert qui “gèle”)
-  $("infoTitle").textContent = "Zone : " + (obj.zoneId || "(sans id)");
-
+  //$("infoTitle").textContent = "Zone : " + (obj.zoneId || "(sans id)");
+$("infoTitle").textContent =
+  obj.zoneData?.nom || "Zone";
+  
   canvas.requestRenderAll();
 }
 
