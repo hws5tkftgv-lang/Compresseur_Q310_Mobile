@@ -9,7 +9,14 @@
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 <button id="btnExport" class="btn">📤 Export JSON</button>
 <style>
-html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,sans-serif;}
+html, body{
+  margin:0;
+  height:100%;
+  overflow:hidden;
+  background:#0b1436;
+  color:#eaf1ff;
+  font-family:Arial,Segoe UI,sans-serif;
+}
 #infoPanel{padding:10px;background:#0f1a44;border-bottom:1px solid rgba(255,255,255,.15);}
 #infoTitle{font-size:18px;font-weight:800;}
 
@@ -125,6 +132,8 @@ const ZONES = [
 ];
 
 const canvas = new fabric.Canvas("c", { selection:false });
+imgLayer.onload = fitCanvasToImage;
+window.addEventListener("resize", fitCanvasToImage);
 canvas.on("object:modified", () => {
   if (!isEditor) return;
 
@@ -523,6 +532,39 @@ function exportZonesJSON(){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+function fitCanvasToImage(){
+  const img   = document.getElementById("imgLayer");
+  const stage = document.getElementById("stage");
+
+  if(!img.naturalWidth) return; // image pas encore chargée
+
+  const stageW = stage.clientWidth;
+  const stageH = stage.clientHeight;
+
+  const imgRatio   = img.naturalWidth / img.naturalHeight;
+  const stageRatio = stageW / stageH;
+
+  let canvasW, canvasH, offsetX = 0, offsetY = 0;
+
+  if(stageRatio > imgRatio){
+    canvasH = stageH;
+    canvasW = canvasH * imgRatio;
+    offsetX = (stageW - canvasW) / 2;
+  }else{
+    canvasW = stageW;
+    canvasH = canvasW / imgRatio;
+    offsetY = (stageH - canvasH) / 2;
+  }
+
+  canvas.setWidth(canvasW);
+  canvas.setHeight(canvasH);
+  canvas.calcOffset();
+
+  canvas.getElement().style.left = offsetX + "px";
+  canvas.getElement().style.top  = offsetY + "px";
+
+  canvas.requestRenderAll();
 }
 </script>
 
