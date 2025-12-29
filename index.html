@@ -80,7 +80,13 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
             display:none;">
   ✏️ MODE ÉDITEUR
 </div>
+<div class="small">Édition de la zone sélectionnée</div>
 
+<input id="editNom" class="input" placeholder="Nom">
+<textarea id="editRole" class="input" placeholder="Rôle"></textarea>
+<textarea id="editDesc" class="input" placeholder="Description"></textarea>
+
+<button id="btnApply" class="btn">💾 Appliquer à la zone</button>
 <script>
 const EDITOR_PASSWORD = "comp";
 const PARTS = {
@@ -133,6 +139,20 @@ fabric.Object.prototype.padding = 10;
 /* ✅ sélection plus facile sur iPhone */
 fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 30;
+
+$("btnApply").onclick = ()=>{
+  if(!isEditor || !selected) return;
+
+  selected.nom  = $("editNom").value.trim();
+  selected.role = $("editRole").value.trim();
+  selected.desc = $("editDesc").value.trim();
+
+  // mise à jour immédiate du panneau élève
+  $("infoTitle").textContent = selected.nom || "Zone";
+  $("infoText").textContent =
+    (selected.role || "") +
+    (selected.desc ? " — " + selected.desc : "");
+};
 
 function resize(){
   canvas.setWidth($("stage").clientWidth);
@@ -272,6 +292,12 @@ function selectObj(obj){
     showAllResizeHandles(obj,false);
     obj.hasControls = false;
   }
+  if(isEditor && obj.zoneId){
+  const part = PARTS[obj.zoneId] || {};
+  $("editNom").value  = obj.nom  || part.nom  || "";
+  $("editRole").value = obj.role || part.role || "";
+  $("editDesc").value = obj.desc || part.desc || "";
+}
 
   // info (au lieu de alert qui “gèle”)
   $("infoTitle").textContent = "Zone : " + (obj.zoneId || "(sans id)");
