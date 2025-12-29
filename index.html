@@ -103,6 +103,12 @@ fabric.Object.prototype.cornerStyle="circle";
 fabric.Object.prototype.transparentCorners=false;
 fabric.Object.prototype.targetFindTolerance=30;
 
+// 🔑 Laisser Fabric capter les events
+canvas.upperCanvasEl.style.pointerEvents = "auto";
+
+// 🔑 Laisser passer les clics UI au-dessus
+canvas.lowerCanvasEl.style.pointerEvents = "none";
+
 function resize(){
   canvas.setWidth($("stage").clientWidth);
   canvas.setHeight($("stage").clientHeight);
