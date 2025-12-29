@@ -85,8 +85,29 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
 <div id="editorState">✏️ MODE ÉDITEUR</div>
 
 <script>
+let partsMap = new Map();
 const EDITOR_PASSWORD="comp";
 const $=id=>document.getElementById(id);
+const PARTS = [
+  {
+    id: "filtre_air",
+    nom: "Filtre à air",
+    role: "Filtrer l’air entrant",
+    desc: "Retient les poussières et impuretés avant l’admission."
+  },
+  {
+    id: "cylindre_lp",
+    nom: "Cylindre basse pression (LP)",
+    role: "Compression initiale",
+    desc: "Première étape de compression volumétrique."
+  },
+  {
+    id: "manometre_hp",
+    nom: "Manomètre HP",
+    role: "Indiquer la pression",
+    desc: "Lecture de la pression de service en sortie."
+  }
+];
 
 const ZONES=[
   {id:"cylindre_lp",x:420,y:180,w:120,h:260},
@@ -94,6 +115,8 @@ const ZONES=[
   {id:"manometre_hp",x:520,y:360,w:110,h:110}
 ];
 
+const partsMap = new Map();
+PARTS.forEach(p => partsMap.set(p.id, p));
 let isEditor=false,tool="view",selected=null;
 let drawing=false,start=null,tempRect=null;
 
@@ -170,20 +193,15 @@ function clearSelection(){
   canvas.requestRenderAll();
 }
 
-/* Events */
-canvas.on("mouse:down",opt=>{
-  const obj=opt.target;
+canvas.on("mouse:down", opt => {
+  const obj = opt.target;
+  if (!obj || !obj.zoneId) return;
 
-  if(isEditor && tool==="draw"){
-    drawing=true;
-    start=canvas.getPointer(opt.e);
-    tempRect=new fabric.Rect({
-      left:start.x,top:start.y,width:2,height:2,
-      fill:"rgba(255,255,255,0.1)",stroke:"#00a2ff",strokeWidth:3,
-      selectable:false,evented:false
-    });
-    canvas.add(tempRect);return;
-  }
+  const part = partsMap.get(obj.zoneId);
+  if (!part) return;
+
+  $("infoTitle").textContent = part.nom;
+});
 
   if(obj) selectObj(obj);
   else clearSelection();
