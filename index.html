@@ -82,6 +82,23 @@ html,body{margin:0;background:#0b1436;color:#eaf1ff;font-family:Arial,Segoe UI,s
 
 <script>
 const EDITOR_PASSWORD = "comp";
+const PARTS = {
+  filtre_air: {
+    nom: "Filtre à air",
+    role: "Filtrer l’air entrant",
+    desc: "Retient les poussières et impuretés avant l’admission."
+  },
+  cylindre_lp: {
+    nom: "Cylindre basse pression (LP)",
+    role: "Compression initiale",
+    desc: "Première étape de compression volumétrique."
+  },
+  manometre_hp: {
+    nom: "Manomètre HP",
+    role: "Indiquer la pression",
+    desc: "Lecture de la pression de service en sortie."
+  }
+};
 const $ = id => document.getElementById(id);
 
 let isEditor = false;
@@ -297,6 +314,10 @@ canvas.on("mouse:down", opt => {
 
   if(obj){
     selectObj(obj);
+
+    if(obj.zoneId && PARTS[obj.zoneId]){
+      $("infoTitle").textContent = PARTS[obj.zoneId].nom;
+    }
   }else{
     clearSelection();
     $("infoTitle").textContent = "Sélectionne une zone";
