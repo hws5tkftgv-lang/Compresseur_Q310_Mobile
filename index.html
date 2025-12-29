@@ -317,60 +317,29 @@ function showAllResizeHandles(obj, on){
 
 function applyMode(){
   canvas.forEachObject(o=>{
-    o.evented = true;
-
-    if(!isEditor){
-      // MODE ÉLÈVE
-      o.selectable = false;
-      o.hasControls = false;
-      o.hasBorders = false;
-
-      o.stroke = "white";
-      o.strokeWidth = 3;
-
-      o.lockMovementX = true;
-      o.lockMovementY = true;
-      o.lockScalingX = true;
-      o.lockScalingY = true;
-      o.lockRotation = true;
-
-      showAllResizeHandles(o,false);
-    }else{
-      // MODE ÉDITEUR
-      o.lockMovementX = false;
-      o.lockMovementY = false;
-      o.lockScalingX = false;
-      o.lockScalingY = false;
-      o.lockRotation = true;
-
-      // IMPORTANT : en éditeur, la couleur ORANGE = zone sélectionnée seulement
-      // sinon ça devient illisible. On met blanc par défaut, et orange sur sélection.
-      if(o !== selected){
-        o.stroke = "white";
-        o.strokeWidth = 3;
-      }
-
-      if(tool === "draw"){
+    if(tool === "draw"){
   o.selectable = false;
-  o.evented = false;
+  o.evented = false;   // ❌ désactive le toucher pendant le dessin
+}
+else if(tool === "move"){
+  o.evented = true;    // ✅ toucher actif
+  o.selectable = true;
+  o.hasControls = false;
+  o.hasBorders = true;
+  showAllResizeHandles(o,false);
+}
+else if(tool === "resize"){
+  o.evented = true;    // ✅ toucher actif
+  o.selectable = true;
+  o.hasControls = true;
+  o.hasBorders = true;
+  showAllResizeHandles(o,true);
 }
 else{
-  o.evented = true;   // ✅ RÉACTIVE LE TOUCHER
-
-
-      else{if(tool === "move"){
-        o.selectable = true;
-        o.hasControls = false;
-        o.hasBorders = true;
-        showAllResizeHandles(o,false);
-      }else if(tool === "resize"){
-        o.selectable = true;
-        o.hasControls = true;
-        o.hasBorders = true;
-        showAllResizeHandles(o,true);
-      }
-    }
-  });
+  // sécurité (mode view)
+  o.evented = true;
+  o.selectable = false;
+}
 
   canvas.requestRenderAll();
 }
