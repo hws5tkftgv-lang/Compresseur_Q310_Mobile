@@ -74,32 +74,59 @@ html, body{
 </head>
 
 <body>
-<div id="infoPanel"><div id="infoTitle">Sélectionne une zone</div></div>
-<div id="infoText" style="font-size:14px; opacity:.9; margin-top:4px;"></div>
 
+<!-- ===== Bande info élève ===== -->
+<div id="infoPanel">
+  <div id="infoTitle">Sélectionne une zone</div>
+  <div id="infoText" style="font-size:14px; opacity:.9; margin-top:4px;"></div>
+</div>
+
+<!-- ===== Zone image + canvas ===== -->
 <div class="stage" id="stage">
-  <div class="media-layer"><img id="imgLayer" src="actif/compresseur_bg.png" alt=""></div>
+  <div class="media-layer">
+    <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
+  </div>
   <canvas id="c"></canvas>
 </div>
 
+<!-- ===== Bouton menu flottant ===== -->
 <button id="fab">☰</button>
 
+<!-- ===== MENU UNIQUE ===== -->
 <div id="panel">
+
   <div style="font-weight:900;margin-bottom:6px;">🧰 Menu</div>
 
+  <!-- État -->
   <div id="stateLine" style="font-weight:900;opacity:.9;">MODE ÉLÈVE</div>
 
+  <!-- Connexion éditeur -->
   <input id="pw" class="input" type="password" placeholder="Mot de passe éditeur (comp)">
   <button id="btnEditor" class="btn">🔒 Activer éditeur</button>
   <button id="btnExit" class="btn" style="display:none;">🚪 Quitter éditeur</button>
 
-  <div class="small">Outils (actifs seulement en mode éditeur)</div>
+  <!-- ===== OUTILS ===== -->
+  <div class="sectionTitle">Outils</div>
   <button id="btnMove" class="btn" disabled>✋ Déplacer</button>
   <button id="btnResize" class="btn" disabled>⬍ Redimensionner</button>
   <button id="btnDraw" class="btn" disabled>➕ Nouvelle zone</button>
+
+  <!-- ===== ÉDITION ZONE ===== -->
+  <div class="sectionTitle">Zone sélectionnée</div>
+  <input id="editNom" class="input" placeholder="Nom">
+  <textarea id="editRole" class="input" placeholder="Rôle"></textarea>
+  <textarea id="editDesc" class="input" placeholder="Description"></textarea>
+
+  <button id="btnApply" class="btn">💾 Appliquer</button>
+  <button id="btnDelete" class="btn">🗑️ Supprimer la zone</button>
+
+  <!-- ===== SAUVEGARDE ===== -->
+  <div class="sectionTitle">Sauvegarde</div>
   <button id="btnExport" class="btn">📤 Export JSON</button>
+
 </div>
 
+<!-- ===== Badge éditeur ===== -->
 <div id="editorState"
      style="position:fixed;top:10px;left:10px;
             background:#ff9800;color:#000;
@@ -108,13 +135,7 @@ html, body{
             display:none;">
   ✏️ MODE ÉDITEUR
 </div>
-<div class="small">Édition de la zone sélectionnée</div>
 
-<input id="editNom" class="input" placeholder="Nom">
-<textarea id="editRole" class="input" placeholder="Rôle"></textarea>
-<textarea id="editDesc" class="input" placeholder="Description"></textarea>
-<button id="btnDelete" class="btn">🗑️ Supprimer la zone</button>
-<button id="btnApply" class="btn">💾 Appliquer à la zone</button>
 <script>
 let zonesData = [];
 const EDITOR_PASSWORD = "comp";
