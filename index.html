@@ -137,138 +137,33 @@ html, body{
 </div>
 
 <script>
-let zonesData = [];
+/* ================== CONFIG ================== */
 const EDITOR_PASSWORD = "comp";
-const PARTS = {
-  filtre_air: {
-    nom: "Filtre à air",
-    role: "Filtrer l’air entrant",
-    desc: "Retient les poussières et impuretés avant l’admission."
-  },
-  cylindre_lp: {
-    nom: "Cylindre basse pression (LP)",
-    role: "Compression initiale",
-    desc: "Première étape de compression volumétrique."
-  },
-  manometre_hp: {
-    nom: "Manomètre HP",
-    role: "Indiquer la pression",
-    desc: "Lecture de la pression de service en sortie."
-  }
-};
 const $ = id => document.getElementById(id);
 
+/* ================== ÉTAT ================== */
 let isEditor = false;
 let tool = "view"; // view | move | resize | draw
 let selected = null;
-
 let drawing = false;
 let start = null;
 let tempRect = null;
 
-/* ✅ ZONES : UNE SEULE DÉCLARATION (IMPORTANT) */
-
-
+/* ================== CANVAS ================== */
 const canvas = new fabric.Canvas("c", { selection:false });
-
-/* ===== CONFIRMATION DÉPLACEMENT ZONE ===== */
-let lastPos = null;
-
-canvas.on("object:moving", e=>{
-  if(!isEditor) return;
-  const o = e.target;
-  if(!o || !o.zoneData) return;
-
-  if(!lastPos){
-    lastPos = { left:o.left, top:o.top };
-  }
-});
-
-canvas.on("object:modified", e=>{
-  if(!isEditor) return;
-  const o = e.target;
-  if(!o || !o.zoneData) return;
-
-  const ok = confirm("Sauvegarder la nouvelle position ?");
-  if(!ok && lastPos){
-    o.set({
-      left: lastPos.left,
-      top: lastPos.top
-    });
-    o.setCoords();
-    canvas.requestRenderAll();
-  }
-
-  lastPos = null;
-});
-canvas.selection = false;
 canvas.preserveObjectStacking = true;
-imgLayer.onload = fitCanvasToImage;
-window.addEventListener("resize", fitCanvasToImage);
+canvas.selection = false;
 
-
-/* ✅ iPhone / iOS : empêche Safari d'intercepter les gestes */
+/* iOS SAFE */
 canvas.upperCanvasEl.style.touchAction = "none";
-canvas.upperCanvasEl.style.webkitUserSelect = "none";
-canvas.upperCanvasEl.style.webkitTouchCallout = "none";
 
-/* ✅ ergonomie tactile */
+/* Ergonomie tactile */
 fabric.Object.prototype.cornerSize = 36;
 fabric.Object.prototype.cornerStyle = "circle";
 fabric.Object.prototype.transparentCorners = false;
-fabric.Object.prototype.padding = 10;
-
-/* ✅ sélection plus facile sur iPhone */
-fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 40;
 
-$("btnApply").onclick = () => {
-  if (!isEditor || !selected || !selected.zoneData) return;
-
-  // 1️⃣ écrire dans la donnée logique
-  selected.zoneData.nom  = $("editNom").value.trim();
-  selected.zoneData.role = $("editRole").value.trim();
-  selected.zoneData.desc = $("editDesc").value.trim();
-
-  // 2️⃣ mise à jour immédiate du panneau élève
-  $("infoTitle").textContent =
-    selected.zoneData.nom || "Zone";
-
-  $("infoText").textContent =
-    (selected.zoneData.role || "") +
-    (selected.zoneData.desc
-      ? " — " + selected.zoneData.desc
-      : "");
-};
-$("btnDelete").onclick = () => {
-  if(!isEditor || !selected) return;
-
-  // 1. Retirer du tableau JSON
-  const i = zonesData.indexOf(selected.zoneData);
-  if(i !== -1) zonesData.splice(i, 1);
-
-  // 2. Retirer du canvas
-  canvas.remove(selected);
-
-  // 3. Nettoyer la sélection
-  selected = null;
-  canvas.discardActiveObject();
-  canvas.requestRenderAll();
-
-  // 4. Réinitialiser l’affichage élève
-  $("infoTitle").textContent = "Sélectionne une zone";
-  $("infoText").textContent = "";
-};
-
-function resize(){
-  canvas.setWidth($("stage").clientWidth);
-  canvas.setHeight($("stage").clientHeight);
-  canvas.calcOffset();
-}
-window.addEventListener("resize", resize);
-resize();
-
-/* ===== UI ===== */
+/* ================== UI ================== */
 function setUI(){
   $("editorState").style.display = isEditor ? "block" : "none";
   $("stateLine").textContent = isEditor ? "MODE ÉDITEUR" : "MODE ÉLÈVE";
@@ -276,102 +171,58 @@ function setUI(){
   $("btnEditor").style.display = isEditor ? "none" : "block";
   $("btnExit").style.display   = isEditor ? "block" : "none";
 
-  $("btnMove").disabled   = !isEditor;
-  $("btnResize").disabled = !isEditor;
-  $("btnDraw").disabled   = !isEditor;
+  ["btnMove","btnResize","btnDraw"].forEach(id=>{
+    $(id).disabled = !isEditor;
+  });
 
   applyMode();
 }
 
-function showAllResizeHandles(obj, on){
-  obj.setControlsVisibility({
-    tl:on, tr:on, bl:on, br:on,
-    ml:on, mt:on, mr:on, mb:on,
-    mtr:false
-  });
-}
-
 function applyMode(){
-
   canvas.forEachObject(o=>{
-
-    /* ===== PAR DÉFAUT : MODE ÉLÈVE ===== */
     o.evented = false;
     o.selectable = false;
     o.hasControls = false;
     o.hasBorders = false;
 
-    o.lockMovementX = true;
-    o.lockMovementY = true;
-    o.lockScalingX  = true;
-    o.lockScalingY  = true;
-    o.lockRotation = true;
-
-    showAllResizeHandles(o,false);
-
-    /* ===== MODE ÉDITEUR ===== */
     if(isEditor){
-
       o.evented = true;
-      o.lockRotation = true;
 
-      if(tool === "draw"){
-        o.selectable = false;
-        o.evented = false;   // IMPORTANT
-      }
-
-      else if(tool === "move"){
+      if(tool === "move"){
         o.selectable = true;
         o.hasBorders = true;
-
-        o.lockMovementX = false;
-        o.lockMovementY = false;
-
-        showAllResizeHandles(o,false);
       }
-
-      else if(tool === "resize"){
+      if(tool === "resize"){
         o.selectable = true;
         o.hasBorders = true;
         o.hasControls = true;
-
-        o.lockMovementX = false;
-        o.lockMovementY = false;
-        o.lockScalingX  = false;
-        o.lockScalingY  = false;
-
-        showAllResizeHandles(o,true);
       }
     }
-
   });
-
   canvas.requestRenderAll();
 }
-function togglePanel(){
-  const p = $("panel");
-  p.style.display = (p.style.display === "block") ? "none" : "block";
-}
 
-// iOS: click + touchend, avec stopPropagation pour éviter Fabric
+/* ================== MENU ================== */
 ["click","touchend"].forEach(evt=>{
-  $("fab").addEventListener(evt, (e)=>{
+  $("fab").addEventListener(evt, e=>{
     e.preventDefault();
     e.stopPropagation();
-    togglePanel();
+    $("panel").style.display =
+      $("panel").style.display === "block" ? "none" : "block";
   }, { passive:false });
 });
-/* ===== Editor ON/OFF ===== */
+
+/* ================== MODE ÉDITEUR ================== */
 $("btnEditor").onclick = ()=>{
-  const p = ($("pw").value || "").trim();
-  if(p !== EDITOR_PASSWORD){
-    alert("Mot de passe incorrect.");
+  if(($("pw").value||"").trim() !== EDITOR_PASSWORD){
+    alert("Mot de passe incorrect");
     return;
   }
   isEditor = true;
   tool = "move";
   setUI();
 };
+
 $("btnExit").onclick = ()=>{
   isEditor = false;
   tool = "view";
@@ -379,252 +230,138 @@ $("btnExit").onclick = ()=>{
   setUI();
 };
 
-/* ===== Tools ===== */
-$("btnMove").onclick = ()=>{ if(!isEditor) return; tool="move"; applyMode(); };
-$("btnResize").onclick = ()=>{ if(!isEditor) return; tool="resize"; applyMode(); };
-$("btnDraw").onclick = ()=>{ if(!isEditor) return; tool="draw"; clearSelection(); applyMode(); };
+/* ================== OUTILS ================== */
+$("btnMove").onclick   = ()=>{ if(isEditor){ tool="move"; applyMode(); }};
+$("btnResize").onclick = ()=>{ if(isEditor){ tool="resize"; applyMode(); }};
+$("btnDraw").onclick   = ()=>{ if(isEditor){ tool="draw"; clearSelection(); applyMode(); }};
 
-/* ===== Selection ===== */
-function selectObj(obj){
-  if(!obj || !obj.zoneData) return;
-  if(!obj) return;
+/* ================== SÉLECTION ================== */
+function selectObj(o){
+  if(!o || !o.zoneData) return;
+  clearSelection();
+  selected = o;
+  o.set({ stroke:"orange", strokeWidth:4 });
+  canvas.setActiveObject(o);
 
-  if(selected && selected !== obj){
-    selected.set({ stroke:"white", strokeWidth:3 });
-    showAllResizeHandles(selected,false);
-  }
+  $("infoTitle").textContent = o.zoneData.nom;
+  $("infoText").textContent  =
+    (o.zoneData.role||"") +
+    (o.zoneData.desc ? " — "+o.zoneData.desc : "");
 
-  selected = obj;
-  canvas.setActiveObject(obj);
-
-  // highlight
-  obj.set({ stroke:"orange", strokeWidth:5 });
-
-  if(isEditor && tool === "resize"){
-    showAllResizeHandles(obj,true);
-    obj.hasControls = true;
-  }else{
-    showAllResizeHandles(obj,false);
-    obj.hasControls = false;
-  }
-  if(isEditor && obj.zoneId){
-  const part = PARTS[obj.zoneId] || {};
-$("infoTitle").textContent = obj.zoneData.nom || obj.zoneData.id;
-$("infoRole").textContent  = obj.zoneData.role || "";
-$("infoDesc").textContent  = obj.zoneData.desc || "";
-}
-
-  // info (au lieu de alert qui “gèle”)
-  //$("infoTitle").textContent = "Zone : " + (obj.zoneId || "(sans id)");
-$("infoTitle").textContent =
-  obj.zoneData?.nom || "Zone";
-  
   canvas.requestRenderAll();
 }
 
 function clearSelection(){
   if(!selected) return;
   selected.set({ stroke:"white", strokeWidth:3 });
-  showAllResizeHandles(selected,false);
   selected = null;
   canvas.discardActiveObject();
-  canvas.requestRenderAll();
 }
 
-/* ===== Draw + Tap handling : UN SEUL HANDLER (IMPORTANT) ===== */
-canvas.on("mouse:down", opt => {
-  
-  // ✅ EN MODE MOVE : laisser Fabric gérer le drag
-  if(isEditor && tool === "move"){
-    return;
-  }
-const obj = opt.target;
-  if(isEditor && tool === "draw"){
+/* ================== DESSIN ZONE ================== */
+canvas.on("mouse:down", opt=>{
+  if(isEditor && tool==="draw"){
     drawing = true;
     start = canvas.getPointer(opt.e);
-
     tempRect = new fabric.Rect({
-      left: start.x,
-      top: start.y,
-      width: 2,
-      height: 2,
-      fill: "rgba(255,255,255,0.10)",
-      stroke: "#00a2ff",
-      strokeWidth: 3,
-      selectable: false,
-      evented: false
+      left:start.x, top:start.y,
+      width:2, height:2,
+      fill:"rgba(255,255,255,0.1)",
+      stroke:"#00a2ff", strokeWidth:3,
+      selectable:false, evented:false
     });
-
     canvas.add(tempRect);
-    canvas.requestRenderAll();
-    return;
   }
-
-  if(obj){
-    selectObj(obj);
-
-    if(obj.zoneId && PARTS[obj.zoneId]){
-      $("infoTitle").textContent = PARTS[obj.zoneId].nom;
-$("infoText").textContent =
-  PARTS[obj.zoneId].role + " — " + PARTS[obj.zoneId].desc;
-    }
-  }else{
-  clearSelection();
-  $("infoTitle").textContent = "Sélectionne une zone";
-  $("infoText").textContent = "";
-}
+  else if(opt.target){
+    selectObj(opt.target);
+  } else {
+    clearSelection();
+    $("infoTitle").textContent = "Sélectionne une zone";
+    $("infoText").textContent = "";
+  }
 });
 
 canvas.on("mouse:move", opt=>{
-  if(!(drawing && tempRect)) return;
+  if(!drawing || !tempRect) return;
   const p = canvas.getPointer(opt.e);
-
-  const left = Math.min(start.x, p.x);
-  const top  = Math.min(start.y, p.y);
-  const w = Math.abs(p.x - start.x);
-  const h = Math.abs(p.y - start.y);
-
-  tempRect.set({ left, top, width:Math.max(2,w), height:Math.max(2,h) });
+  tempRect.set({
+    left:Math.min(start.x,p.x),
+    top: Math.min(start.y,p.y),
+    width:Math.abs(p.x-start.x),
+    height:Math.abs(p.y-start.y)
+  });
   tempRect.setCoords();
   canvas.requestRenderAll();
 });
 
 canvas.on("mouse:up", ()=>{
-  if(!(drawing && tempRect)) return;
+  if(!drawing || !tempRect) return;
   drawing = false;
 
-  const r = tempRect;
+  if(tempRect.width < 12 || tempRect.height < 12){
+    canvas.remove(tempRect);
+    tempRect = null;
+    return;
+  }
+
+  const nom  = prompt("Nom de la zone ?");
+  if(!nom){ canvas.remove(tempRect); return; }
+  const role = prompt("Rôle ?");
+  const desc = prompt("Description ?");
+
+  const zoneData = {
+    id:"zone_"+Date.now(),
+    nom, role, desc
+  };
+
+  const zone = new fabric.Rect({
+    left:tempRect.left,
+    top:tempRect.top,
+    width:tempRect.width,
+    height:tempRect.height,
+    fill:"rgba(255,255,255,0.08)",
+    stroke:"white", strokeWidth:3,
+    lockRotation:true
+  });
+
+  zone.zoneId = zoneData.id;
+  zone.zoneData = zoneData;
+
   canvas.remove(tempRect);
   tempRect = null;
 
-  if(r.width < 12 || r.height < 12) return;
-
-  // 🔹 Infos pédagogiques
-  const nom  = prompt("Nom de la zone ?");
-  if(!nom) return;
-
-  const role = prompt("Rôle de la zone ?");
-  const desc = prompt("Description de la zone ?");
-
-  const ok = confirm("Sauvegarder cette zone ?");
-  if(!ok) return;
-
-  const id = "zone_" + Date.now();
-
-  const zoneData = { id, nom, role, desc };
-
-  const zone = new fabric.Rect({
-    left: r.left,
-    top: r.top,
-    width: r.width,
-    height: r.height,
-    fill: "rgba(255,255,255,0.08)",
-    stroke: "white",
-    strokeWidth: 3,
-    lockRotation: true
-  });
-
-  zone.zoneId = id;
-  zone.zoneData = zoneData;
-
-  zonesData.push(zoneData);
   canvas.add(zone);
-  canvas.setActiveObject(zone);
-
   selectObj(zone);
+  applyMode();
 });
 
-
-
-
-  const json = JSON.stringify(zones, null, 2);
-
-  // téléchargement iPhone / Safari
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "zones_mobile.json";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-function fitCanvasToImage(){
-  const img   = document.getElementById("imgLayer");
-  const stage = document.getElementById("stage");
-
-  if(!img.naturalWidth) return; // image pas encore chargée
-
-  const stageW = stage.clientWidth;
-  const stageH = stage.clientHeight;
-
-  const imgRatio   = img.naturalWidth / img.naturalHeight;
-  const stageRatio = stageW / stageH;
-
-  let canvasW, canvasH, offsetX = 0, offsetY = 0;
-
-  if(stageRatio > imgRatio){
-    canvasH = stageH;
-    canvasW = canvasH * imgRatio;
-    offsetX = (stageW - canvasW) / 2;
-  }else{
-    canvasW = stageW;
-    canvasH = canvasW / imgRatio;
-    offsetY = (stageH - canvasH) / 2;
-  }
-
-  canvas.setWidth(canvasW);
-  canvas.setHeight(canvasH);
-  canvas.calcOffset();
-
-  canvas.getElement().style.left = offsetX + "px";
-  canvas.getElement().style.top  = offsetY + "px";
-
-  canvas.requestRenderAll();
-}
-// ===== EXPORT JSON (iOS SAFE) =====
-$("btnExport").addEventListener("click", exportZonesJSON, { passive:false });
-$("btnExport").addEventListener("touchend", (e)=>{
-  e.preventDefault();
-  exportZonesJSON();
-}, { passive:false });
-
+/* ================== EXPORT JSON ================== */
 function exportZonesJSON(){
   const data = [];
-
   canvas.getObjects().forEach(o=>{
     if(!o.zoneId) return;
-
     data.push({
-      id: o.zoneId,
-      x: Math.round(o.left),
-      y: Math.round(o.top),
-      w: Math.round(o.width * o.scaleX),
-      h: Math.round(o.height * o.scaleY),
-      nom: o.zoneData?.nom || "",
-      role: o.zoneData?.role || "",
-      desc: o.zoneData?.desc || ""
+      id:o.zoneId,
+      x:Math.round(o.left),
+      y:Math.round(o.top),
+      w:Math.round(o.width * o.scaleX),
+      h:Math.round(o.height * o.scaleY),
+      nom:o.zoneData.nom,
+      role:o.zoneData.role,
+      desc:o.zoneData.desc
     });
   });
 
-  const json = JSON.stringify(data, null, 2);
-
-  // ✅ Téléchargement iPhone / Safari fiable
-  const blob = new Blob([json], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
   a.href = url;
-  a.download = "zones_mobile.json";
-  document.body.appendChild(a);
+  a.download = "zones.json";
   a.click();
-  document.body.removeChild(a);
-
   URL.revokeObjectURL(url);
 }
-</script>
 
+$("btnExport").addEventListener("click", exportZonesJSON, {passive:false});
+</script>
 </body>
 </html>
