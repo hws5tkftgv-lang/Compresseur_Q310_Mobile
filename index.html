@@ -481,12 +481,23 @@ function showInfo(z){
     $("infoText").textContent = "";
     return;
   }
-  $("infoTitle").textContent = z.nom || z.id || "Zone";
-  const a = (z.role || "");
-  const b = (z.desc || "");
-  $("infoText").textContent = a + (b ? " — " + b : "");
-}
 
+  // 🧠 Si la zone est liée à une pièce Quincy
+  if(z.partId && PARTS[z.partId]){
+    const p = PARTS[z.partId];
+    $("infoTitle").textContent = p.nom;
+    $("infoText").textContent =
+      (p.role || "") +
+      (p.desc ? " — " + p.desc : "");
+    return;
+  }
+
+  // fallback (zone non associée)
+  $("infoTitle").textContent = z.nom || "Zone";
+  $("infoText").textContent =
+    (z.role || "") +
+    (z.desc ? " — " + z.desc : "");
+}
 function selectObj(obj){
   if(!obj || !obj.zoneData) return;
 
