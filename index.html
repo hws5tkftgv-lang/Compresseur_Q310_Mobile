@@ -204,7 +204,7 @@ html, body{
 <div id="editorState">✏️ MODE ÉDITEUR</div>
 
 <script>
-
+const $ = id => document.getElementById(id);
 let PARTS = {};        // index par id
 let PARTS_LIST = [];  // liste brute depuis le JSON
 
@@ -226,7 +226,7 @@ fetch("quincy_310L_parts.json")
 /* =========================
    CONFIG / DATA
 ========================= */
-const $ = id => document.getElementById(id);
+
 /* ===== ÉTAPE 2 — REMPLIR LE MENU DES PIÈCES ===== */
 /* =========================
    PARTS — Pièces Quincy 310L
