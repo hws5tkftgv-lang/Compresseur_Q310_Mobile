@@ -499,9 +499,16 @@ $("btnLinkPart").disabled = !selected;
    SELECTION + PANEL FIELDS
 ========================= */
 function fillEditorFields(z){
-  $("editNom").value  = z?.nom  || "";
-  $("editRole").value = z?.role || "";
-  $("editDesc").value = z?.desc || "";
+  if(!z){
+    $("editNom").value  = "";
+    $("editRole").value = "";
+    $("editDesc").value = "";
+    return;
+  }
+
+  $("editNom").value  = z.nom  || "";
+  $("editRole").value = z.role || "";
+  $("editDesc").value = z.desc || "";
 }
 
 function showInfo(z){
