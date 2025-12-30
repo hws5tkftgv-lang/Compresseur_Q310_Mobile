@@ -559,6 +559,23 @@ $("btnApply").addEventListener("click", ()=>{
   saveToLocal();
   applyMode();
 }, { passive:false });
+$("btnLinkPart").addEventListener("click", ()=>{
+  if(!isEditor || !selected || !selected.zoneData) return;
+
+  const partId = $("partSelect").value;
+  if(!partId){
+    alert("Choisis une pièce.");
+    return;
+  }
+
+  // 🔗 lier la zone à la pièce Quincy
+  selected.zoneData.partId = partId;
+
+  // 🧠 feedback visuel immédiat
+  showInfo(PARTS[partId]);
+
+  saveToLocal();
+}, { passive:false });
 
 $("btnDelete").addEventListener("click", ()=>{
   if(!isEditor || !selected || !selected.zoneData) return;
