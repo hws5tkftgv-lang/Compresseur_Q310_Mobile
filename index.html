@@ -555,12 +555,10 @@ function togglePanel(){
   p.style.display = (p.style.display === "block") ? "none" : "block";
 }
 
-["click","touchend"].forEach(evt=>{
-  $("fab").addEventListener(evt, (e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    togglePanel();
-  }, { passive:false });
+$("fab").addEventListener("click", (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  togglePanel();
 });
 
 $("btnShowMedia").addEventListener("click", ()=>{
@@ -607,35 +605,26 @@ $("btnCloseMedia").addEventListener("click", ()=>{
 });
 
 /* =========================
-   EDITOR ON/OFF + 
-["click","touchend"].forEach(evt=>{
-  $("btnEditor").addEventListener(evt, (e)=>{
-    e.preventDefault();
-    e.stopPropagation();
+   EDITOR ON/OFF
+========================= */
+$("btnEditor").addEventListener("click", ()=>{
+  const p = ($("pw").value || "").trim();
+  if(p !== EDITOR_PASSWORD){
+    alert("Mot de passe incorrect.");
+    return;
+  }
 
-    const p = ($("pw").value || "").trim();
-    if(p !== EDITOR_PASSWORD){
-      alert("Mot de passe incorrect.");
-      return;
-    }
-
-    $("pw").value = ""; // nettoyage sécurité
-    isEditor = true;
-    tool = "move";
-    setUI();
-  }, { passive:false });
+  $("pw").value = "";
+  isEditor = true;
+  tool = "move";
+  setUI();
 });
 
-["click","touchend"].forEach(evt=>{
-  $("btnExit").addEventListener(evt, (e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-
-    isEditor = false;
-    tool = "view";
-    clearSelection();
-    setUI();
-  }, { passive:false });
+$("btnExit").addEventListener("click", ()=>{
+  isEditor = false;
+  tool = "view";
+  clearSelection();
+  setUI();
 });
 
 $("btnMove").addEventListener("click", ()=>{ if(!isEditor) return; tool="move"; setUI(); }, { passive:false });
@@ -767,12 +756,10 @@ function exportZonesJSON(){
   }
 }
 
-["click","touchend"].forEach(evt=>{
-  $("btnExport").addEventListener(evt, (e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    exportZonesJSON();
-  }, { passive:false });
+$("btnExport").addEventListener("click", (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  exportZonesJSON();
 });
 
 /* =========================
