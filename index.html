@@ -626,12 +626,17 @@ $("btnCloseMedia").addEventListener("click", ()=>{
   }, { passive:false });
 });
 
-$("btnExit").addEventListener("click", ()=>{
-  isEditor = false;
-  tool = "view";
-  clearSelection();
-  setUI();
-}, { passive:false });
+["click","touchend"].forEach(evt=>{
+  $("btnExit").addEventListener(evt, (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+
+    isEditor = false;
+    tool = "view";
+    clearSelection();
+    setUI();
+  }, { passive:false });
+});
 
 $("btnMove").addEventListener("click", ()=>{ if(!isEditor) return; tool="move"; setUI(); }, { passive:false });
 $("btnResize").addEventListener("click", ()=>{ if(!isEditor) return; tool="resize"; setUI(); }, { passive:false });
