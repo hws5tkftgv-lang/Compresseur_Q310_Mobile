@@ -403,7 +403,9 @@ function makeRectFromZone(z){
    BOOT: load zones
 ========================= */
 
-function bootZones(){
+
+
+  function bootZones(){
   canvas.clear();
 
   const hasLocal = loadFromLocal();
@@ -417,31 +419,22 @@ function bootZones(){
           nom:"Cylindre LP",
           role:"Compression initiale",
           desc:"Première étape de compression."
-        },
-        {
-          id:"filtre_air",
-          x:120, y:220, w:80, h:200,
-          nom:"Filtre à air",
-          role:"Filtrer l’air entrant",
-          desc:"Retient poussières/impuretés."
         }
       ]
     };
-
     zonesData = zonesByImage[currentImage];
     saveToLocal();
   }
 
-  // ✅ CECI MANQUAIT
-  zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
+  // ✅ AJOUT MANQUANT (CRITIQUE)
+  zonesData.forEach(z => {
+    canvas.add(makeRectFromZone(z));
+  });
 
-  applyMode();
   clearSelection();
+  applyMode();
   fitCanvasToImage();
 }
-
-bootZones();
-
 
 function remplirMenuPieces(){
   const select = $("partSelect");
