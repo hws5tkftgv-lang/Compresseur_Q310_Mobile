@@ -219,15 +219,7 @@ const $ = id => document.getElementById(id);
 
 const partSelect = $("partSelect");
 
-// sécurité : vider si jamais
-partSelect.innerHTML = '<option value="">— Choisir une pièce —</option>';
 
-Object.values(PARTS).forEach(part => {
-  const opt = document.createElement("option");
-  opt.value = part.id;      // clé technique
-  opt.textContent = part.nom; // texte visible
-  partSelect.appendChild(opt);
-});
 const EDITOR_PASSWORD = "comp";
 const STORAGE_KEY = "q310_zones_v1";
 
@@ -588,22 +580,24 @@ $("btnApply").addEventListener("click", ()=>{
   saveToLocal();
   applyMode();
 }, { passive:false });
+
 $("btnLinkPart").addEventListener("click", ()=>{
   if(!isEditor || !selected || !selected.zoneData) return;
 
   const partId = $("partSelect").value;
-  if(!partId){
-    alert("Choisis une pièce.");
+  if(!partId || !PARTS[partId]){
+    alert("Choisis une pièce valide.");
     return;
   }
 
-  // 🔗 lier la zone à la pièce Quincy
+  // 🔗 lier zone → pièce
   selected.zoneData.partId = partId;
 
-  // 🧠 feedback visuel immédiat
-  showInfo(PARTS[partId]);
+  // 💡 afficher infos de la pièce liée
+  showInfo(selected.zoneData);
 
   saveToLocal();
+  applyMode();
 }, { passive:false });
 
 $("btnDelete").addEventListener("click", ()=>{
@@ -618,44 +612,19 @@ $("btnDelete").addEventListener("click", ()=>{
   saveToLocal();
 }, { passive:false });
 
-/* =========================
-   ASSOCIATION PIÈCE (ÉTAPE 4)
-========================= */
-$("btnLinkPart").addEventListener("click", ()=>{
-  if(!isEditor || !selected || !selected.zoneData) return;
 
-  const partId = $("partSelect").value;
-  if(!partId) return;
 
-  // 🔗 lien zone → pièce Quincy
-  selected.zoneData.partId = partId;
-
-  // mise à jour affichage élève
-  const part = PARTS[partId];
-  if(part){
-    $("infoTitle").textContent = part.nom;
-    $("infoText").textContent =
-      (part.role || "") +
-      (part.desc ? " — " + part.desc : "");
-  }
-
-  saveToLocal();
-});
 
 /* =========================
    EXPORT JSON (download + fallback prompt)
 ========================= */
 function exportZonesJSON(){
-  // IMPORTANT: exporter depuis zonesData (source de vérité)
   const data = zonesData.map(z => ({
-    id: z.id,
-    x: Math.round(z.x),
-    y: Math.round(z.y),
-    w: Math.round(z.w),
-    h: Math.round(z.h),
-    nom: z.nom || "",
-    role: z.role || "",
-    desc: z.desc || ""
+    partId: z.partId || z.id,
+    x: z.x,
+    y: z.y,
+    w: z.w,
+    h: z.h
   }));
 
   const json = JSON.stringify(data, null, 2);
@@ -673,7 +642,6 @@ function exportZonesJSON(){
 
     setTimeout(()=>URL.revokeObjectURL(url), 250);
   }catch(e){
-    // fallback iOS
     prompt("Copie-colle ce JSON :", json);
   }
 }
