@@ -407,21 +407,32 @@ function bootZones(){
   const hasLocal = loadFromLocal();
 
   // 2) fallback demo zones if none
+  
   if(!hasLocal){
-    zonesData = [
-      { id:"cylindre_lp", x:420, y:180, w:120, h:260, nom:"Cylindre LP", role:"Compression initiale", desc:"Première étape de compression." },
-      { id:"filtre_air",  x:120, y:220, w: 80, h:200, nom:"Filtre à air", role:"Filtrer l’air entrant", desc:"Retient poussières/impuretés." },
-      { id:"manometre_hp",x:520, y:360, w:110, h:110, nom:"Manomètre HP", role:"Indiquer la pression", desc:"Lecture pression de service." }
-    ];
-    saveToLocal();
-  }
+  zonesByImage = {
+    "compresseur_bg.png": [
+      {
+        id:"cylindre_lp",
+        x:420, y:180, w:120, h:260,
+        nom:"Cylindre LP",
+        role:"Compression initiale",
+        desc:"Première étape de compression."
+      },
+      {
+        id:"filtre_air",
+        x:120, y:220, w:80, h:200,
+        nom:"Filtre à air",
+        role:"Filtrer l’air entrant",
+        desc:"Retient poussières/impuretés."
+      }
+    ]
+  };
 
-  zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
-
-  applyMode();
-  clearSelection();
-  fitCanvasToImage();
+  zonesData = zonesByImage[currentImage];
+  saveToLocal();
 }
+  
+  
 bootZones();
 
 function remplirMenuPieces(){
