@@ -169,7 +169,14 @@ html, body{
   <textarea id="editDesc" class="input" placeholder="Description"></textarea>
   <button id="btnApply" class="btn">💾 Appliquer</button>
   <button id="btnDelete" class="btn">🗑️ Supprimer la zone</button>
+<!-- ===== ASSOCIATION PIÈCE ===== -->
+<div class="sectionTitle">Associer une pièce</div>
 
+<select id="partSelect" class="input">
+  <option value="">— Choisir une pièce —</option>
+</select>
+
+<button id="btnLinkPart" class="btn">✔ Associer la pièce</button>
   <div class="sectionTitle">Sauvegarde</div>
   <button id="btnExport" class="btn">📤 Export JSON</button>
 </div>
@@ -181,6 +188,19 @@ html, body{
    CONFIG / DATA
 ========================= */
 const $ = id => document.getElementById(id);
+/* ===== ÉTAPE 2 — REMPLIR LE MENU DES PIÈCES ===== */
+
+const partSelect = $("partSelect");
+
+// sécurité : vider si jamais
+partSelect.innerHTML = '<option value="">— Choisir une pièce —</option>';
+
+Object.values(PARTS).forEach(part => {
+  const opt = document.createElement("option");
+  opt.value = part.id;      // clé technique
+  opt.textContent = part.nom; // texte visible
+  partSelect.appendChild(opt);
+});
 const EDITOR_PASSWORD = "comp";
 const STORAGE_KEY = "q310_zones_v1";
 
