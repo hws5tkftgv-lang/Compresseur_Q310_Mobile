@@ -259,24 +259,7 @@ $("btnDelete").onclick = () => {
   $("infoTitle").textContent = "Sélectionne une zone";
   $("infoText").textContent = "";
 };
-$("btnExport").onclick = ()=>{
-  const data = [];
 
-  canvas.getObjects().forEach(o=>{
-    if(!o.zoneId) return;
-
-    data.push({
-      id: o.zoneId,
-      x: Math.round(o.left),
-      y: Math.round(o.top),
-      w: Math.round(o.width * o.scaleX),
-      h: Math.round(o.height * o.scaleY)
-    });
-  });
-
-  const json = JSON.stringify(data, null, 2);
-  prompt("Copie-colle ce JSON :", json);
-};
 function resize(){
   canvas.setWidth($("stage").clientWidth);
   canvas.setHeight($("stage").clientHeight);
@@ -551,34 +534,8 @@ canvas.on("mouse:up", ()=>{
   selectObj(zone);
 });
 
-// 🔗 lien bidirectionnel (INDISPENSABLE)
-zone.zoneId = newId;
-zone.zoneData = zoneData;
-zoneData._obj = zone;
 
-// 📦 stockage
-zonesData.push(zoneData);
-canvas.add(zone);
 
-// 🎯 sélection immédiate
-applyMode();
-selectObj(zone);
-setUI();
-});
-function exportZonesJSON(){
-  const zones = [];
-
-  canvas.getObjects().forEach(o=>{
-    if(!o.zoneId) return;
-
-    zones.push({
-      id: o.zoneId,
-      x: Math.round(o.left),
-      y: Math.round(o.top),
-      w: Math.round(o.width * o.scaleX),
-      h: Math.round(o.height * o.scaleY)
-    });
-  });
 
   const json = JSON.stringify(zones, null, 2);
 
