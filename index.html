@@ -249,7 +249,7 @@ html, body{
     <textarea id="editRole" class="input" placeholder="Rôle"></textarea>
     <textarea id="editDesc" class="input" placeholder="Description"></textarea>
 
-    <button id="btnApply" class="btn">💾 Appliquer</button>
+  <button id="btnApply" class="btn">💾 Enregistrer la zone</button>
     <button id="btnDelete" class="btn">🗑️ Supprimer la zone</button>
   </div>
 
@@ -265,7 +265,7 @@ html, body{
   <option value="__new__">➕ Nouvelle pièce…</option>
 </select>
 
-<button id="btnLinkPart" class="btn">✔ Associer la pièce</button>
+
 
   <div class="sectionTitle">Sauvegarde</div>
   <button id="btnExport" class="btn">📤 Export JSON</button>
@@ -787,27 +787,57 @@ $("btnDraw").addEventListener("click", ()=>{ if(!isEditor) return; tool="draw"; 
 $("btnApply").addEventListener("click", ()=>{
   if(!isEditor || !selected || !selected.zoneData) return;
 
-  selected.zoneData.nom  = $("editNom").value.trim();
-  selected.zoneData.role = $("editRole").value.trim();
-  selected.zoneData.desc = $("editDesc").value.trim();
 
-  showInfo(selected.zoneData);
+
+  const z = selected.zoneData;
+
+  // 1️⃣ Sauvegarde texte zone
+  z.nom  = $("editNom").value.trim();
+  z.role = $("editRole").value.trim();
+  z.desc = $("editDesc").value.trim();
+
+  // 2️⃣ Gestion pièce
+  const select = $("partSelect");
+  let partId = select.value;
+
+  // ➕ Nouvelle pièce
+  if(partId === "__new__"){
+    const nom = prompt("Nom de la nouvelle pièce :");
+    if(!nom) return;
+
+    const role = prompt("Rôle de la pièce :", "");
+    const desc = prompt("Description :", "");
+
+    partId = nom
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]+/g,"_")
+      .replace(/^_|_$/g,"");
+
+    if(!PARTS[partId]){
+      const newPart = { id: partId, nom, role, desc };
+      PARTS[partId] = newPart;
+      PARTS_LIST.push(newPart);
+
+      const opt = document.createElement("option");
+      opt.value = partId;
+      opt.textContent = nom;
+      select.appendChild(opt);
+    }
+
+    select.value = partId;
+  }
+
+  // Pièce existante
+  if(partId){
+    z.partId = partId;
+  }
+
+  // 3️⃣ Finalisation
+  showInfo(z);
   saveToLocal();
   applyMode();
-}, { passive:false });
-
-$("btnDelete").addEventListener("click", ()=>{
-  if(!isEditor || !selected || !selected.zoneData) return;
-
-  // retirer du canvas
-  canvas.remove(selected);
-
-  // retirer des données
-  zonesData = zonesData.filter(z => z !== selected.zoneData);
-
-  clearSelection();
-  saveToLocal();
-}, { passive:false });
+});
 
 
 $("btnLinkPart").addEventListener("click", ()=>{
