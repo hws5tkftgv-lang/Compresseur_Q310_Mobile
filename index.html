@@ -641,8 +641,9 @@ $("imageSelect").addEventListener("change", e=>{
   currentImage = imgName;
   $("imgLayer").src = "actif/" + imgName;
 
-  // recharge zones de cette image
-  if(!zonesByImage[currentImage]){
+  
+}
+if(!zonesByImage[currentImage]){
   zonesByImage[currentImage] = [];
 }
 zonesData = zonesByImage[currentImage];
