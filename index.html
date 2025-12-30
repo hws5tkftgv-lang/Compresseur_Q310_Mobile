@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Q310 – iPhone Éditeur</title>
+<title>Q310 – iPhone Éditeur (Clean)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
@@ -17,18 +17,49 @@ html, body{
   color:#eaf1ff;
   font-family:Arial,Segoe UI,sans-serif;
 }
-#infoPanel{padding:10px;background:#0f1a44;border-bottom:1px solid rgba(255,255,255,.15);}
-#infoTitle{font-size:18px;font-weight:800;}
 
-.stage{position:relative;height:calc(100dvh - 120px);overflow:hidden;background:#0b1536;}
-.media-layer,canvas{position:absolute;inset:0;}
-#imgLayer{width:100%;height:100%;object-fit:contain;pointer-events:none;}
+#infoPanel{
+  padding:10px;
+  background:#0f1a44;
+  border-bottom:1px solid rgba(255,255,255,.15);
+}
+#infoTitle{ font-size:18px; font-weight:800; }
+#infoText{ font-size:14px; opacity:.9; margin-top:4px; }
 
-.stage,.canvas-container,canvas{touch-action:none !important;}
+.stage{
+  position:relative;
+  height:calc(100dvh - 120px);
+  overflow:hidden;
+  background:#0b1536;
+}
+.media-layer, .canvas-wrap{
+  position:absolute;
+  inset:0;
+}
+#imgLayer{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+}
+
+/* IMPORTANT iOS : empêcher Safari de prendre le scroll/pinch */
+.stage, .canvas-container, canvas{
+  touch-action:none !important;
+}
 
 #fab{
-  position:fixed;bottom:10px;left:10px;width:46px;height:46px;border-radius:10px;
-  background:#ffffff22;border:1px solid #ffffff55;color:#fff;font-size:22px;z-index:9999;
+  position:fixed;
+  bottom:10px;
+  left:10px;
+  width:46px;
+  height:46px;
+  border-radius:10px;
+  background:#ffffff22;
+  border:1px solid #ffffff55;
+  color:#fff;
+  font-size:22px;
+  z-index:9999;
 }
 
 #panel{
@@ -55,115 +86,328 @@ html, body{
   font-weight:700;
   text-transform:uppercase;
 }
+
 .btn{
-  width:100%;min-height:44px;margin-top:8px;background:#1b2553;color:#fff;
-  border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:15px;font-weight:800;
+  width:100%;
+  min-height:44px;
+  margin-top:8px;
+  background:#1b2553;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:10px;
+  font-size:15px;
+  font-weight:800;
 }
-.btn.active{background:#ff9800;color:#000;}
+.btn.active{ background:#ff9800; color:#000; }
 
 .input{
-  width:100%;min-height:44px;margin-top:8px;background:#101a40;color:#fff;
-  border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:15px;
-  padding:10px;box-sizing:border-box;
+  width:100%;
+  min-height:44px;
+  margin-top:8px;
+  background:#101a40;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:10px;
+  font-size:15px;
+  padding:10px;
+  box-sizing:border-box;
 }
 
-.small{font-size:12px;opacity:.85;line-height:1.35;margin-top:8px;}
-
-
+#editorState{
+  position:fixed;
+  top:10px;
+  left:10px;
+  background:#ff9800;
+  color:#000;
+  padding:6px 10px;
+  border-radius:8px;
+  font-weight:900;
+  z-index:9999;
+  display:none;
+}
 </style>
 </head>
 
 <body>
 
-<!-- ===== Bande info élève ===== -->
+<!-- Bande info élève -->
 <div id="infoPanel">
   <div id="infoTitle">Sélectionne une zone</div>
-  <div id="infoText" style="font-size:14px; opacity:.9; margin-top:4px;"></div>
+  <div id="infoText"></div>
 </div>
 
-<!-- ===== Zone image + canvas ===== -->
+<!-- Image + Canvas -->
 <div class="stage" id="stage">
   <div class="media-layer">
     <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
   </div>
-  <canvas id="c"></canvas>
+  <div class="canvas-wrap">
+    <canvas id="c"></canvas>
+  </div>
 </div>
 
-<!-- ===== Bouton menu flottant ===== -->
+<!-- Menu -->
 <button id="fab">☰</button>
 
-<!-- ===== MENU UNIQUE ===== -->
 <div id="panel">
-
   <div style="font-weight:900;margin-bottom:6px;">🧰 Menu</div>
 
-  <!-- État -->
   <div id="stateLine" style="font-weight:900;opacity:.9;">MODE ÉLÈVE</div>
 
-  <!-- Connexion éditeur -->
   <input id="pw" class="input" type="password" placeholder="Mot de passe éditeur (comp)">
   <button id="btnEditor" class="btn">🔒 Activer éditeur</button>
   <button id="btnExit" class="btn" style="display:none;">🚪 Quitter éditeur</button>
 
-  <!-- ===== OUTILS ===== -->
   <div class="sectionTitle">Outils</div>
   <button id="btnMove" class="btn" disabled>✋ Déplacer</button>
   <button id="btnResize" class="btn" disabled>⬍ Redimensionner</button>
   <button id="btnDraw" class="btn" disabled>➕ Nouvelle zone</button>
 
-  <!-- ===== ÉDITION ZONE ===== -->
   <div class="sectionTitle">Zone sélectionnée</div>
   <input id="editNom" class="input" placeholder="Nom">
   <textarea id="editRole" class="input" placeholder="Rôle"></textarea>
   <textarea id="editDesc" class="input" placeholder="Description"></textarea>
-
   <button id="btnApply" class="btn">💾 Appliquer</button>
   <button id="btnDelete" class="btn">🗑️ Supprimer la zone</button>
 
-  <!-- ===== SAUVEGARDE ===== -->
   <div class="sectionTitle">Sauvegarde</div>
   <button id="btnExport" class="btn">📤 Export JSON</button>
-
 </div>
 
-<!-- ===== Badge éditeur ===== -->
-<div id="editorState"
-     style="position:fixed;top:10px;left:10px;
-            background:#ff9800;color:#000;
-            padding:6px 10px;border-radius:8px;
-            font-weight:900;z-index:9999;
-            display:none;">
-  ✏️ MODE ÉDITEUR
-</div>
+<div id="editorState">✏️ MODE ÉDITEUR</div>
 
 <script>
-/* ================== CONFIG ================== */
-const EDITOR_PASSWORD = "comp";
+/* =========================
+   CONFIG / DATA
+========================= */
 const $ = id => document.getElementById(id);
+const EDITOR_PASSWORD = "comp";
+const STORAGE_KEY = "q310_zones_v1";
 
-/* ================== ÉTAT ================== */
 let isEditor = false;
 let tool = "view"; // view | move | resize | draw
 let selected = null;
+
 let drawing = false;
-let start = null;
+let startPt = null;
 let tempRect = null;
 
-/* ================== CANVAS ================== */
+let zonesData = []; // [{id,x,y,w,h,nom,role,desc}]
+
+/* =========================
+   CANVAS
+========================= */
 const canvas = new fabric.Canvas("c", { selection:false });
-canvas.preserveObjectStacking = true;
 canvas.selection = false;
+canvas.preserveObjectStacking = true;
 
-/* iOS SAFE */
+// iOS: empêcher gestes Safari
 canvas.upperCanvasEl.style.touchAction = "none";
+canvas.upperCanvasEl.style.webkitUserSelect = "none";
+canvas.upperCanvasEl.style.webkitTouchCallout = "none";
 
-/* Ergonomie tactile */
+// ergonomie tactile
 fabric.Object.prototype.cornerSize = 36;
 fabric.Object.prototype.cornerStyle = "circle";
 fabric.Object.prototype.transparentCorners = false;
-fabric.Object.prototype.targetFindTolerance = 40;
+fabric.Object.prototype.padding = 10;
 
-/* ================== UI ================== */
+// sélection plus facile iPhone
+fabric.Object.prototype.perPixelTargetFind = false;
+fabric.Object.prototype.targetFindTolerance = 45;
+
+/* =========================
+   FIT CANVAS TO IMAGE (contain)
+========================= */
+function fitCanvasToImage(){
+  const img = $("imgLayer");
+  const stage = $("stage");
+  if(!img.naturalWidth) return;
+
+  const stageW = stage.clientWidth;
+  const stageH = stage.clientHeight;
+
+  const imgRatio = img.naturalWidth / img.naturalHeight;
+  const stageRatio = stageW / stageH;
+
+  let canvasW, canvasH;
+
+  if(stageRatio > imgRatio){
+    canvasH = stageH;
+    canvasW = canvasH * imgRatio;
+  }else{
+    canvasW = stageW;
+    canvasH = canvasW / imgRatio;
+  }
+
+  // centre canvas dans stage
+  const offsetX = (stageW - canvasW) / 2;
+  const offsetY = (stageH - canvasH) / 2;
+
+  canvas.setWidth(canvasW);
+  canvas.setHeight(canvasH);
+  canvas.calcOffset();
+
+  canvas.getElement().style.position = "absolute";
+  canvas.getElement().style.left = offsetX + "px";
+  canvas.getElement().style.top  = offsetY + "px";
+
+  canvas.requestRenderAll();
+}
+
+$("imgLayer").addEventListener("load", fitCanvasToImage);
+window.addEventListener("resize", fitCanvasToImage);
+
+/* =========================
+   SAVE / LOAD (localStorage)
+========================= */
+function saveToLocal(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(zonesData));
+  }catch(e){}
+}
+
+function loadFromLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return false;
+    zonesData = arr;
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+/* =========================
+   CREATE RECT FROM DATA
+========================= */
+function makeRectFromZone(z){
+  const r = new fabric.Rect({
+    left: z.x,
+    top: z.y,
+    width: z.w,
+    height: z.h,
+    fill: "rgba(255,255,255,0.08)",
+    stroke: "white",
+    strokeWidth: 3,
+    lockRotation: true
+  });
+  r.zoneId = z.id;
+  r.zoneData = z;
+  return r;
+}
+
+/* =========================
+   BOOT: load zones
+========================= */
+function bootZones(){
+  canvas.clear();
+
+  // 1) load local zones if exist
+  const hasLocal = loadFromLocal();
+
+  // 2) fallback demo zones if none
+  if(!hasLocal){
+    zonesData = [
+      { id:"cylindre_lp", x:420, y:180, w:120, h:260, nom:"Cylindre LP", role:"Compression initiale", desc:"Première étape de compression." },
+      { id:"filtre_air",  x:120, y:220, w: 80, h:200, nom:"Filtre à air", role:"Filtrer l’air entrant", desc:"Retient poussières/impuretés." },
+      { id:"manometre_hp",x:520, y:360, w:110, h:110, nom:"Manomètre HP", role:"Indiquer la pression", desc:"Lecture pression de service." }
+    ];
+    saveToLocal();
+  }
+
+  zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
+
+  applyMode();
+  clearSelection();
+  fitCanvasToImage();
+}
+bootZones();
+
+/* =========================
+   UI / MODES
+========================= */
+function setActiveBtn(btnId){
+  ["btnMove","btnResize","btnDraw"].forEach(id => $(id).classList.remove("active"));
+  if(btnId) $(btnId).classList.add("active");
+}
+
+function showAllResizeHandles(obj, on){
+  obj.setControlsVisibility({
+    tl:on, tr:on, bl:on, br:on,
+    ml:on, mt:on, mr:on, mb:on,
+    mtr:false
+  });
+}
+
+function applyMode(){
+  canvas.forEachObject(o => {
+
+    // reset base
+    o.stroke = (o === selected) ? "orange" : "white";
+    o.strokeWidth = (o === selected) ? 5 : 3;
+
+    // mode élève
+    if(!isEditor){
+      o.evented = true;         // pour cliquer et lire
+      o.selectable = false;
+      o.hasControls = false;
+      o.hasBorders = false;
+
+      o.lockMovementX = true;
+      o.lockMovementY = true;
+      o.lockScalingX  = true;
+      o.lockScalingY  = true;
+      o.lockRotation  = true;
+
+      showAllResizeHandles(o,false);
+      return;
+    }
+
+    // mode éditeur
+    o.evented = true;
+    o.lockRotation = true;
+
+    if(tool === "draw"){
+      o.selectable = false;
+      o.hasControls = false;
+      o.hasBorders = false;
+      showAllResizeHandles(o,false);
+      // IMPORTANT: on laisse evented=true (sinon sélection casse) mais on gère draw via handler
+      return;
+    }
+
+    if(tool === "move"){
+      o.selectable = true;
+      o.hasControls = false;
+      o.hasBorders = true;
+      o.lockMovementX = false;
+      o.lockMovementY = false;
+      o.lockScalingX  = true;
+      o.lockScalingY  = true;
+      showAllResizeHandles(o,false);
+      return;
+    }
+
+    if(tool === "resize"){
+      o.selectable = true;
+      o.hasControls = true;
+      o.hasBorders = true;
+      o.lockMovementX = false;
+      o.lockMovementY = false;
+      o.lockScalingX  = false;
+      o.lockScalingY  = false;
+      showAllResizeHandles(o,true);
+      return;
+    }
+
+  });
+
+  canvas.requestRenderAll();
+}
+
 function setUI(){
   $("editorState").style.display = isEditor ? "block" : "none";
   $("stateLine").textContent = isEditor ? "MODE ÉDITEUR" : "MODE ÉLÈVE";
@@ -171,197 +415,280 @@ function setUI(){
   $("btnEditor").style.display = isEditor ? "none" : "block";
   $("btnExit").style.display   = isEditor ? "block" : "none";
 
-  ["btnMove","btnResize","btnDraw"].forEach(id=>{
-    $(id).disabled = !isEditor;
-  });
+  $("btnMove").disabled   = !isEditor;
+  $("btnResize").disabled = !isEditor;
+  $("btnDraw").disabled   = !isEditor;
+
+  setActiveBtn(isEditor ? (tool==="move"?"btnMove":tool==="resize"?"btnResize":tool==="draw"?"btnDraw":null) : null);
 
   applyMode();
 }
 
-function applyMode(){
-  canvas.forEachObject(o=>{
-    o.evented = false;
-    o.selectable = false;
-    o.hasControls = false;
-    o.hasBorders = false;
-
-    if(isEditor){
-      o.evented = true;
-
-      if(tool === "move"){
-        o.selectable = true;
-        o.hasBorders = true;
-      }
-      if(tool === "resize"){
-        o.selectable = true;
-        o.hasBorders = true;
-        o.hasControls = true;
-      }
-    }
-  });
-  canvas.requestRenderAll();
+/* =========================
+   SELECTION + PANEL FIELDS
+========================= */
+function fillEditorFields(z){
+  $("editNom").value  = z?.nom  || "";
+  $("editRole").value = z?.role || "";
+  $("editDesc").value = z?.desc || "";
 }
 
-/* ================== MENU ================== */
+function showInfo(z){
+  if(!z){
+    $("infoTitle").textContent = "Sélectionne une zone";
+    $("infoText").textContent = "";
+    return;
+  }
+  $("infoTitle").textContent = z.nom || z.id || "Zone";
+  const a = (z.role || "");
+  const b = (z.desc || "");
+  $("infoText").textContent = a + (b ? " — " + b : "");
+}
+
+function selectObj(obj){
+  if(!obj || !obj.zoneData) return;
+
+  selected = obj;
+  canvas.setActiveObject(obj);
+
+  fillEditorFields(obj.zoneData);
+  showInfo(obj.zoneData);
+
+  applyMode();
+}
+
+function clearSelection(){
+  selected = null;
+  canvas.discardActiveObject();
+  fillEditorFields(null);
+  showInfo(null);
+  applyMode();
+}
+
+/* =========================
+   MENU (robuste iOS)
+========================= */
+function togglePanel(){
+  const p = $("panel");
+  p.style.display = (p.style.display === "block") ? "none" : "block";
+}
+
 ["click","touchend"].forEach(evt=>{
-  $("fab").addEventListener(evt, e=>{
+  $("fab").addEventListener(evt, (e)=>{
     e.preventDefault();
     e.stopPropagation();
-    $("panel").style.display =
-      $("panel").style.display === "block" ? "none" : "block";
+    togglePanel();
   }, { passive:false });
 });
 
-/* ================== MODE ÉDITEUR ================== */
-$("btnEditor").onclick = ()=>{
-  if(($("pw").value||"").trim() !== EDITOR_PASSWORD){
-    alert("Mot de passe incorrect");
-    return;
-  }
+/* =========================
+   EDITOR ON/OFF + TOOLS
+========================= */
+$("btnEditor").addEventListener("click", ()=>{
+  const p = ($("pw").value || "").trim();
+  if(p !== EDITOR_PASSWORD){ alert("Mot de passe incorrect."); return; }
   isEditor = true;
   tool = "move";
   setUI();
-};
+}, { passive:false });
 
-$("btnExit").onclick = ()=>{
+$("btnExit").addEventListener("click", ()=>{
   isEditor = false;
   tool = "view";
   clearSelection();
   setUI();
-};
+}, { passive:false });
 
-/* ================== OUTILS ================== */
-$("btnMove").onclick   = ()=>{ if(isEditor){ tool="move"; applyMode(); }};
-$("btnResize").onclick = ()=>{ if(isEditor){ tool="resize"; applyMode(); }};
-$("btnDraw").onclick   = ()=>{ if(isEditor){ tool="draw"; clearSelection(); applyMode(); }};
+$("btnMove").addEventListener("click", ()=>{ if(!isEditor) return; tool="move"; setUI(); }, { passive:false });
+$("btnResize").addEventListener("click", ()=>{ if(!isEditor) return; tool="resize"; setUI(); }, { passive:false });
+$("btnDraw").addEventListener("click", ()=>{ if(!isEditor) return; tool="draw"; clearSelection(); setUI(); }, { passive:false });
 
-/* ================== SÉLECTION ================== */
-function selectObj(o){
-  if(!o || !o.zoneData) return;
+/* =========================
+   APPLY / DELETE
+========================= */
+$("btnApply").addEventListener("click", ()=>{
+  if(!isEditor || !selected || !selected.zoneData) return;
+
+  selected.zoneData.nom  = $("editNom").value.trim();
+  selected.zoneData.role = $("editRole").value.trim();
+  selected.zoneData.desc = $("editDesc").value.trim();
+
+  showInfo(selected.zoneData);
+  saveToLocal();
+  applyMode();
+}, { passive:false });
+
+$("btnDelete").addEventListener("click", ()=>{
+  if(!isEditor || !selected || !selected.zoneData) return;
+
+  const id = selected.zoneData.id;
+
+  zonesData = zonesData.filter(z => z.id !== id);
+  canvas.remove(selected);
+
   clearSelection();
-  selected = o;
-  o.set({ stroke:"orange", strokeWidth:4 });
-  canvas.setActiveObject(o);
+  saveToLocal();
+}, { passive:false });
 
-  $("infoTitle").textContent = o.zoneData.nom;
-  $("infoText").textContent  =
-    (o.zoneData.role||"") +
-    (o.zoneData.desc ? " — "+o.zoneData.desc : "");
+/* =========================
+   EXPORT JSON (download + fallback prompt)
+========================= */
+function exportZonesJSON(){
+  // IMPORTANT: exporter depuis zonesData (source de vérité)
+  const data = zonesData.map(z => ({
+    id: z.id,
+    x: Math.round(z.x),
+    y: Math.round(z.y),
+    w: Math.round(z.w),
+    h: Math.round(z.h),
+    nom: z.nom || "",
+    role: z.role || "",
+    desc: z.desc || ""
+  }));
 
-  canvas.requestRenderAll();
-}
+  const json = JSON.stringify(data, null, 2);
 
-function clearSelection(){
-  if(!selected) return;
-  selected.set({ stroke:"white", strokeWidth:3 });
-  selected = null;
-  canvas.discardActiveObject();
-}
+  try{
+    const blob = new Blob([json], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
 
-/* ================== DESSIN ZONE ================== */
-canvas.on("mouse:down", opt=>{
-  if(isEditor && tool==="draw"){
-    drawing = true;
-    start = canvas.getPointer(opt.e);
-    tempRect = new fabric.Rect({
-      left:start.x, top:start.y,
-      width:2, height:2,
-      fill:"rgba(255,255,255,0.1)",
-      stroke:"#00a2ff", strokeWidth:3,
-      selectable:false, evented:false
-    });
-    canvas.add(tempRect);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "zones_mobile.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    setTimeout(()=>URL.revokeObjectURL(url), 250);
+  }catch(e){
+    // fallback iOS
+    prompt("Copie-colle ce JSON :", json);
   }
-  else if(opt.target){
-    selectObj(opt.target);
-  } else {
+}
+
+["click","touchend"].forEach(evt=>{
+  $("btnExport").addEventListener(evt, (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    exportZonesJSON();
+  }, { passive:false });
+});
+
+/* =========================
+   FABRIC EVENTS: select / move / resize / draw
+========================= */
+canvas.on("mouse:down", opt => {
+  const obj = opt.target;
+
+  // DRAW
+  if(isEditor && tool === "draw"){
+    drawing = true;
+    startPt = canvas.getPointer(opt.e);
+
+    tempRect = new fabric.Rect({
+      left: startPt.x,
+      top: startPt.y,
+      width: 2,
+      height: 2,
+      fill: "rgba(255,255,255,0.10)",
+      stroke: "#00a2ff",
+      strokeWidth: 3,
+      selectable:false,
+      evented:false
+    });
+
+    canvas.add(tempRect);
+    canvas.requestRenderAll();
+    return;
+  }
+
+  // SELECT (éditeur ou élève)
+  if(obj){
+    selectObj(obj);
+  }else{
     clearSelection();
-    $("infoTitle").textContent = "Sélectionne une zone";
-    $("infoText").textContent = "";
   }
 });
 
-canvas.on("mouse:move", opt=>{
-  if(!drawing || !tempRect) return;
+canvas.on("mouse:move", opt => {
+  if(!(drawing && tempRect)) return;
   const p = canvas.getPointer(opt.e);
-  tempRect.set({
-    left:Math.min(start.x,p.x),
-    top: Math.min(start.y,p.y),
-    width:Math.abs(p.x-start.x),
-    height:Math.abs(p.y-start.y)
-  });
+
+  const left = Math.min(startPt.x, p.x);
+  const top  = Math.min(startPt.y, p.y);
+  const w = Math.abs(p.x - startPt.x);
+  const h = Math.abs(p.y - startPt.y);
+
+  tempRect.set({ left, top, width:Math.max(2,w), height:Math.max(2,h) });
   tempRect.setCoords();
   canvas.requestRenderAll();
 });
 
-canvas.on("mouse:up", ()=>{
-  if(!drawing || !tempRect) return;
+canvas.on("mouse:up", () => {
+  if(!(drawing && tempRect)) return;
   drawing = false;
 
-  if(tempRect.width < 12 || tempRect.height < 12){
-    canvas.remove(tempRect);
-    tempRect = null;
-    return;
-  }
-
-  const nom  = prompt("Nom de la zone ?");
-  if(!nom){ canvas.remove(tempRect); return; }
-  const role = prompt("Rôle ?");
-  const desc = prompt("Description ?");
-
-  const zoneData = {
-    id:"zone_"+Date.now(),
-    nom, role, desc
-  };
-
-  const zone = new fabric.Rect({
-    left:tempRect.left,
-    top:tempRect.top,
-    width:tempRect.width,
-    height:tempRect.height,
-    fill:"rgba(255,255,255,0.08)",
-    stroke:"white", strokeWidth:3,
-    lockRotation:true
-  });
-
-  zone.zoneId = zoneData.id;
-  zone.zoneData = zoneData;
-
+  const r = tempRect;
   canvas.remove(tempRect);
   tempRect = null;
 
-  canvas.add(zone);
-  selectObj(zone);
-  applyMode();
+  if(r.width < 12 || r.height < 12) return;
+
+  // création “propre” sans casser menu
+  const id = "zone_" + Date.now();
+  const z = {
+    id,
+    x: Math.round(r.left),
+    y: Math.round(r.top),
+    w: Math.round(r.width),
+    h: Math.round(r.height),
+    nom:"",
+    role:"",
+    desc:""
+  };
+
+  zonesData.push(z);
+
+  const rect = makeRectFromZone(z);
+  canvas.add(rect);
+
+  // sélectionner + remplir inputs
+  selectObj(rect);
+
+  // repasser en move (plus agréable)
+  tool = "move";
+  setUI();
+
+  saveToLocal();
 });
 
-/* ================== EXPORT JSON ================== */
-function exportZonesJSON(){
-  const data = [];
-  canvas.getObjects().forEach(o=>{
-    if(!o.zoneId) return;
-    data.push({
-      id:o.zoneId,
-      x:Math.round(o.left),
-      y:Math.round(o.top),
-      w:Math.round(o.width * o.scaleX),
-      h:Math.round(o.height * o.scaleY),
-      nom:o.zoneData.nom,
-      role:o.zoneData.role,
-      desc:o.zoneData.desc
-    });
-  });
+/* Synchroniser coords lors d’un drag/resize */
+canvas.on("object:modified", e => {
+  if(!isEditor) return;
+  const o = e.target;
+  if(!o || !o.zoneData) return;
 
-  const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "zones.json";
-  a.click();
-  URL.revokeObjectURL(url);
-}
+  // update data (source de vérité)
+  const z = o.zoneData;
+  z.x = Math.round(o.left);
+  z.y = Math.round(o.top);
+  z.w = Math.round(o.width  * o.scaleX);
+  z.h = Math.round(o.height * o.scaleY);
 
-$("btnExport").addEventListener("click", exportZonesJSON, {passive:false});
+  // reset scale pour garder chiffres propres
+  o.set({ scaleX:1, scaleY:1, width:z.w, height:z.h, left:z.x, top:z.y });
+  o.setCoords();
+
+  saveToLocal();
+});
+
+/* Empêche “scroll page” si tu glisses sur canvas (iOS) */
+canvas.upperCanvasEl.addEventListener("touchmove", e=>{
+  e.preventDefault();
+}, { passive:false });
+
+setUI();
 </script>
+
 </body>
 </html>
