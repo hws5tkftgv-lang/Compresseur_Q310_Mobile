@@ -189,7 +189,29 @@ html, body{
 ========================= */
 const $ = id => document.getElementById(id);
 /* ===== ÉTAPE 2 — REMPLIR LE MENU DES PIÈCES ===== */
-
+/* =========================
+   PARTS — Pièces Quincy 310L
+========================= */
+const PARTS = {
+  filtre_air: {
+    id: "filtre_air",
+    nom: "Filtre à air",
+    role: "Filtrer l’air entrant",
+    desc: "Retient les poussières et impuretés"
+  },
+  cylindre_lp: {
+    id: "cylindre_lp",
+    nom: "Cylindre basse pression (LP)",
+    role: "Compression initiale",
+    desc: "Première étape de compression"
+  },
+  manometre_hp: {
+    id: "manometre_hp",
+    nom: "Manomètre HP",
+    role: "Indiquer la pression",
+    desc: "Lecture de la pression de service"
+  }
+};
 const partSelect = $("partSelect");
 
 // sécurité : vider si jamais
