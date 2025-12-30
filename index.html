@@ -9,6 +9,19 @@
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
 <style>
+
+.mediaBlock{
+  margin-bottom:20px;
+}
+
+.mediaBlock img,
+.mediaBlock iframe,
+.mediaBlock video{
+  width:100%;
+  border-radius:12px;
+  background:#000;
+}
+
 html, body{
   margin:0;
   height:100%;
@@ -174,7 +187,9 @@ html, body{
 
 <!-- ===== ASSOCIATION PIÈCE ===== -->
 <div class="sectionTitle">Associer une pièce</div>
+<div class="sectionTitle">Médias (pièce)</div>
 
+<button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
 <select id="partSelect" class="input">
   <option value="">— Choisir une pièce —</option>
   <option value="__new__">➕ Nouvelle pièce…</option>
@@ -544,6 +559,49 @@ function togglePanel(){
   }, { passive:false });
 });
 
+$("btnShowMedia").addEventListener("click", ()=>{
+  if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
+
+  const part = PARTS[selected.zoneData.partId];
+  if(!part || !part.medias) return;
+
+  const box = $("mediaContent");
+  box.innerHTML = "";
+
+  /* IMAGES */
+  (part.medias.images || []).forEach(src=>{
+    const d = document.createElement("div");
+    d.className = "mediaBlock";
+    d.innerHTML = `<img src="${src}" loading="lazy">`;
+    box.appendChild(d);
+  });
+
+  /* VIDÉOS */
+  (part.medias.videos || []).forEach(src=>{
+    const d = document.createElement("div");
+    d.className = "mediaBlock";
+
+    if(src.includes("youtube")){
+      d.innerHTML = `
+        <iframe src="${src}"
+          frameborder="0"
+          allowfullscreen
+          loading="lazy"></iframe>`;
+    }else{
+      d.innerHTML = `
+        <video src="${src}" controls></video>`;
+    }
+
+    box.appendChild(d);
+  });
+
+  $("mediaViewer").style.display = "block";
+});
+
+$("btnCloseMedia").addEventListener("click", ()=>{
+  $("mediaViewer").style.display = "none";
+});
+
 /* =========================
    EDITOR ON/OFF + TOOLS
 ========================= */
@@ -800,6 +858,21 @@ canvas.upperCanvasEl.addEventListener("touchmove", e=>{
 
 setUI();
 </script>
+<div id="mediaViewer" style="
+  position:fixed;
+  inset:0;
+  background:#050b24;
+  display:none;
+  z-index:20000;
+  overflow-y:auto;
+  padding:16px;
+">
 
+  <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">
+    ❌ Fermer
+  </button>
+
+  <div id="mediaContent"></div>
+</div>
 </body>
 </html>
