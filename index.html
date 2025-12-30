@@ -641,12 +641,11 @@ $("imageSelect").addEventListener("change", e=>{
   currentImage = imgName;
   $("imgLayer").src = "actif/" + imgName;
 
-  
-}
-if(!zonesByImage[currentImage]){
-  zonesByImage[currentImage] = [];
-}
-zonesData = zonesByImage[currentImage];
+  // sécurise tableau zones
+  if(!zonesByImage[currentImage]){
+    zonesByImage[currentImage] = [];
+  }
+  zonesData = zonesByImage[currentImage];
 
   // reset canvas
   canvas.clear();
@@ -655,8 +654,6 @@ zonesData = zonesByImage[currentImage];
   clearSelection();
   fitCanvasToImage();
 });
-
-
 
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
