@@ -172,7 +172,19 @@ html, body{
   <input id="pw" class="input" type="password" placeholder="Mot de passe éditeur (comp)">
   <button id="btnEditor" class="btn">🔒 Activer éditeur</button>
   <button id="btnExit" class="btn" style="display:none;">🚪 Quitter éditeur</button>
-
+<div class="sectionTitle">Image active</div>
+<select id="imageSelect" class="input">
+  <option value="compresseur_bg.png">Vue principale</option>
+  <option value="POULIE.jpeg">Poulie</option>
+  <option value="SOUPAPE_UNLOADER.jpeg">Soupape unloader</option>
+  <option value="TETE.jpeg">Tête</option>
+  <option value="TETE_2.jpeg">Tête (2)</option>
+  <option value="TOP.jpeg">Dessus</option>
+  <option value="VERS_RESERVOIR.jpeg">Vers réservoir</option>
+  <option value="VUE_GENERALE.jpeg">Vue générale</option>
+  <option value="VUE_GENERALE_2.jpeg">Vue générale (2)</option>
+  <option value="VUE_POMPE.jpeg">Vue pompe</option>
+</select>
   <div class="sectionTitle">Outils</div>
   <button id="btnMove" class="btn" disabled>✋ Déplacer</button>
   <button id="btnResize" class="btn" disabled>⬍ Redimensionner</button>
@@ -223,6 +235,10 @@ html, body{
 
 <script>
 const $ = id => document.getElementById(id);
+
+let currentImage = "compresseur_bg.png";  // image par défaut (référence)
+let zonesByImage = {};                    // zones classées par image
+
 let PARTS = {};        // index par id
 let PARTS_LIST = [];  // liste brute depuis le JSON
 
@@ -254,6 +270,17 @@ fetch("quincy_310L_parts.json")
 
 const EDITOR_PASSWORD = "comp";
 const STORAGE_KEY = "q310_zones_v1";
+
+let currentImage = "compresseur_bg.png";
+
+/*
+  zonesByImage = {
+    "compresseur_bg.png": [ zones... ],
+    "POULIE.jpeg": [ zones... ]
+  }
+*/
+let zonesByImage = {};
+
 
 let isEditor = false;
 let tool = "view"; // view | move | resize | draw
@@ -332,24 +359,32 @@ window.addEventListener("resize", fitCanvasToImage);
 /* =========================
    SAVE / LOAD (localStorage)
 ========================= */
+
 function saveToLocal(){
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(zonesData));
+    zonesByImage[currentImage] = zonesData;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(zonesByImage));
   }catch(e){}
 }
+
+
 
 function loadFromLocal(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return false;
-    const arr = JSON.parse(raw);
-    if(!Array.isArray(arr)) return false;
-    zonesData = arr;
+
+    const obj = JSON.parse(raw);
+    if(typeof obj !== "object") return false;
+
+    zonesByImage = obj;
+    zonesData = zonesByImage[currentImage] || [];
     return true;
   }catch(e){
     return false;
   }
 }
+
 
 /* =========================
    CREATE RECT FROM DATA
@@ -584,6 +619,29 @@ $("fab").addEventListener("click", (e)=>{
   e.stopPropagation();
   togglePanel();
 });
+
+$("imageSelect").addEventListener("change", e=>{
+  const imgName = e.target.value;
+
+  // sauvegarde image actuelle
+  saveToLocal();
+
+  // change image
+  currentImage = imgName;
+  $("imgLayer").src = "actif/" + imgName;
+
+  // recharge zones de cette image
+  zonesData = zonesByImage[currentImage] || [];
+
+  // reset canvas
+  canvas.clear();
+  zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
+
+  clearSelection();
+  fitCanvasToImage();
+});
+
+
 
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
