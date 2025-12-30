@@ -190,12 +190,22 @@ html, body{
   <button id="btnResize" class="btn" disabled>⬍ Redimensionner</button>
   <button id="btnDraw" class="btn" disabled>➕ Nouvelle zone</button>
 
-  <div class="sectionTitle">Zone sélectionnée</div>
-  <input id="editNom" class="input" placeholder="Nom">
-  <textarea id="editRole" class="input" placeholder="Rôle"></textarea>
-  <textarea id="editDesc" class="input" placeholder="Description"></textarea>
-  <button id="btnApply" class="btn">💾 Appliquer</button>
-  <button id="btnDelete" class="btn">🗑️ Supprimer la zone</button>
+<div class="zoneBox">
+
+  <div class="zoneHeader">
+    📦 Zone sélectionnée
+  </div>
+
+  <div class="zoneContent">
+    <input id="editNom" class="input" placeholder="Nom">
+    <textarea id="editRole" class="input" placeholder="Rôle"></textarea>
+    <textarea id="editDesc" class="input" placeholder="Description"></textarea>
+
+    <button id="btnApply" class="btn">💾 Appliquer</button>
+    <button id="btnDelete" class="btn">🗑️ Supprimer la zone</button>
+  </div>
+
+</div>
 
 <!-- ===== ASSOCIATION PIÈCE ===== -->
 <div class="sectionTitle">Associer une pièce</div>
