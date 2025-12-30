@@ -617,6 +617,46 @@ function fitCanvasToImage(){
 
   canvas.requestRenderAll();
 }
+// ===== EXPORT JSON (iOS SAFE) =====
+$("btnExport").addEventListener("click", exportZonesJSON, { passive:false });
+$("btnExport").addEventListener("touchend", (e)=>{
+  e.preventDefault();
+  exportZonesJSON();
+}, { passive:false });
+
+function exportZonesJSON(){
+  const data = [];
+
+  canvas.getObjects().forEach(o=>{
+    if(!o.zoneId) return;
+
+    data.push({
+      id: o.zoneId,
+      x: Math.round(o.left),
+      y: Math.round(o.top),
+      w: Math.round(o.width * o.scaleX),
+      h: Math.round(o.height * o.scaleY),
+      nom: o.zoneData?.nom || "",
+      role: o.zoneData?.role || "",
+      desc: o.zoneData?.desc || ""
+    });
+  });
+
+  const json = JSON.stringify(data, null, 2);
+
+  // ✅ Téléchargement iPhone / Safari fiable
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "zones_mobile.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+}
 </script>
 
 </body>
