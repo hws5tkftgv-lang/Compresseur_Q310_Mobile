@@ -920,6 +920,7 @@ canvas.on("mouse:up", () => {
   };
 
   zonesData.push(z);
+  zonesByImage[currentImage] = zonesData;
 
   const rect = makeRectFromZone(z);
   canvas.add(rect);
