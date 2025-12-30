@@ -213,9 +213,7 @@ html, body{
   <button id="btnExport" class="btn">📤 Export JSON</button>
 </div>
 
-<button id="btnReset" class="btn" style="background:#b00020;">
-  ♻️ Réinitialiser les zones (debug)
-</button>
+
 
 <div id="editorState">✏️ MODE ÉDITEUR</div>
 
@@ -970,12 +968,7 @@ canvas.upperCanvasEl.addEventListener("touchmove", e=>{
 
 setUI();
 
-$("btnReset").addEventListener("click", ()=>{
-  if(!confirm("Supprimer toutes les zones sauvegardées ?")) return;
 
-  localStorage.removeItem("q310_zones_v1");
-  location.reload();
-});
 
 
 </script>
