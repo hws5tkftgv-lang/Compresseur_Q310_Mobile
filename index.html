@@ -383,7 +383,10 @@ bootZones();
 function remplirMenuPieces(){
   const select = $("partSelect");
 
-  select.innerHTML = '<option value="">— Choisir une pièce —</option>';
+  select.innerHTML = `
+    <option value="">— Choisir une pièce —</option>
+    <option value="__new__">➕ Nouvelle pièce…</option>
+  `;
 
   PARTS_LIST.forEach(p => {
     const opt = document.createElement("option");
@@ -485,7 +488,8 @@ function setUI(){
   $("btnMove").disabled   = !isEditor;
   $("btnResize").disabled = !isEditor;
   $("btnDraw").disabled   = !isEditor;
-
+$("btnShowMedia").disabled = !selected || !selected.zoneData || !selected.zoneData.partId;
+$("btnLinkPart").disabled = !selected;
   setActiveBtn(isEditor ? (tool==="move"?"btnMove":tool==="resize"?"btnResize":tool==="draw"?"btnDraw":null) : null);
 
   applyMode();
@@ -608,6 +612,8 @@ $("btnCloseMedia").addEventListener("click", ()=>{
 $("btnEditor").addEventListener("click", ()=>{
   const p = ($("pw").value || "").trim();
   if(p !== EDITOR_PASSWORD){ alert("Mot de passe incorrect."); return; }
+
+  $("pw").value = ""; // 🔒 nettoyage sécurité
   isEditor = true;
   tool = "move";
   setUI();
@@ -638,6 +644,20 @@ $("btnApply").addEventListener("click", ()=>{
   saveToLocal();
   applyMode();
 }, { passive:false });
+
+$("btnDelete").addEventListener("click", ()=>{
+  if(!isEditor || !selected || !selected.zoneData) return;
+
+  // retirer du canvas
+  canvas.remove(selected);
+
+  // retirer des données
+  zonesData = zonesData.filter(z => z !== selected.zoneData);
+
+  clearSelection();
+  saveToLocal();
+}, { passive:false });
+
 
 $("btnLinkPart").addEventListener("click", ()=>{
   if(!isEditor || !selected || !selected.zoneData) return;
