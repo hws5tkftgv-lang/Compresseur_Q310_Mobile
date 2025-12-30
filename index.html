@@ -356,12 +356,17 @@ window.addEventListener("resize", fitCanvasToImage);
 
 function saveToLocal(){
   try{
+    if(!zonesByImage[currentImage]){
+      zonesByImage[currentImage] = [];
+    }
+
     zonesByImage[currentImage] = zonesData;
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(zonesByImage));
-  }catch(e){}
+  }catch(e){
+    console.error("Save error", e);
+  }
 }
-
-
 
 function loadFromLocal(){
   try{
