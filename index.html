@@ -171,9 +171,16 @@ html, body{
   <textarea id="editDesc" class="input" placeholder="Description"></textarea>
   <button id="btnApply" class="btn">💾 Appliquer</button>
   <button id="btnDelete" class="btn">🗑️ Supprimer la zone</button>
+
 <!-- ===== ASSOCIATION PIÈCE ===== -->
 <div class="sectionTitle">Associer une pièce</div>
 
+<select id="partSelect" class="input">
+  <option value="">— Choisir une pièce —</option>
+  <option value="__new__">➕ Nouvelle pièce…</option>
+</select>
+
+<button id="btnLinkPart" class="btn">✔ Associer la pièce</button>
 <select id="partSelect" class="input">
   <option value="">— Choisir une pièce —</option>
 </select>
