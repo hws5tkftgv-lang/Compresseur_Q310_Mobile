@@ -265,21 +265,17 @@ $("btnExport").onclick = ()=>{
     if(!o.zoneId) return;
 
     data.push({
-  id: o.zoneId,
-  x: Math.round(o.left),
-  y: Math.round(o.top),
-  w: Math.round(o.width * o.scaleX),
-  h: Math.round(o.height * o.scaleY),
-  nom: o.zoneData?.nom || "",
-  role: o.zoneData?.role || "",
-  desc: o.zoneData?.desc || ""
-});
+      id: o.zoneId,
+      x: Math.round(o.left),
+      y: Math.round(o.top),
+      w: Math.round(o.width * o.scaleX),
+      h: Math.round(o.height * o.scaleY)
+    });
   });
 
   const json = JSON.stringify(data, null, 2);
   prompt("Copie-colle ce JSON :", json);
 };
-
 function resize(){
   canvas.setWidth($("stage").clientWidth);
   canvas.setHeight($("stage").clientHeight);
@@ -368,11 +364,19 @@ function applyMode(){
 
   canvas.requestRenderAll();
 }
-/* ===== Menu ===== */
-$("fab").onclick = ()=> {
-  $("panel").style.display = ($("panel").style.display==="block") ? "none" : "block";
-};
+function togglePanel(){
+  const p = $("panel");
+  p.style.display = (p.style.display === "block") ? "none" : "block";
+}
 
+// iOS: click + touchend, avec stopPropagation pour éviter Fabric
+["click","touchend"].forEach(evt=>{
+  $("fab").addEventListener(evt, (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    togglePanel();
+  }, { passive:false });
+});
 /* ===== Editor ON/OFF ===== */
 $("btnEditor").onclick = ()=>{
   const p = ($("pw").value || "").trim();
