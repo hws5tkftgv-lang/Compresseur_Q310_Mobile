@@ -525,6 +525,35 @@ function setActiveBtn(btnId){
   if(btnId) $(btnId).classList.add("active");
 }
 
+function setTool(newTool){
+  if(!isEditor) return;
+
+  tool = newTool;
+
+  // met à jour l'UI
+  setUI();
+
+  // met à jour la quickbar
+  updateQuickbar();
+}
+
+
+
+$("btnMove").addEventListener("click", ()=> setTool("move"));
+$("btnDraw").addEventListener("click", ()=> setTool("draw"));
+$("btnResize").addEventListener("click", ()=> setTool("resize"));
+
+function updateQuickbar(){
+  ["btnMove","btnDraw","btnResize"].forEach(id=>{
+    $(id).classList.remove("active");
+  });
+
+  if(tool === "move")   $("btnMove").classList.add("active");
+  if(tool === "draw")   $("btnDraw").classList.add("active");
+  if(tool === "resize") $("btnResize").classList.add("active");
+}
+
+
 function showAllResizeHandles(obj, on){
   obj.setControlsVisibility({
     tl:on, tr:on, bl:on, br:on,
@@ -766,20 +795,18 @@ $("btnEditor").addEventListener("click", ()=>{
 
   $("pw").value = "";
   isEditor = true;
-  tool = "move";
-  setUI();
+setTool("move");
 });
 
 $("btnExit").addEventListener("click", ()=>{
   isEditor = false;
-  tool = "view";
-  clearSelection();
+  tool = "view";      // ⬅️ normal, on ne passe PAS par setTool ici
+  clearSelection();   // ✅ OBLIGATOIRE
   setUI();
+  updateQuickbar();   // ⬅️ important pour synchro visuelle
 });
 
-$("btnMove").addEventListener("click", ()=>{ if(!isEditor) return; tool="move"; setUI(); }, { passive:false });
-$("btnResize").addEventListener("click", ()=>{ if(!isEditor) return; tool="resize"; setUI(); }, { passive:false });
-$("btnDraw").addEventListener("click", ()=>{ if(!isEditor) return; tool="draw"; clearSelection(); setUI(); }, { passive:false });
+
 
 /* =========================
    APPLY / DELETE
@@ -965,8 +992,7 @@ canvas.on("mouse:up", () => {
   selectObj(rect);
 
   // repasser en move (plus agréable)
-  tool = "move";
-  setUI();
+  setTool("move");
 
   saveToLocal();
 });
