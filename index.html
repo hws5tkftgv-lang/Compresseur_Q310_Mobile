@@ -642,7 +642,10 @@ $("imageSelect").addEventListener("change", e=>{
   $("imgLayer").src = "actif/" + imgName;
 
   // recharge zones de cette image
-  zonesData = zonesByImage[currentImage] || [];
+  if(!zonesByImage[currentImage]){
+  zonesByImage[currentImage] = [];
+}
+zonesData = zonesByImage[currentImage];
 
   // reset canvas
   canvas.clear();
