@@ -607,17 +607,24 @@ $("btnCloseMedia").addEventListener("click", ()=>{
 });
 
 /* =========================
-   EDITOR ON/OFF + TOOLS
-========================= */
-$("btnEditor").addEventListener("click", ()=>{
-  const p = ($("pw").value || "").trim();
-  if(p !== EDITOR_PASSWORD){ alert("Mot de passe incorrect."); return; }
+   EDITOR ON/OFF + 
+["click","touchend"].forEach(evt=>{
+  $("btnEditor").addEventListener(evt, (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
 
-  $("pw").value = ""; // 🔒 nettoyage sécurité
-  isEditor = true;
-  tool = "move";
-  setUI();
-}, { passive:false });
+    const p = ($("pw").value || "").trim();
+    if(p !== EDITOR_PASSWORD){
+      alert("Mot de passe incorrect.");
+      return;
+    }
+
+    $("pw").value = ""; // nettoyage sécurité
+    isEditor = true;
+    tool = "move";
+    setUI();
+  }, { passive:false });
+});
 
 $("btnExit").addEventListener("click", ()=>{
   isEditor = false;
