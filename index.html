@@ -116,14 +116,16 @@ html, body{
 #editorState{
   position:fixed;
   top:10px;
-  left:10px;
+  right:10px;          /* ✅ à droite */
   background:#ff9800;
   color:#000;
-  padding:6px 10px;
-  border-radius:8px;
+  padding:6px 12px;
+  border-radius:999px; /* ✅ pastille discrète */
   font-weight:900;
+  font-size:12px;
   z-index:9999;
   display:none;
+  box-shadow:0 2px 6px rgba(0,0,0,.35);
 }
 </style>
 </head>
