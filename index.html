@@ -184,6 +184,25 @@ html, body{
 <div id="editorState">✏️ MODE ÉDITEUR</div>
 
 <script>
+
+let PARTS = {};        // index par id
+let PARTS_LIST = [];  // liste brute depuis le JSON
+
+fetch("quincy_310L_parts.json")
+  .then(res => res.json())
+  .then(data => {
+    PARTS_LIST = data;
+
+    // indexation par id
+    data.forEach(p => {
+      PARTS[p.id] = p;
+    });
+
+    remplirMenuPieces();
+  })
+  .catch(err => {
+    console.error("Erreur chargement quincy_310L_parts.json", err);
+  });
 /* =========================
    CONFIG / DATA
 ========================= */
@@ -192,26 +211,7 @@ const $ = id => document.getElementById(id);
 /* =========================
    PARTS — Pièces Quincy 310L
 ========================= */
-const PARTS = {
-  filtre_air: {
-    id: "filtre_air",
-    nom: "Filtre à air",
-    role: "Filtrer l’air entrant",
-    desc: "Retient les poussières et impuretés"
-  },
-  cylindre_lp: {
-    id: "cylindre_lp",
-    nom: "Cylindre basse pression (LP)",
-    role: "Compression initiale",
-    desc: "Première étape de compression"
-  },
-  manometre_hp: {
-    id: "manometre_hp",
-    nom: "Manomètre HP",
-    role: "Indiquer la pression",
-    desc: "Lecture de la pression de service"
-  }
-};
+
 const partSelect = $("partSelect");
 
 // sécurité : vider si jamais
@@ -367,6 +367,19 @@ function bootZones(){
   fitCanvasToImage();
 }
 bootZones();
+
+function remplirMenuPieces(){
+  const select = $("partSelect");
+
+  select.innerHTML = '<option value="">— Choisir une pièce —</option>';
+
+  PARTS_LIST.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.nom} (${p.circuit || "?"})`;
+    select.appendChild(opt);
+  });
+}
 
 /* =========================
    UI / MODES
@@ -599,6 +612,30 @@ $("btnDelete").addEventListener("click", ()=>{
   clearSelection();
   saveToLocal();
 }, { passive:false });
+
+/* =========================
+   ASSOCIATION PIÈCE (ÉTAPE 4)
+========================= */
+$("btnLinkPart").addEventListener("click", ()=>{
+  if(!isEditor || !selected || !selected.zoneData) return;
+
+  const partId = $("partSelect").value;
+  if(!partId) return;
+
+  // 🔗 lien zone → pièce Quincy
+  selected.zoneData.partId = partId;
+
+  // mise à jour affichage élève
+  const part = PARTS[partId];
+  if(part){
+    $("infoTitle").textContent = part.nom;
+    $("infoText").textContent =
+      (part.role || "") +
+      (part.desc ? " — " + part.desc : "");
+  }
+
+  saveToLocal();
+});
 
 /* =========================
    EXPORT JSON (download + fallback prompt)
