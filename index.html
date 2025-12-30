@@ -513,32 +513,41 @@ canvas.on("mouse:up", ()=>{
   canvas.remove(tempRect);
   tempRect = null;
 
-  if(r.width < 12 || r.height < 12){
-    canvas.requestRenderAll();
-    return;
-  }
+  if(r.width < 12 || r.height < 12) return;
 
-  // ✅ ID automatique unique
-const newId = "zone_" + Date.now();
+  // 🔹 Infos pédagogiques
+  const nom  = prompt("Nom de la zone ?");
+  if(!nom) return;
 
-// ✅ données pédagogiques
-const zoneData = {
-  id: newId,
-  nom: "",
-  role: "",
-  desc: ""
-};
+  const role = prompt("Rôle de la zone ?");
+  const desc = prompt("Description de la zone ?");
 
-// ✅ rectangle visuel
-const zone = new fabric.Rect({
-  left: r.left,
-  top: r.top,
-  width: r.width,
-  height: r.height,
-  fill: "rgba(255,255,255,0.08)",
-  stroke: "white",
-  strokeWidth: 3,
-  lockRotation: true
+  const ok = confirm("Sauvegarder cette zone ?");
+  if(!ok) return;
+
+  const id = "zone_" + Date.now();
+
+  const zoneData = { id, nom, role, desc };
+
+  const zone = new fabric.Rect({
+    left: r.left,
+    top: r.top,
+    width: r.width,
+    height: r.height,
+    fill: "rgba(255,255,255,0.08)",
+    stroke: "white",
+    strokeWidth: 3,
+    lockRotation: true
+  });
+
+  zone.zoneId = id;
+  zone.zoneData = zoneData;
+
+  zonesData.push(zoneData);
+  canvas.add(zone);
+  canvas.setActiveObject(zone);
+
+  selectObj(zone);
 });
 
 // 🔗 lien bidirectionnel (INDISPENSABLE)
