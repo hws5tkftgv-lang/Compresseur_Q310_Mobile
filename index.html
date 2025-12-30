@@ -356,6 +356,8 @@ window.addEventListener("resize", fitCanvasToImage);
 
 function saveToLocal(){
   try{
+    localStorage.setItem("__test__", "1");
+localStorage.removeItem("__test__");
     if(!zonesByImage[currentImage]){
       zonesByImage[currentImage] = [];
     }
@@ -966,6 +968,8 @@ canvas.upperCanvasEl.addEventListener("touchmove", e=>{
 }, { passive:false });
 
 setUI();
+bootZones();
+$("imageSelect").value = currentImage;
 
 
 
