@@ -840,67 +840,7 @@ $("btnApply").addEventListener("click", ()=>{
 });
 
 
-$("btnLinkPart").addEventListener("click", ()=>{
-  if(!isEditor || !selected || !selected.zoneData) return;
 
-  const select = $("partSelect");
-  let partId = select.value;
-
-  /* ===== CAS 1 : création nouvelle pièce ===== */
-  if(partId === "__new__"){
-    const nom = prompt("Nom de la nouvelle pièce :");
-    if(!nom) return;
-
-    const role = prompt("Rôle de la pièce :", "");
-    const desc = prompt("Description :", "");
-
-    // id technique propre
-    partId = nom
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-      .replace(/[^a-z0-9]+/g,"_")
-      .replace(/^_|_$/g,"");
-
-    // sécurité anti-duplication
-    if(PARTS[partId]){
-      alert("Une pièce avec ce nom existe déjà.");
-      return;
-    }
-
-    const newPart = {
-      id: partId,
-      nom,
-      role,
-      desc
-    };
-
-    // ajout en mémoire
-    PARTS[partId] = newPart;
-    PARTS_LIST.push(newPart);
-
-    // ajout immédiat au menu
-    const opt = document.createElement("option");
-    opt.value = partId;
-    opt.textContent = nom;
-    select.appendChild(opt);
-    select.value = partId;
-  }
-
-  /* ===== CAS 2 : pièce existante ===== */
-  if(!PARTS[partId]){
-    alert("Choisis une pièce valide.");
-    return;
-  }
-
-  // 🔗 lier zone → pièce
-  selected.zoneData.partId = partId;
-
-  // 💡 affichage élève
-  showInfo(selected.zoneData);
-
-  saveToLocal();
-  applyMode();
-}, { passive:false });
 
 
 
