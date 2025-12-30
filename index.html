@@ -171,40 +171,41 @@ let tempRect = null;
 
 const canvas = new fabric.Canvas("c", { selection:false });
 
+/* ===== CONFIRMATION DÉPLACEMENT ZONE ===== */
+let lastPos = null;
 
+canvas.on("object:moving", e=>{
+  if(!isEditor) return;
+  const o = e.target;
+  if(!o || !o.zoneData) return;
+
+  if(!lastPos){
+    lastPos = { left:o.left, top:o.top };
+  }
+});
+
+canvas.on("object:modified", e=>{
+  if(!isEditor) return;
+  const o = e.target;
+  if(!o || !o.zoneData) return;
+
+  const ok = confirm("Sauvegarder la nouvelle position ?");
+  if(!ok && lastPos){
+    o.set({
+      left: lastPos.left,
+      top: lastPos.top
+    });
+    o.setCoords();
+    canvas.requestRenderAll();
+  }
+
+  lastPos = null;
+});
 canvas.selection = false;
 canvas.preserveObjectStacking = true;
 imgLayer.onload = fitCanvasToImage;
 window.addEventListener("resize", fitCanvasToImage);
-canvas.on("object:modified", () => {
-  if (!isEditor) return;
 
-  if (!selected) return;
-
-  // 🔗 retrouver la zone liée au rectangle
-  const zone = ZONES.find(z => z._obj === selected);
-  if (!zone) return;
-
-  // 🔄 mise à jour des dimensions
-  zone.x = Math.round(selected.left);
-  zone.y = Math.round(selected.top);
-  zone.w = Math.round(selected.width * selected.scaleX);
-  zone.h = Math.round(selected.height * selected.scaleY);
-
-  // 🔧 reset scale pour éviter l’accumulation
-  selected.set({
-    scaleX: 1,
-    scaleY: 1,
-    width: zone.w,
-    height: zone.h,
-    left: zone.x,
-    top: zone.y
-  });
-
-  selected.setCoords();
-
-  console.log("Zone mise à jour :", zone);
-});
 
 /* ✅ iPhone / iOS : empêche Safari d'intercepter les gestes */
 canvas.upperCanvasEl.style.touchAction = "none";
