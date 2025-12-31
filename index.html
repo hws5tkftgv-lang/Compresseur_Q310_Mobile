@@ -260,7 +260,22 @@ body{ padding-bottom:90px; }
   color:#000;
 }
 
+#mediaViewer{
+  position:fixed;
+  inset:0;
+  background:#050b24;
+  z-index:30000;
+  overflow-y:auto;
+  padding:16px;
 
+  display:none;
+  pointer-events:none;   /* 🔴 CRITIQUE */
+}
+
+#mediaViewer.open{
+  display:block;
+  pointer-events:auto;   /* 🔴 CRITIQUE */
+}
 
 
 
@@ -327,15 +342,7 @@ body{ padding-bottom:90px; }
 
 <div id="editorState">✏️ MODE ÉDITEUR</div>
 
-<div id="mediaViewer" style="
-  position:fixed;
-  inset:0;
-  background:#050b24;
-  display:none;
-  z-index:20000;
-  overflow-y:auto;
-  padding:16px;
-">
+<div id="mediaViewer">
 
   <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">
     ❌ Fermer
@@ -833,7 +840,6 @@ $("btnShowMedia").addEventListener("click", ()=>{
   const box = $("mediaContent");
   box.innerHTML = "";
 
-  /* IMAGES */
   (part.medias.images || []).forEach(src=>{
     const d = document.createElement("div");
     d.className = "mediaBlock";
@@ -841,35 +847,22 @@ $("btnShowMedia").addEventListener("click", ()=>{
     box.appendChild(d);
   });
 
-  /* VIDÉOS */
   (part.medias.videos || []).forEach(src=>{
     const d = document.createElement("div");
     d.className = "mediaBlock";
-
-    if(src.includes("youtube")){
-      d.innerHTML = `
-        <iframe src="${src}"
-          frameborder="0"
-          allowfullscreen
-          loading="lazy"></iframe>`;
-    }else{
-      d.innerHTML = `
-        <video src="${src}" controls></video>`;
-    }
-
+    d.innerHTML = src.includes("youtube")
+      ? `<iframe src="${src}" allowfullscreen></iframe>`
+      : `<video src="${src}" controls></video>`;
     box.appendChild(d);
   });
 
-  $("mediaViewer").style.display = "block";
+  $("mediaViewer").classList.add("open");
 });
+
 
 $("btnCloseMedia").addEventListener("click", ()=>{
-  $("mediaViewer").style.display = "none";
+  $("mediaViewer").classList.remove("open");
 });
-
-
-
-
 
 
 /* =========================
