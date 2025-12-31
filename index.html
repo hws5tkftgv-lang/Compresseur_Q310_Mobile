@@ -35,7 +35,6 @@ body{
 html, body{
   margin:0;
   height:100%;
-  overflow:hidden;
   background:#0b1436;
   color:#eaf1ff;
   font-family:Arial,Segoe UI,sans-serif;
@@ -56,7 +55,7 @@ body{ padding-bottom:90px; }
   position:relative;
   height:calc(100dvh - 120px);
   overflow:hidden;
-  background:#0b1536;
+  touch-action:none;
 }
 .media-layer, .canvas-wrap{
   position:absolute;
@@ -1025,31 +1024,13 @@ canvas.on("object:modified", e => {
 });
 
 /* Empêche “scroll page” si tu glisses sur canvas (iOS) */
-function blockCanvasTouch(e){
-  e.preventDefault();
-}
-
-function enableCanvasTouch(){
-  canvas.upperCanvasEl.addEventListener(
-    "touchmove",
-    blockCanvasTouch,
-    { passive:false }
-  );
-}
-
-function disableCanvasTouch(){
-  canvas.upperCanvasEl.removeEventListener(
-    "touchmove",
-    blockCanvasTouch
-  );
-}
 
 
 isEditor = true;
 tool = "move";
 setUI();
 bootZones();
-enableCanvasTouch();
+
 
 
 
