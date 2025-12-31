@@ -214,6 +214,9 @@ html, body{
   <button id="btnMove" class="qbtn active">✋</button>
   <button id="btnDraw" class="qbtn">+</button>
   <button id="btnResize" class="qbtn">↕</button>
+  <button id="btnDelete" class="qbtn">🗑️</button>
+  <button id="btnIO" class="qbtn">⇄</button>
+<input type="file" id="fileInput" accept="application/json" hidden>
 </div>
 
 
@@ -501,6 +504,70 @@ function setTool(newTool){
 $("btnMove").addEventListener("click", ()=> setTool("move"));
 $("btnDraw").addEventListener("click", ()=> setTool("draw"));
 $("btnResize").addEventListener("click", ()=> setTool("resize"));
+
+$("btnDelete").addEventListener("click", ()=>{
+  if(!isEditor || !selected) return;
+
+  if(!confirm("Supprimer cette zone ?")) return;
+
+  // retirer du canvas
+  canvas.remove(selected);
+
+  // retirer des données
+  zonesData = zonesData.filter(z => z !== selected.zoneData);
+  zonesByImage[currentImage] = zonesData;
+
+  clearSelection();
+  saveToLocal();
+});
+
+$("btnIO").addEventListener("click", ()=>{
+  const action = prompt("Tape 1 pour EXPORT, 2 pour IMPORT");
+
+  if(action === "1"){
+    exportZonesJSON();
+  }
+
+  if(action === "2"){
+    $("fileInput").click();
+  }
+});
+
+$("fileInput").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(!Array.isArray(data)) throw "format invalide";
+
+      zonesData = data.map(z=>({
+        id: z.partId || ("zone_" + Date.now()),
+        x:z.x, y:z.y, w:z.w, h:z.h,
+        nom:"", role:"", desc:"",
+        partId:z.partId
+      }));
+
+      zonesByImage[currentImage] = zonesData;
+
+      canvas.clear();
+      zonesData.forEach(z=>canvas.add(makeRectFromZone(z)));
+
+      clearSelection();
+      saveToLocal();
+      fitCanvasToImage();
+
+      alert("Import réussi");
+    }catch(err){
+      alert("JSON invalide");
+    }
+  };
+  reader.readAsText(file);
+});
+
+
 
 function updateQuickbar(){
   ["btnMove","btnDraw","btnResize"].forEach(id=>{
