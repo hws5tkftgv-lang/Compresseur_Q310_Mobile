@@ -1,5 +1,5 @@
-<!doctype html>
 <html lang="fr">
+<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
@@ -59,14 +59,9 @@ html, body{
     - 60px   /* infoPanel */
   );
   overflow:hidden;
+  touch-action:none;
 }
-
-#mediaViewer{
-  padding-bottom: calc(
-    env(safe-area-inset-bottom) + 20px
-  );
 }
-
 
 .media-layer, .canvas-wrap{ position:absolute; inset:0; }
 
@@ -179,7 +174,7 @@ html, body{
   left:0;
   right:0;
 
-  /* 🔥 CRITIQUE iOS */
+  /* 🔥 LA LIGNE QUI MANQUAIT */
   bottom: env(safe-area-inset-bottom);
 
   height:var(--quickbar-h);
@@ -213,7 +208,14 @@ html, body{
   background:#050b24;
   z-index:30000;
   overflow-y:auto;
-  padding:16px;
+
+  /* ✅ CORRECTION iOS */
+  padding:
+    16px
+    16px
+    calc(16px + env(safe-area-inset-bottom))
+    16px;
+
   display:none;
   pointer-events:none;
 }
