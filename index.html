@@ -1021,9 +1021,26 @@ canvas.on("object:modified", e => {
 });
 
 /* Empêche “scroll page” si tu glisses sur canvas (iOS) */
-canvas.upperCanvasEl.addEventListener("touchmove", e=>{
+function blockCanvasTouch(e){
   e.preventDefault();
-}, { passive:false });
+}
+
+function enableCanvasTouch(){
+  canvas.upperCanvasEl.addEventListener(
+    "touchmove",
+    blockCanvasTouch,
+    { passive:false }
+  );
+}
+
+function disableCanvasTouch(){
+  canvas.upperCanvasEl.removeEventListener(
+    "touchmove",
+    blockCanvasTouch
+  );
+}
+
+
 isEditor = true;
 tool = "move";
 setUI();
