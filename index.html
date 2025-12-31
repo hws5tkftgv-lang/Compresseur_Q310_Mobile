@@ -588,37 +588,26 @@ function applyMode(){
 }
 
 function setUI(){
-  $("editorState").style.display = isEditor ? "block" : "none";
-  $("stateLine").textContent = isEditor ? "MODE ÉDITEUR" : "MODE ÉLÈVE";
+  // pastille éditeur (si tu la gardes)
+  const badge = $("editorState");
+  if(badge) badge.style.display = isEditor ? "block" : "none";
 
-  $("btnEditor").style.display = isEditor ? "none" : "block";
-  $("btnExit").style.display   = isEditor ? "block" : "none";
+  // quickbar activée seulement en mode éditeur
+  ["btnMove","btnDraw","btnResize"].forEach(id=>{
+    const b = $(id);
+    if(b) b.disabled = !isEditor;
+  });
 
-  $("btnMove").disabled   = !isEditor;
-  $("btnResize").disabled = !isEditor;
-  $("btnDraw").disabled   = !isEditor;
-$("btnShowMedia").disabled = !selected || !selected.zoneData || !selected.zoneData.partId;
-$("btnLinkPart").disabled = !selected;
-  
+  // synchro visuelle des boutons
+  updateQuickbar();
 
+  // applique le mode sur les zones
   applyMode();
 }
-
 /* =========================
    SELECTION + PANEL FIELDS
 ========================= */
-function fillEditorFields(z){
-  if(!z){
-    $("editNom").value  = "";
-    $("editRole").value = "";
-    $("editDesc").value = "";
-    return;
-  }
 
-  $("editNom").value  = z.nom  || "";
-  $("editRole").value = z.role || "";
-  $("editDesc").value = z.desc || "";
-}
 
 function showInfo(z){
   if(!z){
@@ -658,7 +647,7 @@ function selectObj(obj){
 function clearSelection(){
   selected = null;
   canvas.discardActiveObject();
-  fillEditorFields(null);
+  
   showInfo(null);
   applyMode();
 }
@@ -720,60 +709,6 @@ $("btnCloseMedia").addEventListener("click", ()=>{
 /* =========================
    APPLY / DELETE
 ========================= */
-$("btnApply").addEventListener("click", ()=>{
-  if(!isEditor || !selected || !selected.zoneData) return;
-
-
-
-  const z = selected.zoneData;
-
-  // 1️⃣ Sauvegarde texte zone
-  z.nom  = $("editNom").value.trim();
-  z.role = $("editRole").value.trim();
-  z.desc = $("editDesc").value.trim();
-
-  // 2️⃣ Gestion pièce
-  const select = $("partSelect");
-  let partId = select.value;
-
-  // ➕ Nouvelle pièce
-  if(partId === "__new__"){
-    const nom = prompt("Nom de la nouvelle pièce :");
-    if(!nom) return;
-
-    const role = prompt("Rôle de la pièce :", "");
-    const desc = prompt("Description :", "");
-
-    partId = nom
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-      .replace(/[^a-z0-9]+/g,"_")
-      .replace(/^_|_$/g,"");
-
-    if(!PARTS[partId]){
-      const newPart = { id: partId, nom, role, desc };
-      PARTS[partId] = newPart;
-      PARTS_LIST.push(newPart);
-
-      const opt = document.createElement("option");
-      opt.value = partId;
-      opt.textContent = nom;
-      select.appendChild(opt);
-    }
-
-    select.value = partId;
-  }
-
-  // Pièce existante
-  if(partId){
-    z.partId = partId;
-  }
-
-  // 3️⃣ Finalisation
-  showInfo(z);
-  saveToLocal();
-  applyMode();
-});
 
 
 
@@ -934,7 +869,7 @@ isEditor = true;
 tool = "move";
 setUI();
 bootZones();
-$("imageSelect").value = currentImage;
+
 
 
 
