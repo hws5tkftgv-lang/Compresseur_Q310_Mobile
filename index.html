@@ -666,40 +666,8 @@ function clearSelection(){
 /* =========================
    MENU (robuste iOS)
 ========================= */
-function togglePanel(){
-  const p = $("panel");
-  p.style.display = (p.style.display === "block") ? "none" : "block";
-}
 
-$("fab").addEventListener("click", (e)=>{
-  e.preventDefault();
-  e.stopPropagation();
-  togglePanel();
-});
 
-$("imageSelect").addEventListener("change", e=>{
-  const imgName = e.target.value;
-
-  // sauvegarde image actuelle
-  saveToLocal();
-
-  // change image
-  currentImage = imgName;
-  $("imgLayer").src = "actif/" + imgName;
-
-  // sécurise tableau zones
-  if(!zonesByImage[currentImage]){
-    zonesByImage[currentImage] = [];
-  }
-  zonesData = zonesByImage[currentImage];
-
-  // reset canvas
-  canvas.clear();
-  zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
-
-  clearSelection();
-  fitCanvasToImage();
-});
 
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
@@ -745,25 +713,7 @@ $("btnCloseMedia").addEventListener("click", ()=>{
 });
 
 
-$("btnEditor").addEventListener("click", ()=>{
-  const p = ($("pw").value || "").trim();
-  if(p !== EDITOR_PASSWORD){
-    alert("Mot de passe incorrect.");
-    return;
-  }
 
-  $("pw").value = "";
-  isEditor = true;
-setTool("move");
-});
-
-$("btnExit").addEventListener("click", ()=>{
-  isEditor = false;
-  tool = "view";      // ⬅️ normal, on ne passe PAS par setTool ici
-  clearSelection();   // ✅ OBLIGATOIRE
-  setUI();
-  updateQuickbar();   // ⬅️ important pour synchro visuelle
-});
 
 
 
@@ -980,7 +930,8 @@ canvas.on("object:modified", e => {
 canvas.upperCanvasEl.addEventListener("touchmove", e=>{
   e.preventDefault();
 }, { passive:false });
-
+isEditor = true;
+tool = "move";
 setUI();
 bootZones();
 $("imageSelect").value = currentImage;
