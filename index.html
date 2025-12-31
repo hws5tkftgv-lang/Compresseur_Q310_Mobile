@@ -9,11 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
 <style>
-
-.mediaBlock{
-  margin-bottom:20px;
-}
-
+.mediaBlock{ margin-bottom:20px; }
 .mediaBlock img,
 .mediaBlock iframe,
 .mediaBlock video{
@@ -22,15 +18,11 @@
   background:#000;
 }
 
-:root{
-  --quickbar-h: 70px;
-}
+:root{ --quickbar-h: 70px; }
 
 body{
   padding-bottom: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
 }
-
-
 
 html, body{
   margin:0;
@@ -41,7 +33,6 @@ html, body{
 }
 
 body{ padding-bottom:90px; }
-
 
 #infoPanel{
   padding:10px;
@@ -57,10 +48,9 @@ body{ padding-bottom:90px; }
   overflow:hidden;
   touch-action:none;
 }
-.media-layer, .canvas-wrap{
-  position:absolute;
-  inset:0;
-}
+
+.media-layer, .canvas-wrap{ position:absolute; inset:0; }
+
 #imgLayer{
   width:100%;
   height:100%;
@@ -72,46 +62,6 @@ body{ padding-bottom:90px; }
 .stage, .canvas-container, canvas{
   touch-action:none !important;
 }
-
-#fab{
-  position:fixed;
-  bottom:10px;
-  left:10px;
-  width:46px;
-  height:46px;
-  border-radius:10px;
-  background:#ffffff22;
-  border:1px solid #ffffff55;
-  color:#fff;
-  font-size:22px;
-  z-index:9999;
-}
-
-#panel{
-  position:fixed;
-  left:10px;
-  bottom:70px;
-  width:calc(100vw - 20px);
-  max-height:65vh;
-  overflow-y:auto;
-  overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  background:#0f1a44;
-  border:1px solid rgba(255,255,255,.2);
-  padding:10px;
-  border-radius:12px;
-  display:none;
-  z-index:10000;
-}
-
-.sectionTitle{
-  margin-top:12px;
-  font-size:12px;
-  opacity:.7;
-  font-weight:700;
-  text-transform:uppercase;
-}
-
 
 #piecePanel{
   position:fixed;
@@ -128,13 +78,14 @@ body{ padding-bottom:90px; }
   display:flex;
   flex-direction:column;
 
-  pointer-events: none;   /* 🔴 AJOUT CRITIQUE */
+  pointer-events:none;   /* 👈 important */
 }
 
 #piecePanel.open{
   transform:translateY(0);
-  pointer-events: auto;   /* 🔴 AJOUT CRITIQUE */
+  pointer-events:auto;
 }
+
 .panelHeader{
   display:flex;
   justify-content:space-between;
@@ -154,6 +105,7 @@ body{ padding-bottom:90px; }
 .panelContent{
   padding:16px;
   overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 
 .panelLabel{
@@ -162,8 +114,6 @@ body{ padding-bottom:90px; }
   margin-bottom:6px;
   display:block;
 }
-
-
 
 .btn{
   width:100%;
@@ -194,36 +144,17 @@ body{ padding-bottom:90px; }
 #editorState{
   position:fixed;
   top:10px;
-  right:10px;          /* ✅ à droite */
+  right:10px;
   background:#ff9800;
   color:#000;
   padding:6px 12px;
-  border-radius:999px; /* ✅ pastille discrète */
+  border-radius:999px;
   font-weight:900;
   font-size:12px;
   z-index:9999;
   display:none;
   box-shadow:0 2px 6px rgba(0,0,0,.35);
 }
-
-.zoneBox{
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:12px;
-  margin-top:12px;
-  background:#0c163d;
-}
-
-.zoneHeader{
-  padding:10px;
-  font-weight:900;
-  font-size:13px;
-  opacity:.9;
-}
-
-.zoneContent{
-  padding:10px;
-}
-
 
 #quickbar{
   position:fixed;
@@ -242,7 +173,6 @@ body{ padding-bottom:90px; }
   padding-bottom:env(safe-area-inset-bottom);
 }
 
-
 .qbtn{
   width:46px;
   height:46px;
@@ -254,10 +184,7 @@ body{ padding-bottom:90px; }
   font-weight:900;
 }
 
-.qbtn.active{
-  background:#ff9800;
-  color:#000;
-}
+.qbtn.active{ background:#ff9800; color:#000; }
 
 #mediaViewer{
   position:fixed;
@@ -268,22 +195,19 @@ body{ padding-bottom:90px; }
   padding:16px;
 
   display:none;
-  pointer-events:none;   /* 🔴 CRITIQUE */
+  pointer-events:none;
 }
 
 #mediaViewer.open{
   display:block;
-  pointer-events:auto;   /* 🔴 CRITIQUE */
+  pointer-events:auto;
 }
-
-
-
 </style>
 </head>
 
 <body>
-  
-  <!-- ===== PANNEAU PIÈCE / MÉDIAS ===== -->
+
+<!-- ===== PANNEAU PIÈCE / MÉDIAS ===== -->
 <div id="piecePanel">
   <div class="panelHeader">
     <span>📦 Pièce & médias</span>
@@ -291,22 +215,17 @@ body{ padding-bottom:90px; }
   </div>
 
   <div class="panelContent">
-
     <label class="panelLabel">Associer une pièce</label>
     <select id="partSelect" class="input">
       <option value="">— Choisir une pièce —</option>
       <option value="__new__">➕ Nouvelle pièce…</option>
     </select>
 
-    <button id="btnShowMedia" class="btn">
-      🖼️🎥 Voir les médias
-    </button>
-
+    <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
   </div>
 </div>
-  
 
-<!-- Bande info élève -->
+<!-- Bande info -->
 <div id="infoPanel">
   <div id="infoTitle">Sélectionne une zone</div>
   <div id="infoText"></div>
@@ -322,9 +241,6 @@ body{ padding-bottom:90px; }
   </div>
 </div>
 
-<!-- Menu -->
-
-
 <!-- Barre outils rapide -->
 <div id="quickbar">
   <button id="btnMove" class="qbtn active">✋</button>
@@ -333,94 +249,79 @@ body{ padding-bottom:90px; }
   <button id="btnDelete" class="qbtn">🗑️</button>
   <button id="btnIO" class="qbtn">⇄</button>
   <button id="btnPiece" class="qbtn">📦</button>
-<input type="file" id="fileInput" accept="application/json" hidden>
+  <input type="file" id="fileInput" accept="application/json" hidden>
 </div>
-
-
-
 
 <div id="editorState">✏️ MODE ÉDITEUR</div>
 
 <div id="mediaViewer">
-
-  <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">
-    ❌ Fermer
-  </button>
-
+  <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">❌ Fermer</button>
   <div id="mediaContent"></div>
 </div>
-
 
 <script>
 const $ = id => document.getElementById(id);
 
-let currentImage = "compresseur_bg.png";  // image par défaut (référence)
-let zonesByImage = {};                    // zones classées par image
+/* =========================
+   IMAGE KEY (important)
+   Ton <img> est "actif/compresseur_bg.png"
+   Donc la clé doit être "compresseur_bg.png"
+========================= */
+function getCurrentImageKey(){
+  const img = $("imgLayer");
+  const src = (img && img.getAttribute("src")) ? img.getAttribute("src") : "";
+  const base = src.split("?")[0].split("#")[0].split("/").pop();
+  return base || "compresseur_bg.png";
+}
+
+let currentImage = getCurrentImageKey();
+let zonesByImage = {};
 
 let PARTS = {};        // index par id
-let PARTS_LIST = [];  // liste brute depuis le JSON
+let PARTS_LIST = [];   // liste brute depuis JSON
 
 fetch("quincy_310L_parts.json")
   .then(res => res.json())
   .then(data => {
-    PARTS_LIST = data;
-
-    // indexation par id
-    data.forEach(p => {
-      PARTS[p.id] = p;
-    });
-
+    PARTS_LIST = Array.isArray(data) ? data : [];
+    PARTS = {};
+    PARTS_LIST.forEach(p => { if(p && p.id) PARTS[p.id] = p; });
     remplirMenuPieces();
   })
-  .catch(err => {
-    console.error("Erreur chargement quincy_310L_parts.json", err);
-  });
-/* =========================
-   CONFIG / DATA
-========================= */
+  .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
 
-/* ===== ÉTAPE 2 — REMPLIR LE MENU DES PIÈCES ===== */
-/* =========================
-   PARTS — Pièces Quincy 310L
-========================= */
-
-
-
-const EDITOR_PASSWORD = "comp";
 const STORAGE_KEY = "q310_zones_v1";
 
-
-
-
 let isEditor = false;
-let tool = "view"; // view | move | resize | draw
+let tool = "view"; // move | resize | draw
 let selected = null;
 
 let drawing = false;
 let startPt = null;
 let tempRect = null;
 
-let zonesData = []; // [{id,x,y,w,h,nom,role,desc}]
+let zonesData = []; // [{id,x,y,w,h,nom,role,desc,partId?}]
 
 /* =========================
    CANVAS
 ========================= */
-const canvas = new fabric.Canvas("c", { selection:false });
+const canvas = new fabric.Canvas("c", {
+  selection:false,
+  preserveObjectStacking:true,
+  allowTouchScrolling:false
+});
 canvas.selection = false;
-canvas.preserveObjectStacking = true;
 
-// iOS: empêcher gestes Safari
+/* iOS: empêcher gestes Safari */
 canvas.upperCanvasEl.style.touchAction = "none";
 canvas.upperCanvasEl.style.webkitUserSelect = "none";
 canvas.upperCanvasEl.style.webkitTouchCallout = "none";
 
-// ergonomie tactile
+/* ergonomie tactile */
 fabric.Object.prototype.cornerSize = 36;
 fabric.Object.prototype.cornerStyle = "circle";
 fabric.Object.prototype.transparentCorners = false;
 fabric.Object.prototype.padding = 10;
-
-// sélection plus facile iPhone
 fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 45;
 
@@ -430,7 +331,7 @@ fabric.Object.prototype.targetFindTolerance = 45;
 function fitCanvasToImage(){
   const img = $("imgLayer");
   const stage = $("stage");
-  if(!img.naturalWidth) return;
+  if(!img || !stage || !img.naturalWidth) return;
 
   const stageW = stage.clientWidth;
   const stageH = stage.clientHeight;
@@ -448,7 +349,6 @@ function fitCanvasToImage(){
     canvasH = canvasW / imgRatio;
   }
 
-  // centre canvas dans stage
   const offsetX = (stageW - canvasW) / 2;
   const offsetY = (stageH - canvasH) / 2;
 
@@ -456,30 +356,29 @@ function fitCanvasToImage(){
   canvas.setHeight(canvasH);
   canvas.calcOffset();
 
-  canvas.getElement().style.position = "absolute";
-  canvas.getElement().style.left = offsetX + "px";
-  canvas.getElement().style.top  = offsetY + "px";
+  const el = canvas.getElement();
+  el.style.position = "absolute";
+  el.style.left = offsetX + "px";
+  el.style.top  = offsetY + "px";
 
   canvas.requestRenderAll();
 }
 
-$("imgLayer").addEventListener("load", fitCanvasToImage);
+$("imgLayer").addEventListener("load", ()=>{
+  currentImage = getCurrentImageKey();
+  bootZones();        // recharge zones selon la bonne clé d'image
+  fitCanvasToImage();
+});
+
 window.addEventListener("resize", fitCanvasToImage);
 
 /* =========================
    SAVE / LOAD (localStorage)
 ========================= */
-
 function saveToLocal(){
   try{
-    localStorage.setItem("__test__", "1");
-localStorage.removeItem("__test__");
-    if(!zonesByImage[currentImage]){
-      zonesByImage[currentImage] = [];
-    }
-
+    currentImage = getCurrentImageKey();
     zonesByImage[currentImage] = zonesData;
-
     localStorage.setItem(STORAGE_KEY, JSON.stringify(zonesByImage));
   }catch(e){
     console.error("Save error", e);
@@ -492,16 +391,16 @@ function loadFromLocal(){
     if(!raw) return false;
 
     const obj = JSON.parse(raw);
-    if(typeof obj !== "object") return false;
+    if(!obj || typeof obj !== "object") return false;
 
     zonesByImage = obj;
-    zonesData = zonesByImage[currentImage] || [];
+    currentImage = getCurrentImageKey();
+    zonesData = Array.isArray(zonesByImage[currentImage]) ? zonesByImage[currentImage] : [];
     return true;
   }catch(e){
     return false;
   }
 }
-
 
 /* =========================
    CREATE RECT FROM DATA
@@ -525,42 +424,42 @@ function makeRectFromZone(z){
 /* =========================
    BOOT: load zones
 ========================= */
-
-
-
-  function bootZones(){
+function bootZones(){
   canvas.clear();
 
   const hasLocal = loadFromLocal();
 
   if(!hasLocal){
-    zonesByImage = {
-      "compresseur_bg.png": [
-        {
-          id:"cylindre_lp",
-          x:420, y:180, w:120, h:260,
-          nom:"Cylindre LP",
-          role:"Compression initiale",
-          desc:"Première étape de compression."
-        }
-      ]
-    };
+    // valeur par défaut si rien en storage
+    currentImage = getCurrentImageKey();
+    zonesByImage = zonesByImage || {};
+    zonesByImage[currentImage] = zonesByImage[currentImage] || [
+      {
+        id:"cylindre_lp",
+        x:420, y:180, w:120, h:260,
+        nom:"Cylindre LP",
+        role:"Compression initiale",
+        desc:"Première étape de compression.",
+        partId:""
+      }
+    ];
     zonesData = zonesByImage[currentImage];
     saveToLocal();
   }
 
-  // ✅ AJOUT MANQUANT (CRITIQUE)
-  zonesData.forEach(z => {
-    canvas.add(makeRectFromZone(z));
-  });
+  zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
 
   clearSelection();
   applyMode();
   fitCanvasToImage();
 }
 
+/* =========================
+   PARTS MENU
+========================= */
 function remplirMenuPieces(){
   const select = $("partSelect");
+  if(!select) return;
 
   select.innerHTML = `
     <option value="">— Choisir une pièce —</option>
@@ -568,126 +467,48 @@ function remplirMenuPieces(){
   `;
 
   PARTS_LIST.forEach(p => {
+    if(!p || !p.id) return;
     const opt = document.createElement("option");
     opt.value = p.id;
-    opt.textContent = `${p.nom} (${p.circuit || "?"})`;
+    opt.textContent = `${p.nom || p.id} (${p.circuit || "?"})`;
     select.appendChild(opt);
   });
 }
 
 /* =========================
-   UI / MODES
+   iOS SAFE TOUCH BLOCKING (anti-gel)
 ========================= */
+let canvasTouchBlocked = false;
 
-
-function setTool(newTool){
-  if(!isEditor) return;
-
-  tool = newTool;
-
-  // met à jour l'UI
-  setUI();
-
-  // met à jour la quickbar
-  updateQuickbar();
+function blockCanvasTouch(e){
+  // Empêche Safari de "prendre" le geste (scroll/pinch),
+  // MAIS on l'active seulement quand il faut.
+  e.preventDefault();
 }
 
+function enableCanvasTouch(){
+  if(canvasTouchBlocked) return;
+  canvas.upperCanvasEl.addEventListener("touchmove", blockCanvasTouch, { passive:false });
+  canvas.upperCanvasEl.addEventListener("touchstart", blockCanvasTouch, { passive:false });
+  canvasTouchBlocked = true;
+}
 
+function disableCanvasTouch(){
+  if(!canvasTouchBlocked) return;
+  canvas.upperCanvasEl.removeEventListener("touchmove", blockCanvasTouch);
+  canvas.upperCanvasEl.removeEventListener("touchstart", blockCanvasTouch);
+  canvasTouchBlocked = false;
+}
 
-$("btnMove").addEventListener("click", ()=> setTool("move"));
-$("btnDraw").addEventListener("click", ()=> setTool("draw"));
-$("btnResize").addEventListener("click", ()=> setTool("resize"));
-$("btnPiece").addEventListener("click", ()=>{
-  if(!selected) return;
-  disableCanvasTouch();            // ✅ IMPORTANT
-  $("piecePanel").classList.add("open");
-});
-$("btnDelete").addEventListener("click", ()=>{
-  if(!isEditor || !selected) return;
-
-  if(!confirm("Supprimer cette zone ?")) return;
-
-  // retirer du canvas
-  canvas.remove(selected);
-
-  // retirer des données
-  zonesData = zonesData.filter(z => z !== selected.zoneData);
-  zonesByImage[currentImage] = zonesData;
-
-  clearSelection();
-  saveToLocal();
-});
-
-$("btnIO").addEventListener("click", ()=>{
-  const action = prompt("Tape 1 pour EXPORT, 2 pour IMPORT");
-
-  if(action === "1"){
-    exportZonesJSON();
-  }
-
-  if(action === "2"){
-    $("fileInput").click();
-  }
-});
-
-$("btnSwap").addEventListener("click", ()=>{
-  $("piecePanel").classList.add("open");
-});
-
-
-$("btnClosePiecePanel").addEventListener("click", ()=>{
-  $("piecePanel").classList.remove("open");
-  enableCanvasTouch();             // ✅ IMPORTANT
-});
-
-
-
-$("fileInput").addEventListener("change", e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-
-  const reader = new FileReader();
-  reader.onload = ev=>{
-    try{
-      const data = JSON.parse(ev.target.result);
-      if(!Array.isArray(data)) throw "format invalide";
-
-      zonesData = data.map(z=>({
-        id: z.partId || ("zone_" + Date.now()),
-        x:z.x, y:z.y, w:z.w, h:z.h,
-        nom:"", role:"", desc:"",
-        partId:z.partId
-      }));
-
-      zonesByImage[currentImage] = zonesData;
-
-      canvas.clear();
-      zonesData.forEach(z=>canvas.add(makeRectFromZone(z)));
-
-      clearSelection();
-      saveToLocal();
-      fitCanvasToImage();
-
-      alert("Import réussi");
-    }catch(err){
-      alert("JSON invalide");
-    }
-  };
-  reader.readAsText(file);
-});
-
-
-
+/* =========================
+   UI / MODES
+========================= */
 function updateQuickbar(){
-  ["btnMove","btnDraw","btnResize"].forEach(id=>{
-    $(id).classList.remove("active");
-  });
-
+  ["btnMove","btnDraw","btnResize"].forEach(id => $(id).classList.remove("active"));
   if(tool === "move")   $("btnMove").classList.add("active");
   if(tool === "draw")   $("btnDraw").classList.add("active");
   if(tool === "resize") $("btnResize").classList.add("active");
 }
-
 
 function showAllResizeHandles(obj, on){
   obj.setControlsVisibility({
@@ -699,14 +520,11 @@ function showAllResizeHandles(obj, on){
 
 function applyMode(){
   canvas.forEachObject(o => {
-
-    // reset base
     o.stroke = (o === selected) ? "orange" : "white";
     o.strokeWidth = (o === selected) ? 5 : 3;
 
-    // mode élève
     if(!isEditor){
-      o.evented = true;         // pour cliquer et lire
+      o.evented = true;
       o.selectable = false;
       o.hasControls = false;
       o.hasBorders = false;
@@ -721,7 +539,6 @@ function applyMode(){
       return;
     }
 
-    // mode éditeur
     o.evented = true;
     o.lockRotation = true;
 
@@ -730,7 +547,6 @@ function applyMode(){
       o.hasControls = false;
       o.hasBorders = false;
       showAllResizeHandles(o,false);
-      // IMPORTANT: on laisse evented=true (sinon sélection casse) mais on gère draw via handler
       return;
     }
 
@@ -738,10 +554,12 @@ function applyMode(){
       o.selectable = true;
       o.hasControls = false;
       o.hasBorders = true;
+
       o.lockMovementX = false;
       o.lockMovementY = false;
       o.lockScalingX  = true;
       o.lockScalingY  = true;
+
       showAllResizeHandles(o,false);
       return;
     }
@@ -750,41 +568,42 @@ function applyMode(){
       o.selectable = true;
       o.hasControls = true;
       o.hasBorders = true;
+
       o.lockMovementX = false;
       o.lockMovementY = false;
       o.lockScalingX  = false;
       o.lockScalingY  = false;
+
       showAllResizeHandles(o,true);
       return;
     }
-
   });
 
   canvas.requestRenderAll();
 }
 
 function setUI(){
-  // pastille éditeur (si tu la gardes)
   const badge = $("editorState");
   if(badge) badge.style.display = isEditor ? "block" : "none";
 
-  // quickbar activée seulement en mode éditeur
   ["btnMove","btnDraw","btnResize"].forEach(id=>{
     const b = $(id);
     if(b) b.disabled = !isEditor;
   });
 
-  // synchro visuelle des boutons
   updateQuickbar();
-
-  // applique le mode sur les zones
   applyMode();
 }
+
+function setTool(newTool){
+  if(!isEditor) return;
+  tool = newTool;
+  setUI();
+}
+
 /* =========================
-   SELECTION + PANEL FIELDS
+   SELECTION + INFO
 ========================= */
-
-
 function showInfo(z){
   if(!z){
     $("infoTitle").textContent = "Sélectionne une zone";
@@ -792,27 +611,27 @@ function showInfo(z){
     return;
   }
 
-  // 🧠 Si la zone est liée à une pièce Quincy
   if(z.partId && PARTS[z.partId]){
     const p = PARTS[z.partId];
-    $("infoTitle").textContent = p.nom;
-    $("infoText").textContent =
-      (p.role || "") +
-      (p.desc ? " — " + p.desc : "");
+    $("infoTitle").textContent = p.nom || z.partId;
+    $("infoText").textContent = (p.role || "") + (p.desc ? " — " + p.desc : "");
     return;
   }
 
-  // fallback (zone non associée)
   $("infoTitle").textContent = z.nom || "Zone";
-  $("infoText").textContent =
-    (z.role || "") +
-    (z.desc ? " — " + z.desc : "");
+  $("infoText").textContent = (z.role || "") + (z.desc ? " — " + z.desc : "");
 }
+
 function selectObj(obj){
   if(!obj || !obj.zoneData) return;
-
   selected = obj;
   canvas.setActiveObject(obj);
+
+  // sync le select quand on ouvre le panneau
+  const ps = $("partSelect");
+  if(ps){
+    ps.value = selected.zoneData.partId || "";
+  }
 
   showInfo(obj.zoneData);
   applyMode();
@@ -821,24 +640,105 @@ function selectObj(obj){
 function clearSelection(){
   selected = null;
   canvas.discardActiveObject();
-  
   showInfo(null);
   applyMode();
 }
 
 /* =========================
-   MENU (robuste iOS)
+   BUTTONS
 ========================= */
+$("btnMove").addEventListener("click", ()=> setTool("move"));
+$("btnDraw").addEventListener("click", ()=> setTool("draw"));
+$("btnResize").addEventListener("click", ()=> setTool("resize"));
 
+$("btnPiece").addEventListener("click", ()=>{
+  if(!selected) return;
+  // quand un panneau est ouvert, on évite que le canvas capte les gestures
+  disableCanvasTouch();
+  $("partSelect").value = selected.zoneData.partId || "";
+  $("piecePanel").classList.add("open");
+});
 
+$("btnClosePiecePanel").addEventListener("click", ()=>{
+  $("piecePanel").classList.remove("open");
+  enableCanvasTouch();
+});
 
+$("btnDelete").addEventListener("click", ()=>{
+  if(!isEditor || !selected) return;
+  if(!confirm("Supprimer cette zone ?")) return;
+
+  canvas.remove(selected);
+  zonesData = zonesData.filter(z => z !== selected.zoneData);
+  zonesByImage[currentImage] = zonesData;
+
+  clearSelection();
+  saveToLocal();
+});
+
+$("btnIO").addEventListener("click", ()=>{
+  const action = prompt("Tape 1 pour EXPORT, 2 pour IMPORT");
+  if(action === "1") exportZonesJSON();
+  if(action === "2") $("fileInput").click();
+});
+
+/* =========================
+   PART SELECT: associer une pièce à la zone
+========================= */
+$("partSelect").addEventListener("change", ()=>{
+  if(!selected || !selected.zoneData) return;
+
+  const v = $("partSelect").value;
+
+  // Nouvelle pièce
+  if(v === "__new__"){
+    const nom = prompt("Nom de la nouvelle pièce ?");
+    if(!nom){
+      $("partSelect").value = selected.zoneData.partId || "";
+      return;
+    }
+
+    // ID simple (slug)
+    const baseId = nom.toLowerCase().trim()
+      .replace(/\s+/g,"_")
+      .replace(/[^a-z0-9_]/g,"");
+
+    const id = baseId ? baseId : ("piece_" + Date.now());
+
+    // Ajoute dans PARTS_LIST / PARTS
+    const newPart = { id, nom, circuit:"", role:"", desc:"", medias:{ images:[], videos:[] } };
+    PARTS_LIST.push(newPart);
+    PARTS[id] = newPart;
+    remplirMenuPieces();
+
+    // applique à la zone
+    selected.zoneData.partId = id;
+    $("partSelect").value = id;
+    saveToLocal();
+    showInfo(selected.zoneData);
+    return;
+  }
+
+  // Associer / désassocier
+  selected.zoneData.partId = v || "";
+  saveToLocal();
+  showInfo(selected.zoneData);
+});
+
+/* =========================
+   MEDIA VIEWER
+========================= */
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
 
-  disableCanvasTouch();            // ✅ IMPORTANT
+  disableCanvasTouch();
 
   const part = PARTS[selected.zoneData.partId];
-  if(!part || !part.medias) return;
+  if(!part || !part.medias){
+    alert("Aucun média pour cette pièce.");
+    return;
+  }
+
   const box = $("mediaContent");
   box.innerHTML = "";
 
@@ -852,7 +752,7 @@ $("btnShowMedia").addEventListener("click", ()=>{
   (part.medias.videos || []).forEach(src=>{
     const d = document.createElement("div");
     d.className = "mediaBlock";
-    d.innerHTML = src.includes("youtube")
+    d.innerHTML = (src.includes("youtube"))
       ? `<iframe src="${src}" allowfullscreen></iframe>`
       : `<video src="${src}" controls></video>`;
     box.appendChild(d);
@@ -861,25 +761,56 @@ $("btnShowMedia").addEventListener("click", ()=>{
   $("mediaViewer").classList.add("open");
 });
 
-
 $("btnCloseMedia").addEventListener("click", ()=>{
   $("mediaViewer").classList.remove("open");
-  enableCanvasTouch();             // ✅ IMPORTANT
+  enableCanvasTouch();
 });
 
-
 /* =========================
-   APPLY / DELETE
+   IMPORT JSON
 ========================= */
+$("fileInput").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
 
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(!Array.isArray(data)) throw new Error("format invalide");
 
+      zonesData = data.map(z=>({
+        id: z.partId || ("zone_" + Date.now()),
+        x: Number(z.x)||0,
+        y: Number(z.y)||0,
+        w: Number(z.w)||20,
+        h: Number(z.h)||20,
+        nom:"",
+        role:"",
+        desc:"",
+        partId: z.partId || ""
+      }));
 
+      zonesByImage[currentImage] = zonesData;
 
+      canvas.clear();
+      zonesData.forEach(z=>canvas.add(makeRectFromZone(z)));
 
+      clearSelection();
+      saveToLocal();
+      fitCanvasToImage();
 
+      alert("Import réussi");
+    }catch(err){
+      alert("JSON invalide");
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+});
 
 /* =========================
-   EXPORT JSON (download + fallback prompt)
+   EXPORT JSON
 ========================= */
 function exportZonesJSON(){
   const data = zonesData.map(z => ({
@@ -909,14 +840,8 @@ function exportZonesJSON(){
   }
 }
 
-$("btnExport").addEventListener("click", (e)=>{
-  e.preventDefault();
-  e.stopPropagation();
-  exportZonesJSON();
-});
-
 /* =========================
-   FABRIC EVENTS: select / move / resize / draw
+   FABRIC EVENTS: select / draw
 ========================= */
 canvas.on("mouse:down", opt => {
   const obj = opt.target;
@@ -943,12 +868,9 @@ canvas.on("mouse:down", opt => {
     return;
   }
 
-  // SELECT (éditeur ou élève)
-  if(obj){
-    selectObj(obj);
-  }else{
-    clearSelection();
-  }
+  // SELECT
+  if(obj) selectObj(obj);
+  else clearSelection();
 });
 
 canvas.on("mouse:move", opt => {
@@ -973,19 +895,21 @@ canvas.on("mouse:up", () => {
   canvas.remove(tempRect);
   tempRect = null;
 
-  if(r.width < 12 || r.height < 12) return;
+  const w = r.width || 0;
+  const h = r.height || 0;
+  if(w < 12 || h < 12) return;
 
-  // création “propre” sans casser menu
   const id = "zone_" + Date.now();
   const z = {
     id,
     x: Math.round(r.left),
     y: Math.round(r.top),
-    w: Math.round(r.width),
-    h: Math.round(r.height),
+    w: Math.round(w),
+    h: Math.round(h),
     nom:"",
     role:"",
-    desc:""
+    desc:"",
+    partId:""
   };
 
   zonesData.push(z);
@@ -994,10 +918,7 @@ canvas.on("mouse:up", () => {
   const rect = makeRectFromZone(z);
   canvas.add(rect);
 
-  // sélectionner + remplir inputs
   selectObj(rect);
-
-  // repasser en move (plus agréable)
   setTool("move");
 
   saveToLocal();
@@ -1009,33 +930,32 @@ canvas.on("object:modified", e => {
   const o = e.target;
   if(!o || !o.zoneData) return;
 
-  // update data (source de vérité)
   const z = o.zoneData;
+
+  // valeurs “propres”
+  const newW = Math.round(o.getScaledWidth());
+  const newH = Math.round(o.getScaledHeight());
+
   z.x = Math.round(o.left);
   z.y = Math.round(o.top);
-  z.w = Math.round(o.width  * o.scaleX);
-  z.h = Math.round(o.height * o.scaleY);
+  z.w = newW;
+  z.h = newH;
 
-  // reset scale pour garder chiffres propres
+  // reset scale pour éviter l’accumulation
   o.set({ scaleX:1, scaleY:1, width:z.w, height:z.h, left:z.x, top:z.y });
   o.setCoords();
 
   saveToLocal();
 });
 
-/* Empêche “scroll page” si tu glisses sur canvas (iOS) */
-
-
+/* =========================
+   BOOT
+========================= */
 isEditor = true;
 tool = "move";
 setUI();
 bootZones();
-
-
-
-
-
-
+enableCanvasTouch();
 </script>
 
 </body>
