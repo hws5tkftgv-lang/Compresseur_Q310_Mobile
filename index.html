@@ -482,10 +482,7 @@ function remplirMenuPieces(){
 /* =========================
    UI / MODES
 ========================= */
-function setActiveBtn(btnId){
-  ["btnMove","btnResize","btnDraw"].forEach(id => $(id).classList.remove("active"));
-  if(btnId) $(btnId).classList.add("active");
-}
+
 
 function setTool(newTool){
   if(!isEditor) return;
@@ -602,7 +599,7 @@ function setUI(){
   $("btnDraw").disabled   = !isEditor;
 $("btnShowMedia").disabled = !selected || !selected.zoneData || !selected.zoneData.partId;
 $("btnLinkPart").disabled = !selected;
-  setActiveBtn(isEditor ? (tool==="move"?"btnMove":tool==="resize"?"btnResize":tool==="draw"?"btnDraw":null) : null);
+  
 
   applyMode();
 }
