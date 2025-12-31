@@ -40,7 +40,7 @@ html, body{
   font-family:Arial,Segoe UI,sans-serif;
 }
 
-body{ padding-bottom:90px; }
+
 
 #infoPanel{
   padding:10px;
@@ -52,10 +52,21 @@ body{ padding-bottom:90px; }
 
 .stage{
   position:relative;
-  height:calc(100dvh - 120px);
+  height: calc(
+    100svh
+    - var(--quickbar-h)
+    - env(safe-area-inset-bottom)
+    - 60px   /* infoPanel */
+  );
   overflow:hidden;
-  touch-action:none;
 }
+
+#mediaViewer{
+  padding-bottom: calc(
+    env(safe-area-inset-bottom) + 20px
+  );
+}
+
 
 .media-layer, .canvas-wrap{ position:absolute; inset:0; }
 
@@ -167,19 +178,22 @@ body{ padding-bottom:90px; }
   position:fixed;
   left:0;
   right:0;
-  bottom:0;
+
+  /* 🔥 CRITIQUE iOS */
+  bottom: env(safe-area-inset-bottom);
+
   height:var(--quickbar-h);
   display:flex;
   justify-content:center;
   align-items:center;
   gap:10px;
+
   background:rgba(15,26,68,.95);
   backdrop-filter:blur(10px);
   border-top:1px solid rgba(255,255,255,.15);
-  z-index:10000;
-  padding-bottom:env(safe-area-inset-bottom);
-}
 
+  z-index:10000;
+}
 .qbtn{
   width:46px;
   height:46px;
