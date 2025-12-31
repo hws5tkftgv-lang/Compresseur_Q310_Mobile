@@ -599,7 +599,8 @@ $("btnMove").addEventListener("click", ()=> setTool("move"));
 $("btnDraw").addEventListener("click", ()=> setTool("draw"));
 $("btnResize").addEventListener("click", ()=> setTool("resize"));
 $("btnPiece").addEventListener("click", ()=>{
-  if(!selected) return; // optionnel mais conseillé
+  if(!selected) return;
+  disableCanvasTouch();            // ✅ IMPORTANT
   $("piecePanel").classList.add("open");
 });
 $("btnDelete").addEventListener("click", ()=>{
@@ -637,6 +638,7 @@ $("btnSwap").addEventListener("click", ()=>{
 
 $("btnClosePiecePanel").addEventListener("click", ()=>{
   $("piecePanel").classList.remove("open");
+  enableCanvasTouch();             // ✅ IMPORTANT
 });
 
 
@@ -834,9 +836,10 @@ function clearSelection(){
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
 
+  disableCanvasTouch();            // ✅ IMPORTANT
+
   const part = PARTS[selected.zoneData.partId];
   if(!part || !part.medias) return;
-
   const box = $("mediaContent");
   box.innerHTML = "";
 
@@ -862,6 +865,7 @@ $("btnShowMedia").addEventListener("click", ()=>{
 
 $("btnCloseMedia").addEventListener("click", ()=>{
   $("mediaViewer").classList.remove("open");
+  enableCanvasTouch();             // ✅ IMPORTANT
 });
 
 
@@ -1045,6 +1049,7 @@ isEditor = true;
 tool = "move";
 setUI();
 bootZones();
+enableCanvasTouch();
 
 
 
