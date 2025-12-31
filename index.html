@@ -53,20 +53,17 @@ html, body{
 .stage{
   position:relative;
   width:100%;
-  max-width:100vw;
+  
 
   height: calc(
-  100svh
-  - var(--quickbar-h)
-  - env(safe-area-inset-bottom)
-  - 60px
-);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+    var(--real-vh)
+    - var(--quickbar-h)
+    - 60px
+  );
 
   overflow:hidden;
   background:#000;
+
 }
 .canvas-container{
   max-width:100%;
@@ -81,6 +78,12 @@ html, body{
   align-items:center;
   justify-content:center;
 }
+
+html, body{
+  height:100%;
+  overflow:hidden;
+}
+
 
 #imgLayer{
   max-width:100%;
@@ -1022,7 +1025,22 @@ canvas.on("object:modified", e => {
 
   saveToLocal();
 });
+<script>
+function fixIOSViewport(){
+  const vh = window.visualViewport
+    ? window.visualViewport.height
+    : window.innerHeight;
 
+  document.documentElement.style.setProperty(
+    "--real-vh",
+    `${vh}px`
+  );
+}
+
+fixIOSViewport();
+window.addEventListener("resize", fixIOSViewport);
+window.visualViewport?.addEventListener("resize", fixIOSViewport);
+</script>
 /* BOOT */
 isEditor = true;
 tool = "move";
