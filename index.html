@@ -302,18 +302,47 @@ let zonesByImage = {};
 let PARTS = {};        // index par id
 let PARTS_LIST = [];   // liste brute depuis JSON
 
-fetch("quincy_310L_parts.json")
-  .then(res => res.json())
-  .then(data => {
-    PARTS_LIST = Array.isArray(data) ? data : [];
+// 1) Essaie localStorage d'abord
+if(loadPartsFromLocal()){
+  remplirMenuPieces();
+}else{
+  // 2) Sinon charge le JSON
+  fetch("quincy_310L_parts.json")
+    .then(res => res.json())
+    .then(data => {
+      PARTS_LIST = Array.isArray(data) ? data : [];
+      PARTS = {};
+      PARTS_LIST.forEach(p => { if(p && p.id) PARTS[p.id] = p; });
+      savePartsToLocal();
+      remplirMenuPieces();
+    })
+    .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
+}
+const PARTS_STORAGE_KEY = "q310_parts_v1";
+
+function savePartsToLocal(){
+  try{
+    localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST));
+  }catch(e){
+    console.error("savePartsToLocal error", e);
+  }
+}
+
+function loadPartsFromLocal(){
+  try{
+    const raw = localStorage.getItem(PARTS_STORAGE_KEY);
+    if(!raw) return false;
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return false;
+
+    PARTS_LIST = arr;
     PARTS = {};
     PARTS_LIST.forEach(p => { if(p && p.id) PARTS[p.id] = p; });
-    remplirMenuPieces();
-  })
-  .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
-
-const STORAGE_KEY = "q310_zones_v1";
-
+    return true;
+  }catch(e){
+    return false;
+  }
+}
 let isEditor = false;
 let tool = "view"; // move | resize | draw
 let selected = null;
@@ -789,7 +818,8 @@ $("btnCloseMedia").addEventListener("click", ()=>{
 });
 
 $("btnAddImage").addEventListener("click", ()=>{
-  if(!selected || !selected.zoneData?.partId) return;
+  if(!selected) return alert("Sélectionne une zone d’abord.");
+if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
 
   const part = PARTS[selected.zoneData.partId];
   if(!part.medias) part.medias = { images:[], videos:[] };
@@ -803,6 +833,7 @@ $("btnAddImage").addEventListener("click", ()=>{
   if(isNaN(idx) || !ASSETS.images[idx]) return;
 
   part.medias.images.push(ASSETS.images[idx]);
+  savePartsToLocal();
   saveToLocal();
 
   alert("Image ajoutée à la pièce");
@@ -810,7 +841,8 @@ $("btnAddImage").addEventListener("click", ()=>{
 
 
 $("btnAddVideo").addEventListener("click", ()=>{
-  if(!selected || !selected.zoneData?.partId) return;
+ if(!selected) return alert("Sélectionne une zone d’abord.");
+if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
 
   const part = PARTS[selected.zoneData.partId];
   if(!part.medias) part.medias = { images:[], videos:[] };
@@ -824,6 +856,7 @@ $("btnAddVideo").addEventListener("click", ()=>{
   if(isNaN(idx) || !ASSETS.videos[idx]) return;
 
   part.medias.videos.push(ASSETS.videos[idx]);
+  savePartsToLocal();
   saveToLocal();
 
   alert("Vidéo ajoutée à la pièce");
