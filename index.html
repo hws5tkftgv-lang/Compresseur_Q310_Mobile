@@ -222,6 +222,15 @@ body{ padding-bottom:90px; }
     </select>
 
     <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
+    <div class="sectionTitle">Ajouter depuis actif/</div>
+
+<button id="btnAddImage" class="btn">
+  ➕ Ajouter une image
+</button>
+
+<button id="btnAddVideo" class="btn">
+  ➕ Ajouter une vidéo
+</button>
   </div>
 </div>
 
@@ -260,6 +269,19 @@ body{ padding-bottom:90px; }
 </div>
 
 <script>
+
+const ASSETS = {
+  images: [
+    "actif/vues/cylindre_lp_face.jpg",
+    "actif/vues/cylindre_lp_coupe.jpg",
+    "actif/vues/cylindre_lp_detail.jpg"
+  ],
+  videos: [
+    "actif/videos/cylindre_lp.mp4",
+    "https://www.youtube.com/embed/XXXXX"
+  ]
+};
+
 const $ = id => document.getElementById(id);
 
 /* =========================
@@ -765,6 +787,50 @@ $("btnCloseMedia").addEventListener("click", ()=>{
   $("mediaViewer").classList.remove("open");
   enableCanvasTouch();
 });
+
+$("btnAddImage").addEventListener("click", ()=>{
+  if(!selected || !selected.zoneData?.partId) return;
+
+  const part = PARTS[selected.zoneData.partId];
+  if(!part.medias) part.medias = { images:[], videos:[] };
+
+  const choix = prompt(
+    "Choisis une image :\n\n" +
+    ASSETS.images.map((p,i)=>`${i+1}. ${p}`).join("\n")
+  );
+
+  const idx = parseInt(choix,10) - 1;
+  if(isNaN(idx) || !ASSETS.images[idx]) return;
+
+  part.medias.images.push(ASSETS.images[idx]);
+  saveToLocal();
+
+  alert("Image ajoutée à la pièce");
+});
+
+
+$("btnAddVideo").addEventListener("click", ()=>{
+  if(!selected || !selected.zoneData?.partId) return;
+
+  const part = PARTS[selected.zoneData.partId];
+  if(!part.medias) part.medias = { images:[], videos:[] };
+
+  const choix = prompt(
+    "Choisis une vidéo :\n\n" +
+    ASSETS.videos.map((p,i)=>`${i+1}. ${p}`).join("\n")
+  );
+
+  const idx = parseInt(choix,10) - 1;
+  if(isNaN(idx) || !ASSETS.videos[idx]) return;
+
+  part.medias.videos.push(ASSETS.videos[idx]);
+  saveToLocal();
+
+  alert("Vidéo ajoutée à la pièce");
+});
+
+
+
 
 /* =========================
    IMPORT JSON
