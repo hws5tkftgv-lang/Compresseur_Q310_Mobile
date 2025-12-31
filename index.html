@@ -18,6 +18,14 @@
   background:#000;
 }
 
+.sectionTitle{
+  margin-top:12px;
+  font-size:12px;
+  opacity:.7;
+  font-weight:700;
+  text-transform:uppercase;
+}
+
 :root{ --quickbar-h: 70px; }
 
 body{
@@ -77,8 +85,7 @@ body{ padding-bottom:90px; }
   z-index:20000;
   display:flex;
   flex-direction:column;
-
-  pointer-events:none;   /* 👈 important */
+  pointer-events:none;
 }
 
 #piecePanel.open{
@@ -193,7 +200,6 @@ body{ padding-bottom:90px; }
   z-index:30000;
   overflow-y:auto;
   padding:16px;
-
   display:none;
   pointer-events:none;
 }
@@ -224,13 +230,8 @@ body{ padding-bottom:90px; }
     <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
     <div class="sectionTitle">Ajouter depuis actif/</div>
 
-<button id="btnAddImage" class="btn">
-  ➕ Ajouter une image
-</button>
-
-<button id="btnAddVideo" class="btn">
-  ➕ Ajouter une vidéo
-</button>
+    <button id="btnAddImage" class="btn">➕ Ajouter une image</button>
+    <button id="btnAddVideo" class="btn">➕ Ajouter une vidéo</button>
   </div>
 </div>
 
@@ -269,7 +270,6 @@ body{ padding-bottom:90px; }
 </div>
 
 <script>
-
 const ASSETS = {
   images: [
     "actif/vues/cylindre_lp_face.jpg",
@@ -284,11 +284,10 @@ const ASSETS = {
 
 const $ = id => document.getElementById(id);
 
-/* =========================
-   IMAGE KEY (important)
-   Ton <img> est "actif/compresseur_bg.png"
-   Donc la clé doit être "compresseur_bg.png"
-========================= */
+/* ✅ AJOUT: clés storage manquantes */
+const STORAGE_KEY = "q310_zones_v1";
+const PARTS_STORAGE_KEY = "q310_parts_v1";
+
 function getCurrentImageKey(){
   const img = $("imgLayer");
   const src = (img && img.getAttribute("src")) ? img.getAttribute("src") : "";
@@ -299,27 +298,10 @@ function getCurrentImageKey(){
 let currentImage = getCurrentImageKey();
 let zonesByImage = {};
 
-let PARTS = {};        // index par id
-let PARTS_LIST = [];   // liste brute depuis JSON
+let PARTS = {};
+let PARTS_LIST = [];
 
-// 1) Essaie localStorage d'abord
-if(loadPartsFromLocal()){
-  remplirMenuPieces();
-}else{
-  // 2) Sinon charge le JSON
-  fetch("quincy_310L_parts.json")
-    .then(res => res.json())
-    .then(data => {
-      PARTS_LIST = Array.isArray(data) ? data : [];
-      PARTS = {};
-      PARTS_LIST.forEach(p => { if(p && p.id) PARTS[p.id] = p; });
-      savePartsToLocal();
-      remplirMenuPieces();
-    })
-    .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
-}
-const PARTS_STORAGE_KEY = "q310_parts_v1";
-
+/* ✅ functions PARTS storage (déclarées AVANT usage) */
 function savePartsToLocal(){
   try{
     localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST));
@@ -343,19 +325,34 @@ function loadPartsFromLocal(){
     return false;
   }
 }
+
+/* ✅ init PARTS */
+if(loadPartsFromLocal()){
+  remplirMenuPieces();
+}else{
+  fetch("quincy_310L_parts.json")
+    .then(res => res.json())
+    .then(data => {
+      PARTS_LIST = Array.isArray(data) ? data : [];
+      PARTS = {};
+      PARTS_LIST.forEach(p => { if(p && p.id) PARTS[p.id] = p; });
+      savePartsToLocal();
+      remplirMenuPieces();
+    })
+    .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
+}
+
 let isEditor = false;
-let tool = "view"; // move | resize | draw
+let tool = "view";
 let selected = null;
 
 let drawing = false;
 let startPt = null;
 let tempRect = null;
 
-let zonesData = []; // [{id,x,y,w,h,nom,role,desc,partId?}]
+let zonesData = [];
 
-/* =========================
-   CANVAS
-========================= */
+/* CANVAS */
 const canvas = new fabric.Canvas("c", {
   selection:false,
   preserveObjectStacking:true,
@@ -363,12 +360,10 @@ const canvas = new fabric.Canvas("c", {
 });
 canvas.selection = false;
 
-/* iOS: empêcher gestes Safari */
 canvas.upperCanvasEl.style.touchAction = "none";
 canvas.upperCanvasEl.style.webkitUserSelect = "none";
 canvas.upperCanvasEl.style.webkitTouchCallout = "none";
 
-/* ergonomie tactile */
 fabric.Object.prototype.cornerSize = 36;
 fabric.Object.prototype.cornerStyle = "circle";
 fabric.Object.prototype.transparentCorners = false;
@@ -376,9 +371,6 @@ fabric.Object.prototype.padding = 10;
 fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 45;
 
-/* =========================
-   FIT CANVAS TO IMAGE (contain)
-========================= */
 function fitCanvasToImage(){
   const img = $("imgLayer");
   const stage = $("stage");
@@ -417,15 +409,13 @@ function fitCanvasToImage(){
 
 $("imgLayer").addEventListener("load", ()=>{
   currentImage = getCurrentImageKey();
-  bootZones();        // recharge zones selon la bonne clé d'image
+  bootZones();
   fitCanvasToImage();
 });
 
 window.addEventListener("resize", fitCanvasToImage);
 
-/* =========================
-   SAVE / LOAD (localStorage)
-========================= */
+/* ZONES storage */
 function saveToLocal(){
   try{
     currentImage = getCurrentImageKey();
@@ -453,9 +443,6 @@ function loadFromLocal(){
   }
 }
 
-/* =========================
-   CREATE RECT FROM DATA
-========================= */
 function makeRectFromZone(z){
   const r = new fabric.Rect({
     left: z.x,
@@ -472,16 +459,12 @@ function makeRectFromZone(z){
   return r;
 }
 
-/* =========================
-   BOOT: load zones
-========================= */
 function bootZones(){
   canvas.clear();
 
   const hasLocal = loadFromLocal();
 
   if(!hasLocal){
-    // valeur par défaut si rien en storage
     currentImage = getCurrentImageKey();
     zonesByImage = zonesByImage || {};
     zonesByImage[currentImage] = zonesByImage[currentImage] || [
@@ -505,9 +488,6 @@ function bootZones(){
   fitCanvasToImage();
 }
 
-/* =========================
-   PARTS MENU
-========================= */
 function remplirMenuPieces(){
   const select = $("partSelect");
   if(!select) return;
@@ -526,16 +506,9 @@ function remplirMenuPieces(){
   });
 }
 
-/* =========================
-   iOS SAFE TOUCH BLOCKING (anti-gel)
-========================= */
+/* iOS touch block canvas */
 let canvasTouchBlocked = false;
-
-function blockCanvasTouch(e){
-  // Empêche Safari de "prendre" le geste (scroll/pinch),
-  // MAIS on l'active seulement quand il faut.
-  e.preventDefault();
-}
+function blockCanvasTouch(e){ e.preventDefault(); }
 
 function enableCanvasTouch(){
   if(canvasTouchBlocked) return;
@@ -543,7 +516,6 @@ function enableCanvasTouch(){
   canvas.upperCanvasEl.addEventListener("touchstart", blockCanvasTouch, { passive:false });
   canvasTouchBlocked = true;
 }
-
 function disableCanvasTouch(){
   if(!canvasTouchBlocked) return;
   canvas.upperCanvasEl.removeEventListener("touchmove", blockCanvasTouch);
@@ -551,9 +523,7 @@ function disableCanvasTouch(){
   canvasTouchBlocked = false;
 }
 
-/* =========================
-   UI / MODES
-========================= */
+/* UI / MODES */
 function updateQuickbar(){
   ["btnMove","btnDraw","btnResize"].forEach(id => $(id).classList.remove("active"));
   if(tool === "move")   $("btnMove").classList.add("active");
@@ -652,9 +622,7 @@ function setTool(newTool){
   setUI();
 }
 
-/* =========================
-   SELECTION + INFO
-========================= */
+/* SELECTION + INFO */
 function showInfo(z){
   if(!z){
     $("infoTitle").textContent = "Sélectionne une zone";
@@ -678,11 +646,8 @@ function selectObj(obj){
   selected = obj;
   canvas.setActiveObject(obj);
 
-  // sync le select quand on ouvre le panneau
   const ps = $("partSelect");
-  if(ps){
-    ps.value = selected.zoneData.partId || "";
-  }
+  if(ps) ps.value = selected.zoneData.partId || "";
 
   showInfo(obj.zoneData);
   applyMode();
@@ -695,16 +660,13 @@ function clearSelection(){
   applyMode();
 }
 
-/* =========================
-   BUTTONS
-========================= */
+/* BUTTONS */
 $("btnMove").addEventListener("click", ()=> setTool("move"));
 $("btnDraw").addEventListener("click", ()=> setTool("draw"));
 $("btnResize").addEventListener("click", ()=> setTool("resize"));
 
 $("btnPiece").addEventListener("click", ()=>{
   if(!selected) return;
-  // quand un panneau est ouvert, on évite que le canvas capte les gestures
   disableCanvasTouch();
   $("partSelect").value = selected.zoneData.partId || "";
   $("piecePanel").classList.add("open");
@@ -733,15 +695,12 @@ $("btnIO").addEventListener("click", ()=>{
   if(action === "2") $("fileInput").click();
 });
 
-/* =========================
-   PART SELECT: associer une pièce à la zone
-========================= */
+/* PART SELECT */
 $("partSelect").addEventListener("change", ()=>{
   if(!selected || !selected.zoneData) return;
 
   const v = $("partSelect").value;
 
-  // Nouvelle pièce
   if(v === "__new__"){
     const nom = prompt("Nom de la nouvelle pièce ?");
     if(!nom){
@@ -749,20 +708,19 @@ $("partSelect").addEventListener("change", ()=>{
       return;
     }
 
-    // ID simple (slug)
     const baseId = nom.toLowerCase().trim()
       .replace(/\s+/g,"_")
       .replace(/[^a-z0-9_]/g,"");
 
     const id = baseId ? baseId : ("piece_" + Date.now());
 
-    // Ajoute dans PARTS_LIST / PARTS
     const newPart = { id, nom, circuit:"", role:"", desc:"", medias:{ images:[], videos:[] } };
     PARTS_LIST.push(newPart);
     PARTS[id] = newPart;
+
+    savePartsToLocal();   /* ✅ AJOUT CRITIQUE */
     remplirMenuPieces();
 
-    // applique à la zone
     selected.zoneData.partId = id;
     $("partSelect").value = id;
     saveToLocal();
@@ -770,15 +728,12 @@ $("partSelect").addEventListener("change", ()=>{
     return;
   }
 
-  // Associer / désassocier
   selected.zoneData.partId = v || "";
   saveToLocal();
   showInfo(selected.zoneData);
 });
 
-/* =========================
-   MEDIA VIEWER
-========================= */
+/* MEDIA VIEWER */
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
 
@@ -804,8 +759,8 @@ $("btnShowMedia").addEventListener("click", ()=>{
     const d = document.createElement("div");
     d.className = "mediaBlock";
     d.innerHTML = (src.includes("youtube"))
-      ? `<iframe src="${src}" allowfullscreen></iframe>`
-      : `<video src="${src}" controls></video>`;
+      ? `<iframe src="${src}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`
+      : `<video src="${src}" controls playsinline preload="metadata"></video>`;
     box.appendChild(d);
   });
 
@@ -819,7 +774,7 @@ $("btnCloseMedia").addEventListener("click", ()=>{
 
 $("btnAddImage").addEventListener("click", ()=>{
   if(!selected) return alert("Sélectionne une zone d’abord.");
-if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
+  if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
 
   const part = PARTS[selected.zoneData.partId];
   if(!part.medias) part.medias = { images:[], videos:[] };
@@ -833,16 +788,16 @@ if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant
   if(isNaN(idx) || !ASSETS.images[idx]) return;
 
   part.medias.images.push(ASSETS.images[idx]);
-  savePartsToLocal();
+
+  savePartsToLocal();  /* ✅ */
   saveToLocal();
 
   alert("Image ajoutée à la pièce");
 });
 
-
 $("btnAddVideo").addEventListener("click", ()=>{
- if(!selected) return alert("Sélectionne une zone d’abord.");
-if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
+  if(!selected) return alert("Sélectionne une zone d’abord.");
+  if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
 
   const part = PARTS[selected.zoneData.partId];
   if(!part.medias) part.medias = { images:[], videos:[] };
@@ -856,18 +811,14 @@ if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant
   if(isNaN(idx) || !ASSETS.videos[idx]) return;
 
   part.medias.videos.push(ASSETS.videos[idx]);
-  savePartsToLocal();
+
+  savePartsToLocal();  /* ✅ */
   saveToLocal();
 
   alert("Vidéo ajoutée à la pièce");
 });
 
-
-
-
-/* =========================
-   IMPORT JSON
-========================= */
+/* IMPORT JSON */
 $("fileInput").addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -908,9 +859,7 @@ $("fileInput").addEventListener("change", e=>{
   reader.readAsText(file);
 });
 
-/* =========================
-   EXPORT JSON
-========================= */
+/* EXPORT JSON */
 function exportZonesJSON(){
   const data = zonesData.map(z => ({
     partId: z.partId || z.id,
@@ -939,13 +888,10 @@ function exportZonesJSON(){
   }
 }
 
-/* =========================
-   FABRIC EVENTS: select / draw
-========================= */
+/* FABRIC EVENTS */
 canvas.on("mouse:down", opt => {
   const obj = opt.target;
 
-  // DRAW
   if(isEditor && tool === "draw"){
     drawing = true;
     startPt = canvas.getPointer(opt.e);
@@ -967,7 +913,6 @@ canvas.on("mouse:down", opt => {
     return;
   }
 
-  // SELECT
   if(obj) selectObj(obj);
   else clearSelection();
 });
@@ -1023,7 +968,6 @@ canvas.on("mouse:up", () => {
   saveToLocal();
 });
 
-/* Synchroniser coords lors d’un drag/resize */
 canvas.on("object:modified", e => {
   if(!isEditor) return;
   const o = e.target;
@@ -1031,7 +975,6 @@ canvas.on("object:modified", e => {
 
   const z = o.zoneData;
 
-  // valeurs “propres”
   const newW = Math.round(o.getScaledWidth());
   const newH = Math.round(o.getScaledHeight());
 
@@ -1040,16 +983,13 @@ canvas.on("object:modified", e => {
   z.w = newW;
   z.h = newH;
 
-  // reset scale pour éviter l’accumulation
   o.set({ scaleX:1, scaleY:1, width:z.w, height:z.h, left:z.x, top:z.y });
   o.setCoords();
 
   saveToLocal();
 });
 
-/* =========================
-   BOOT
-========================= */
+/* BOOT */
 isEditor = true;
 tool = "move";
 setUI();
