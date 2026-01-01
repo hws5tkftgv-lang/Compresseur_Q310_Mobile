@@ -799,7 +799,7 @@ zonesData = zonesData.filter(z => z !== selected.zoneData);
 VIEWS[currentViewId].zones = zonesData;
 clearSelection();
 saveToLocal();
-
+});
 
 $("btnIO").addEventListener("click", ()=>{
   const action = prompt("Tape 1 pour EXPORT, 2 pour IMPORT");
