@@ -491,14 +491,15 @@ function fitCanvasToImage(){
   const stageRatio = stageW / stageH;
 
   let w, h;
-  if(stageRatio > imgRatio){
-    h = stageH;
-    w = h * imgRatio;
-  }else{
-    w = stageW;
-    h = w / imgRatio;
-  }
+const SCALE = 0.92; // ✅ réduction volontaire ~8 %
 
+if(stageRatio > imgRatio){
+  h = stageH * SCALE;
+  w = h * imgRatio;
+}else{
+  w = stageW * SCALE;
+  h = w / imgRatio;
+}
   w = Math.round(w);
   h = Math.round(h);
 
