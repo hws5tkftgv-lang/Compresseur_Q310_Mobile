@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Q310 – iPhone Éditeur (Portrait iOS Safari – FIX)</title>
+  <title>Q310 – iPhone Éditeur (FINAL STABLE iOS Safari)</title>
 
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
   <style>
     :root{
       --quickbar-h: 70px;
-      --header-h: 86px;      /* sera recalculé par JS */
-      --vvh: 100vh;          /* hauteur visible réelle */
-      --safari-ui: 0px;      /* overlay bas Safari (calculé JS) */
+      --header-h: 86px;      /* sera recalculé en JS */
+      --vvh: 100vh;          /* visualViewport height */
+      --safari-ui: 0px;      /* overlay bas Safari */
     }
 
     html, body{
@@ -31,17 +31,14 @@
     }
     body{ position:fixed; inset:0; }
 
-    /* App */
     #app{
       position:fixed;
       inset:0;
-      height: var(--vvh);
       display:flex;
       flex-direction:column;
       overflow:hidden;
       background:#0b1436;
 
-      /* réserve l’espace réel pour quickbar + safe-area + barre Safari */
       padding-bottom: calc(
         var(--quickbar-h)
         + env(safe-area-inset-bottom)
@@ -52,13 +49,12 @@
     /* ===== Bande info ===== */
     #infoPanel{
       padding:10px 12px;
-      padding-left: calc(12px + env(safe-area-inset-left));
-      padding-right: calc(12px + env(safe-area-inset-right));
       background:#0f1a44;
       border-bottom:1px solid rgba(255,255,255,.15);
       flex:0 0 auto;
       position:relative;
       z-index:5;
+
       width:100%;
       box-sizing:border-box;
       overflow:hidden;
@@ -70,7 +66,7 @@
       line-height:1.25;
       white-space:normal;
       word-break:break-word;
-      padding-right:44px; /* espace pour ✏️ */
+      padding-right:44px; /* place pour ✏️ */
     }
 
     #infoText{
@@ -82,11 +78,11 @@
       word-break:break-word;
     }
 
-    /* ✏️ icône seulement */
+    /* ✏️ badge */
     #editorState{
       position:absolute;
       top:8px;
-      right: calc(8px + env(safe-area-inset-right));
+      right:8px;
       width:32px;
       height:32px;
       border-radius:50%;
@@ -121,10 +117,8 @@
     .canvas-wrap{
       position:absolute;
       inset:0;
-      overflow:hidden;
     }
 
-    /* Image positionnée EXACTEMENT par JS */
     #imgLayer{
       position:absolute;
       left:0;
@@ -135,7 +129,6 @@
       pointer-events:none;
       user-select:none;
       -webkit-user-drag:none;
-      transform: translateZ(0);
     }
 
     .canvas-container, canvas{
@@ -150,10 +143,7 @@
       bottom: var(--safari-ui);
 
       height: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
-      padding: 10px;
-      padding-bottom: calc(10px + env(safe-area-inset-bottom));
-      padding-left: calc(10px + env(safe-area-inset-left));
-      padding-right: calc(10px + env(safe-area-inset-right));
+      padding: 10px 10px calc(10px + env(safe-area-inset-bottom)) 10px;
 
       display:flex;
       justify-content:center;
@@ -165,7 +155,6 @@
       border-top:1px solid rgba(255,255,255,.15);
       z-index:10000;
       touch-action:none;
-      box-sizing:border-box;
     }
 
     .qbtn{
@@ -279,29 +268,10 @@
       border-radius:12px;
       background:#000;
     }
-
-    /* Overlay paysage */
-    #rotateHint{
-      position:fixed;
-      inset:0;
-      background:#0b1436;
-      color:#fff;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      font-size:18px;
-      z-index:99999;
-      text-align:center;
-      padding:24px;
-      box-sizing:border-box;
-    }
-    #rotateHint.show{ display:flex; }
   </style>
 </head>
 
 <body>
-
-  <div id="rotateHint">🔄 Remets ton iPhone en <b>portrait</b> pour utiliser l’éditeur.</div>
 
   <div id="app">
     <div id="infoPanel">
@@ -360,11 +330,12 @@
   </div>
 
 <script>
-/* =========================
-   Helpers
-   ========================= */
+/* =========================================================
+   HELPERS
+   ========================================================= */
 const $ = id => document.getElementById(id);
 
+/* ✅ Autoriser scroll uniquement dans panneaux */
 function allowScrollTarget(el){
   return !!(el && (el.closest(".panelContent") || el.closest("#mediaViewer")));
 }
@@ -372,36 +343,42 @@ document.addEventListener("touchmove", (e)=>{
   if(!allowScrollTarget(e.target)) e.preventDefault();
 }, { passive:false });
 
-/* =========================
-   Viewport vars (iOS)
-   ========================= */
+/* =========================================================
+   VIEWPORT VARS (source unique)
+   ========================================================= */
 function updateViewportVars(){
   const vv = window.visualViewport;
   const vvh = vv ? vv.height : window.innerHeight;
-
-  // overlay Safari en bas (approximé fiable)
-  const safariUI = vv ? Math.max(0, window.innerHeight - (vv.height + vv.offsetTop)) : 0;
+  const safariUI = vv
+    ? Math.max(0, window.innerHeight - (vv.height + vv.offsetTop))
+    : 0;
 
   document.documentElement.style.setProperty("--vvh", Math.round(vvh) + "px");
   document.documentElement.style.setProperty("--safari-ui", Math.round(safariUI) + "px");
 
-  // hauteur header réelle
-  const headerH = $("infoPanel") ? $("infoPanel").offsetHeight : 86;
-  document.documentElement.style.setProperty("--header-h", Math.round(headerH) + "px");
+  // Header dynamique: on mesure vraiment la hauteur du bandeau
+  const header = $("infoPanel");
+  if(header){
+    const h = header.getBoundingClientRect().height;
+    document.documentElement.style.setProperty("--header-h", Math.round(h) + "px");
+  }
 }
 
-function isLandscape(){
-  return window.innerWidth > window.innerHeight;
+/* =========================================================
+   ORCHESTRATEUR STABLE (anti-drift iOS)
+   ========================================================= */
+let relayoutTimer = null;
+function scheduleRelayout(delay = 250){
+  if(relayoutTimer) clearTimeout(relayoutTimer);
+  relayoutTimer = setTimeout(() => {
+    updateViewportVars();
+    fitCanvasToImage();
+  }, delay);
 }
 
-function applyOrientationUI(){
-  const show = isLandscape();
-  $("rotateHint").classList.toggle("show", show);
-}
-
-/* =========================
-   Assets / Storage keys
-   ========================= */
+/* =========================================================
+   ASSETS / STORAGE
+   ========================================================= */
 const ASSETS = {
   images: [
     "actif/vues/cylindre_lp_face.jpg",
@@ -431,13 +408,14 @@ let zonesData = [];
 let PARTS = {};
 let PARTS_LIST = [];
 
-/* =========================
-   Parts load/save
-   ========================= */
+/* =========================================================
+   PARTS load/save
+   ========================================================= */
 function savePartsToLocal(){
   try{ localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST)); }
   catch(e){ console.error("savePartsToLocal error", e); }
 }
+
 function loadPartsFromLocal(){
   try{
     const raw = localStorage.getItem(PARTS_STORAGE_KEY);
@@ -453,6 +431,7 @@ function loadPartsFromLocal(){
     return false;
   }
 }
+
 function remplirMenuPieces(){
   const select = $("partSelect");
   if(!select) return;
@@ -461,6 +440,7 @@ function remplirMenuPieces(){
     <option value="">— Choisir une pièce —</option>
     <option value="__new__">➕ Nouvelle pièce…</option>
   `;
+
   PARTS_LIST.forEach(p => {
     if(!p || !p.id) return;
     const opt = document.createElement("option");
@@ -487,9 +467,9 @@ function remplirMenuPieces(){
     .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
 })();
 
-/* =========================
-   Fabric init
-   ========================= */
+/* =========================================================
+   FABRIC init
+   ========================================================= */
 let isEditor = true;
 let tool = "move";
 let selected = null;
@@ -516,26 +496,21 @@ fabric.Object.prototype.padding = 10;
 fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 45;
 
-/* =========================
-   FIT (centrage fiable iOS)
-   ========================= */
+/* =========================================================
+   FIT CANVAS TO IMAGE (centrage stable)
+   ========================================================= */
 function fitCanvasToImage(){
-  if (isLandscape()) return;
-
   const img   = $("imgLayer");
   const stage = $("stage");
   if(!img || !stage || !img.naturalWidth) return;
 
-  // ✅ IMPORTANT: on prend la taille réelle rendue (iOS ment parfois sur clientWidth)
   const r = stage.getBoundingClientRect();
-  const stageW = Math.round(r.width);
-  const stageH = Math.round(r.height);
-  if(stageW <= 0 || stageH <= 0) return;
+  const stageW = Math.max(1, Math.round(r.width));
+  const stageH = Math.max(1, Math.round(r.height));
 
   const imgW = img.naturalWidth;
   const imgH = img.naturalHeight;
 
-  // Fit contain
   const scale = Math.min(stageW / imgW, stageH / imgH);
   const w = Math.round(imgW * scale);
   const h = Math.round(imgH * scale);
@@ -560,16 +535,15 @@ function fitCanvasToImage(){
     wrap.style.top    = top  + "px";
     wrap.style.width  = w + "px";
     wrap.style.height = h + "px";
-    wrap.style.transform = "translateZ(0)";
   }
 
   canvas.calcOffset();
   canvas.requestRenderAll();
 }
 
-/* =========================
-   Zones load/save
-   ========================= */
+/* =========================================================
+   ZONES load/save
+   ========================================================= */
 function saveToLocal(){
   try{
     currentImage = getCurrentImageKey();
@@ -579,10 +553,12 @@ function saveToLocal(){
     console.error("Save error", e);
   }
 }
+
 function loadFromLocal(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return false;
+
     const obj = JSON.parse(raw);
     if(!obj || typeof obj !== "object") return false;
 
@@ -594,6 +570,7 @@ function loadFromLocal(){
     return false;
   }
 }
+
 function makeRectFromZone(z){
   const r = new fabric.Rect({
     left: z.x,
@@ -609,14 +586,24 @@ function makeRectFromZone(z){
   r.zoneData = z;
   return r;
 }
+
 function bootZones(){
   canvas.clear();
 
   const hasLocal = loadFromLocal();
+
   if(!hasLocal){
     currentImage = getCurrentImageKey();
+    zonesByImage = zonesByImage || {};
     zonesByImage[currentImage] = zonesByImage[currentImage] || [
-      { id:"cylindre_lp", x:140, y:120, w:120, h:220, nom:"Cylindre LP", role:"Compression initiale", desc:"Première étape de compression.", partId:"" }
+      {
+        id:"cylindre_lp",
+        x:140, y:120, w:120, h:220,
+        nom:"Cylindre LP",
+        role:"Compression initiale",
+        desc:"Première étape de compression.",
+        partId:""
+      }
     ];
     zonesData = zonesByImage[currentImage];
     saveToLocal();
@@ -625,18 +612,18 @@ function bootZones(){
   zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
   clearSelection();
   applyMode();
-  fitCanvasToImage();
 }
 
-/* =========================
+/* =========================================================
    UI / Modes / Selection
-   ========================= */
+   ========================================================= */
 function updateQuickbar(){
   ["btnMove","btnDraw","btnResize"].forEach(id => $(id).classList.remove("active"));
   if(tool === "move")   $("btnMove").classList.add("active");
   if(tool === "draw")   $("btnDraw").classList.add("active");
   if(tool === "resize") $("btnResize").classList.add("active");
 }
+
 function showAllResizeHandles(obj, on){
   obj.setControlsVisibility({
     tl:on, tr:on, bl:on, br:on,
@@ -644,6 +631,7 @@ function showAllResizeHandles(obj, on){
     mtr:false
   });
 }
+
 function applyMode(){
   canvas.forEachObject(o => {
     o.stroke = (o === selected) ? "orange" : "white";
@@ -654,9 +642,13 @@ function applyMode(){
       o.selectable = false;
       o.hasControls = false;
       o.hasBorders = false;
-      o.lockMovementX = o.lockMovementY = true;
-      o.lockScalingX = o.lockScalingY = true;
-      o.lockRotation = true;
+
+      o.lockMovementX = true;
+      o.lockMovementY = true;
+      o.lockScalingX  = true;
+      o.lockScalingY  = true;
+      o.lockRotation  = true;
+
       showAllResizeHandles(o,false);
       return;
     }
@@ -676,8 +668,12 @@ function applyMode(){
       o.selectable = true;
       o.hasControls = false;
       o.hasBorders = true;
-      o.lockMovementX = o.lockMovementY = false;
-      o.lockScalingX = o.lockScalingY = true;
+
+      o.lockMovementX = false;
+      o.lockMovementY = false;
+      o.lockScalingX  = true;
+      o.lockScalingY  = true;
+
       showAllResizeHandles(o,false);
       return;
     }
@@ -686,8 +682,12 @@ function applyMode(){
       o.selectable = true;
       o.hasControls = true;
       o.hasBorders = true;
-      o.lockMovementX = o.lockMovementY = false;
-      o.lockScalingX = o.lockScalingY = false;
+
+      o.lockMovementX = false;
+      o.lockMovementY = false;
+      o.lockScalingX  = false;
+      o.lockScalingY  = false;
+
       showAllResizeHandles(o,true);
       return;
     }
@@ -695,40 +695,53 @@ function applyMode(){
 
   canvas.requestRenderAll();
 }
+
 function setUI(){
   $("editorState").style.display = isEditor ? "flex" : "none";
-  ["btnMove","btnDraw","btnResize"].forEach(id => $(id).disabled = !isEditor);
+
+  ["btnMove","btnDraw","btnResize"].forEach(id=>{
+    $(id).disabled = !isEditor;
+  });
+
   updateQuickbar();
   applyMode();
 }
+
 function setTool(newTool){
   if(!isEditor) return;
   tool = newTool;
   setUI();
 }
+
 function showInfo(z){
   if(!z){
     $("infoTitle").textContent = "Sélectionne une zone";
     $("infoText").textContent = "";
     return;
   }
+
   if(z.partId && PARTS[z.partId]){
     const p = PARTS[z.partId];
     $("infoTitle").textContent = p.nom || z.partId;
     $("infoText").textContent = (p.role || "") + (p.desc ? " — " + p.desc : "");
     return;
   }
+
   $("infoTitle").textContent = z.nom || "Zone";
   $("infoText").textContent = (z.role || "") + (z.desc ? " — " + z.desc : "");
 }
+
 function selectObj(obj){
   if(!obj || !obj.zoneData) return;
+
   selected = obj;
   canvas.setActiveObject(obj);
+
   $("partSelect").value = selected.zoneData.partId || "";
   showInfo(obj.zoneData);
   applyMode();
 }
+
 function clearSelection(){
   selected = null;
   canvas.discardActiveObject();
@@ -736,9 +749,9 @@ function clearSelection(){
   applyMode();
 }
 
-/* =========================
-   Panels open/close
-   ========================= */
+/* =========================================================
+   PANELS
+   ========================================================= */
 function openPiecePanel(){
   if(!selected) return;
   $("partSelect").value = selected.zoneData.partId || "";
@@ -748,9 +761,9 @@ function closePiecePanel(){ $("piecePanel").classList.remove("open"); }
 function openMediaViewer(){ $("mediaViewer").classList.add("open"); }
 function closeMediaViewer(){ $("mediaViewer").classList.remove("open"); }
 
-/* =========================
-   Buttons wiring
-   ========================= */
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 $("btnMove").addEventListener("click", ()=> setTool("move"));
 $("btnDraw").addEventListener("click", ()=> setTool("draw"));
 $("btnResize").addEventListener("click", ()=> setTool("resize"));
@@ -776,9 +789,9 @@ $("btnIO").addEventListener("click", ()=>{
   if(action === "2") $("fileInput").click();
 });
 
-/* =========================
-   Part select
-   ========================= */
+/* =========================================================
+   PART SELECT
+   ========================================================= */
 $("partSelect").addEventListener("change", ()=>{
   if(!selected || !selected.zoneData) return;
 
@@ -816,9 +829,9 @@ $("partSelect").addEventListener("change", ()=>{
   showInfo(selected.zoneData);
 });
 
-/* =========================
-   Media viewer
-   ========================= */
+/* =========================================================
+   MEDIA VIEWER
+   ========================================================= */
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
 
@@ -849,6 +862,7 @@ $("btnShowMedia").addEventListener("click", ()=>{
 
   openMediaViewer();
 });
+
 $("btnCloseMedia").addEventListener("click", closeMediaViewer);
 
 $("btnAddImage").addEventListener("click", ()=>{
@@ -865,6 +879,7 @@ $("btnAddImage").addEventListener("click", ()=>{
   part.medias.images.push(ASSETS.images[idx]);
   savePartsToLocal();
   saveToLocal();
+
   alert("Image ajoutée à la pièce");
 });
 
@@ -882,12 +897,13 @@ $("btnAddVideo").addEventListener("click", ()=>{
   part.medias.videos.push(ASSETS.videos[idx]);
   savePartsToLocal();
   saveToLocal();
+
   alert("Vidéo ajoutée à la pièce");
 });
 
-/* =========================
-   Import / Export
-   ========================= */
+/* =========================================================
+   IMPORT / EXPORT
+   ========================================================= */
 $("fileInput").addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -917,7 +933,7 @@ $("fileInput").addEventListener("change", e=>{
 
       clearSelection();
       saveToLocal();
-      fitCanvasToImage();
+      scheduleRelayout(150);
 
       alert("Import réussi");
     }catch(err){
@@ -934,6 +950,7 @@ function exportZonesJSON(){
     partId: z.partId || z.id,
     x: z.x, y: z.y, w: z.w, h: z.h
   }));
+
   const json = JSON.stringify(data, null, 2);
 
   try{
@@ -953,9 +970,9 @@ function exportZonesJSON(){
   }
 }
 
-/* =========================
-   Fabric events
-   ========================= */
+/* =========================================================
+   FABRIC EVENTS (draw/select/resize sync)
+   ========================================================= */
 canvas.on("mouse:down", opt => {
   const obj = opt.target;
 
@@ -1056,45 +1073,29 @@ canvas.on("object:modified", e => {
   saveToLocal();
 });
 
-/* =========================
-   Layout orchestration (stable iOS)
-   ========================= */
-function relayout(){
-  updateViewportVars();
-  applyOrientationUI();
-
-  if (isLandscape()) return;
-
-  // Safari iOS a besoin d’un petit délai après resize/orientation
-  setTimeout(() => {
-    updateViewportVars();
-    fitCanvasToImage();
-  }, 120);
+/* =========================================================
+   STABLE LAYOUT EVENTS (UNIFIÉS)
+   ========================================================= */
+window.addEventListener("resize", () => scheduleRelayout(300));
+window.addEventListener("orientationchange", () => scheduleRelayout(450));
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", () => scheduleRelayout(300));
+  window.visualViewport.addEventListener("scroll", () => scheduleRelayout(300));
 }
 
-/* =========================
-   Boot / hooks
-   ========================= */
 $("imgLayer").addEventListener("load", ()=>{
   currentImage = getCurrentImageKey();
   bootZones();
-  relayout();
+  scheduleRelayout(350);
 });
 
-window.addEventListener("resize", relayout);
-window.addEventListener("orientationchange", () => setTimeout(relayout, 250));
-if(window.visualViewport){
-  window.visualViewport.addEventListener("resize", relayout);
-  window.visualViewport.addEventListener("scroll", relayout);
-}
-
-/* BOOT */
+/* =========================================================
+   BOOT
+   ========================================================= */
 tool = "move";
 setUI();
-updateViewportVars();
-applyOrientationUI();
 bootZones();
-relayout();
+scheduleRelayout(500);
 </script>
 
 </body>
