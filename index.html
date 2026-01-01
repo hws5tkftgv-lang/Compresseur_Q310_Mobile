@@ -29,21 +29,20 @@
     }
     body{ position:fixed; inset:0; }
 
-    #app{
-      position:fixed;
-      inset:0;
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-      padding-bottom: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
-    }
-
-    #infoPanel{
-      padding:10px;
-      background:#0f1a44;
-      border-bottom:1px solid rgba(255,255,255,.15);
-      flex:0 0 auto;
-    }
+#app{
+  outline:3px solid red;
+}
+ #app{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100vw;
+  height: var(--real-vh); /* ✅ LA CLÉ */
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:#0b1436;
+}
     #infoTitle{ font-size:18px; font-weight:800; }
     #infoText{ font-size:14px; opacity:.9; margin-top:4px; }
 
