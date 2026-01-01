@@ -281,12 +281,12 @@
     </div>
 
     <div class="stage" id="stage">
-      <div class="media-layer">
-        <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
-      </div>
-      <div class="canvas-wrap">
-        <canvas id="c"></canvas>
-      </div>
+  <div class="media-layer" id="mediaLayer">
+  <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
+</div>
+<div class="canvas-wrap" id="canvasWrap">
+  <canvas id="c"></canvas>
+</div>
     </div>
   </div>
 
@@ -391,7 +391,7 @@ const ASSETS = {
   ]
 };
 
-const STORAGE_KEY = "q310_zones_v1";
+const STORAGE_KEY = "q310_views_v1"; // ✅ nouveau storage
 const PARTS_STORAGE_KEY = "q310_parts_v1";
 
 function getCurrentImageKey(){
@@ -401,9 +401,9 @@ function getCurrentImageKey(){
   return base || "compresseur_bg.png";
 }
 
-let currentImage = getCurrentImageKey();
-let zonesByImage = {};
-let zonesData = [];
+let currentViewId = getCurrentImageKey(); // ex: compresseur_bg.png
+let VIEWS = {};  // { [viewId]: { id, type, src, zones, linkedFromZone } }
+let zonesData = []; // alias = zones de la vue courante
 
 let PARTS = {};
 let PARTS_LIST = [];
@@ -546,9 +546,7 @@ function fitCanvasToImage(){
    ========================================================= */
 function saveToLocal(){
   try{
-    currentImage = getCurrentImageKey();
-    zonesByImage[currentImage] = zonesData;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(zonesByImage));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(VIEWS));
   }catch(e){
     console.error("Save error", e);
   }
@@ -562,14 +560,28 @@ function loadFromLocal(){
     const obj = JSON.parse(raw);
     if(!obj || typeof obj !== "object") return false;
 
-    zonesByImage = obj;
-    currentImage = getCurrentImageKey();
-    zonesData = Array.isArray(zonesByImage[currentImage]) ? zonesByImage[currentImage] : [];
+    VIEWS = obj;
     return true;
   }catch(e){
     return false;
   }
 }
+
+function ensureView(viewId, src){
+  if(!VIEWS[viewId]){
+    VIEWS[viewId] = {
+      id: viewId,
+      type: "image",
+      src: src,
+      zones: [],
+      linkedFromZone: null
+    };
+  }
+  zonesData = VIEWS[viewId].zones; // ✅ alias zonesData vers cette vue
+}
+
+
+
 
 function makeRectFromZone(z){
   const r = new fabric.Rect({
@@ -590,30 +602,37 @@ function makeRectFromZone(z){
 function bootZones(){
   canvas.clear();
 
+  // 1) charger views depuis local si existe
   const hasLocal = loadFromLocal();
 
-  if(!hasLocal){
-    currentImage = getCurrentImageKey();
-    zonesByImage = zonesByImage || {};
-    zonesByImage[currentImage] = zonesByImage[currentImage] || [
-      {
-        id:"cylindre_lp",
-        x:140, y:120, w:120, h:220,
-        nom:"Cylindre LP",
-        role:"Compression initiale",
-        desc:"Première étape de compression.",
-        partId:""
-      }
-    ];
-    zonesData = zonesByImage[currentImage];
+  // 2) définir la vue courante = image affichée
+  currentViewId = getCurrentImageKey();
+  const img = $("imgLayer");
+  const src = img ? img.getAttribute("src") : "actif/compresseur_bg.png";
+
+  // 3) créer la vue si absente
+  ensureView(currentViewId, src);
+
+  // 4) si aucune donnée locale, créer une zone démo dans la vue courante
+  if(!hasLocal && zonesData.length === 0){
+    zonesData.push({
+      id:"cylindre_lp",
+      x:140, y:120, w:120, h:220,
+      nom:"Cylindre LP",
+      role:"Compression initiale",
+      desc:"Première étape de compression.",
+      partId:""
+    });
     saveToLocal();
   }
 
+  // 5) dessiner zones de la vue courante
   zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
+
   clearSelection();
   applyMode();
+  fitCanvasToImage();
 }
-
 /* =========================================================
    UI / Modes / Selection
    ========================================================= */
@@ -777,8 +796,8 @@ $("btnDelete").addEventListener("click", ()=>{
 
   canvas.remove(selected);
   zonesData = zonesData.filter(z => z !== selected.zoneData);
-  zonesByImage[currentImage] = zonesData;
-
+VIEWS[currentViewId].zones = zonesData;
+saveToLocal();
   clearSelection();
   saveToLocal();
 });
@@ -1041,7 +1060,9 @@ canvas.on("mouse:up", () => {
   };
 
   zonesData.push(z);
-  zonesByImage[currentImage] = zonesData;
+  VIEWS[currentViewId].zones = zonesData;
+saveToLocal();
+  
 
   const rect = makeRectFromZone(z);
   canvas.add(rect);
@@ -1069,7 +1090,7 @@ canvas.on("object:modified", e => {
 
   o.set({ scaleX:1, scaleY:1, width:z.w, height:z.h, left:z.x, top:z.y });
   o.setCoords();
-
+VIEWS[currentViewId].zones = zonesData;
   saveToLocal();
 });
 
