@@ -61,48 +61,58 @@
 
     /* ===== Bande info ===== */
     #infoPanel{
-  height: var(--header-h);   /* ✅ clé */
-  padding:12px var(--side-pad);
-  box-sizing:border-box;
+  padding:10px 12px;
   background:#0f1a44;
   border-bottom:1px solid rgba(255,255,255,.15);
   flex:0 0 auto;
   position:relative;
-  z-index:10;
-}
-    #infoTitle{
-      font-size:18px;
-      font-weight:800;
-      line-height:1.2;
-      margin:0;
-    }
-    #infoText{
-      font-size:14px;
-      opacity:.9;
-      margin-top:4px;
-      line-height:1.3;
-      min-height:18px;
-    }
+  z-index:5;
 
-    /* ✅ Badge éditeur compact : ✏️ seulement */
-    #editorState{
-      position:absolute;
-      top:8px;
-      right:8px;
-      width:32px;
-      height:32px;
-      border-radius:999px;
-      background:#ff9800;
-      color:#000;
-      display:none; /* show si isEditor */
-      align-items:center;
-      justify-content:center;
-      font-weight:900;
-      font-size:16px;
-      z-index:20;
-      box-shadow:0 2px 6px rgba(0,0,0,.35);
-      pointer-events:none;
-    }
+  width:100%;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+
+#infoTitle{
+  font-size:16px;
+  font-weight:800;
+  line-height:1.25;
+  white-space:normal;
+  word-break:break-word;
+  padding-right:40px; /* espace pour le bouton ✏️ */
+}
+
+#infoText{
+  font-size:13px;
+  opacity:.9;
+  margin-top:4px;
+  line-height:1.3;
+  white-space:normal;
+  word-break:break-word;
+}
+
+/* ✏️ bouton ÉDITEUR — icône SEULEMENT */
+#editorState{
+  position:absolute;
+  top:8px;
+  right:8px;
+
+  width:32px;
+  height:32px;
+  border-radius:50%;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#ff9800;
+  color:#000;
+  font-size:16px;
+  font-weight:900;
+
+  z-index:20;
+  pointer-events:none;
+}
 
     /* ===== Stage (image + canvas) ===== */
   .stage{
@@ -512,25 +522,25 @@ function fitCanvasToImage(){
   const imgW = img.naturalWidth;
   const imgH = img.naturalHeight;
 
-  /* 📱 RÈGLE PORTRAIT :
-     on fit STRICTEMENT par la hauteur */
-  const scale = stageH / imgH;
+  /* 🔒 DOUBLE CONTRAINTE (LA CLÉ DE LA STABILITÉ) */
+  const scaleH = stageH / imgH;
+  const scaleW = stageW / imgW;
+  const scale  = Math.min(scaleH, scaleW);
 
   const w = Math.round(imgW * scale);
   const h = Math.round(imgH * scale);
 
-  /* centre horizontal seulement */
   const left = Math.round((stageW - w) / 2);
-  const top  = 0;
+  const top  = Math.round((stageH - h) / 2);
 
-  /* ===== IMAGE ===== */
+  /* IMAGE */
   img.style.position = "absolute";
   img.style.left   = left + "px";
   img.style.top    = top + "px";
   img.style.width  = w + "px";
   img.style.height = h + "px";
 
-  /* ===== CANVAS ===== */
+  /* CANVAS */
   canvas.setWidth(w);
   canvas.setHeight(h);
   canvas.calcOffset();
@@ -907,7 +917,12 @@ $("btnAddVideo").addEventListener("click", ()=>{
 
   alert("Vidéo ajoutée à la pièce");
 });
-
+window.addEventListener("orientationchange", () => {
+  setTimeout(() => {
+    fixIOSViewport();
+    fitCanvasToImage();
+  }, 300);
+});
 /* =========================
    11) Import / Export
    ========================= */
