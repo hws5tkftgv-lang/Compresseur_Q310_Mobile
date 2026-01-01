@@ -11,6 +11,9 @@
   <style>
     :root{
       --quickbar-h: 70px;
+      
+      /* ✅ hauteur réelle bande info */
+      --header-h: 86px;  
 
       /* ✅ hauteur visible réelle (visualViewport) */
       --vvh: 100vh;
@@ -58,13 +61,15 @@
 
     /* ===== Bande info ===== */
     #infoPanel{
-      padding:12px var(--side-pad); /* ✅ évite texte trop à gauche */
-      background:#0f1a44;
-      border-bottom:1px solid rgba(255,255,255,.15);
-      flex:0 0 auto;
-      position:relative;
-      z-index:10;
-    }
+  height: var(--header-h);   /* ✅ clé */
+  padding:12px var(--side-pad);
+  box-sizing:border-box;
+  background:#0f1a44;
+  border-bottom:1px solid rgba(255,255,255,.15);
+  flex:0 0 auto;
+  position:relative;
+  z-index:10;
+}
     #infoTitle{
       font-size:18px;
       font-weight:800;
@@ -100,14 +105,23 @@
     }
 
     /* ===== Stage (image + canvas) ===== */
-    .stage{
-      position:relative;
-      width:100%;
-      flex:1 1 auto;
-      overflow:hidden;
-      background:#000;
-      touch-action:none;
-    }
+  .stage{
+  position:relative;
+  width:100%;
+
+  /* ✅ hauteur EXACTE disponible */
+  height: calc(
+    var(--vvh)
+    - var(--header-h)
+    - var(--quickbar-h)
+    - env(safe-area-inset-bottom)
+    - var(--safari-ui)
+  );
+
+  overflow:hidden;
+  background:#000;
+  touch-action:none;
+}
 
     .media-layer,
     .canvas-wrap{
@@ -499,7 +513,7 @@ function fitCanvasToImage(){
   const imgRatio   = img.naturalWidth / img.naturalHeight;
   const stageRatio = stageW / stageH;
 
-  const SCALE = 0.94;                   // ✅ réduit un peu l’image/canvas
+  const SCALE = 0.90;                   // ✅ réduit un peu l’image/canvas
   const SIDE_PAD = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--side-pad")) || 16;
 
   const usableW = stageW - (SIDE_PAD * 2);
