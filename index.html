@@ -196,29 +196,23 @@
       text-transform:uppercase;
     }
 
-    #piecePanel{
-      position:fixed;
-      left:0; right:0;
+    /* ===== PANNEAU PIÈCE & MÉDIAS — FULLSCREEN MODAL ===== */
+#piecePanel{
+  position:fixed;
+  inset:0;                       /* ✅ plein écran */
+  background:#0f1a44;
+  z-index:30000;
 
-      /* ✅ au-dessus de la quickbar, et au-dessus de la barre Safari */
-      bottom: calc(var(--quickbar-h) + env(safe-area-inset-bottom) + var(--safari-toolbar));
+  display:none;                  /* ✅ INVISIBLE par défaut */
+  flex-direction:column;
 
-      height:70vh;
-      background:#0f1a44;
-      border-top-left-radius:16px;
-      border-top-right-radius:16px;
-      transform:translateY(110%);
-      transition:transform .25s ease;
-      z-index:20000;
-      display:flex;
-      flex-direction:column;
-      pointer-events:none;
-      touch-action:none;
-    }
-    #piecePanel.open{
-      transform:translateY(0);
-      pointer-events:auto;
-    }
+  touch-action:none;
+}
+
+/* quand ouvert */
+#piecePanel.open{
+  display:flex;                  /* ✅ apparaît seulement ici */
+}
     .panelHeader{
       display:flex;
       justify-content:space-between;
@@ -735,12 +729,16 @@ function showInfo(z){
 
 function selectObj(obj){
   if(!obj || !obj.zoneData) return;
+
   selected = obj;
   canvas.setActiveObject(obj);
 
   $("partSelect").value = selected.zoneData.partId || "";
   showInfo(obj.zoneData);
   applyMode();
+
+  /* ✅ OUVERTURE AUTOMATIQUE DU PANNEAU */
+  openPiecePanel();
 }
 
 function clearSelection(){
@@ -755,9 +753,9 @@ function clearSelection(){
    ========================= */
 function openPiecePanel(){
   if(!selected) return;
-  $("partSelect").value = selected.zoneData.partId || "";
   $("piecePanel").classList.add("open");
 }
+
 function closePiecePanel(){
   $("piecePanel").classList.remove("open");
 }
