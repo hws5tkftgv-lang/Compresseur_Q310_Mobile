@@ -606,7 +606,7 @@ function bootZones(){
   const hasLocal = loadFromLocal();
 
   // 2) définir la vue courante = image affichée
-  currentViewId = getCurrentImageKey();
+  currentViewId = $("imgLayer").getAttribute("src");
   const img = $("imgLayer");
   const src = img ? img.getAttribute("src") : "actif/compresseur_bg.png";
 
@@ -795,12 +795,11 @@ $("btnDelete").addEventListener("click", ()=>{
   if(!confirm("Supprimer cette zone ?")) return;
 
   canvas.remove(selected);
-  zonesData = zonesData.filter(z => z !== selected.zoneData);
+zonesData = zonesData.filter(z => z !== selected.zoneData);
 VIEWS[currentViewId].zones = zonesData;
+clearSelection();
 saveToLocal();
-  clearSelection();
-  saveToLocal();
-});
+
 
 $("btnIO").addEventListener("click", ()=>{
   const action = prompt("Tape 1 pour EXPORT, 2 pour IMPORT");
@@ -945,7 +944,7 @@ $("fileInput").addEventListener("change", e=>{
         partId: z.partId || ""
       }));
 
-      zonesByImage[currentImage] = zonesData;
+      VIEWS[currentViewId].zones = zonesData;
 
       canvas.clear();
       zonesData.forEach(z=>canvas.add(makeRectFromZone(z)));
@@ -1105,7 +1104,7 @@ if(window.visualViewport){
 }
 
 $("imgLayer").addEventListener("load", ()=>{
-  currentImage = getCurrentImageKey();
+  currentViewId = getCurrentImageKey();
   bootZones();
   scheduleRelayout(350);
 });
