@@ -4,28 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Q310 – iPhone Éditeur (Portrait FINAL iOS Safari)</title>
+  <title>Q310 – iPhone Éditeur (Portrait iOS Safari – FIX)</title>
 
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
   <style>
     :root{
       --quickbar-h: 70px;
-      
-      /* ✅ hauteur réelle bande info */
-      --header-h: 86px;  
-
-      /* ✅ hauteur visible réelle (visualViewport) */
-      --vvh: 100vh;
-
-      /* ✅ “barre Safari” réelle en bas (calculée en JS) */
-      --safari-ui: 0px;
-
-      /* ✅ marge latérale pour éviter l’effet “collé à gauche” iOS */
-      --side-pad: 16px;
+      --header-h: 86px;      /* sera recalculé par JS */
+      --vvh: 100vh;          /* hauteur visible réelle */
+      --safari-ui: 0px;      /* overlay bas Safari (calculé JS) */
     }
 
-    /* ✅ lock bounce/scroll */
     html, body{
       margin:0;
       padding:0;
@@ -41,7 +31,7 @@
     }
     body{ position:fixed; inset:0; }
 
-    /* ✅ App en portrait-first, avec un padding latéral iOS */
+    /* App */
     #app{
       position:fixed;
       inset:0;
@@ -51,7 +41,7 @@
       overflow:hidden;
       background:#0b1436;
 
-      /* ✅ réserve l’espace réel pour quickbar + safe-area + barre Safari */
+      /* réserve l’espace réel pour quickbar + safe-area + barre Safari */
       padding-bottom: calc(
         var(--quickbar-h)
         + env(safe-area-inset-bottom)
@@ -61,85 +51,80 @@
 
     /* ===== Bande info ===== */
     #infoPanel{
-  padding:10px 12px;
-  background:#0f1a44;
-  border-bottom:1px solid rgba(255,255,255,.15);
-  flex:0 0 auto;
-  position:relative;
-  z-index:5;
+      padding:10px 12px;
+      padding-left: calc(12px + env(safe-area-inset-left));
+      padding-right: calc(12px + env(safe-area-inset-right));
+      background:#0f1a44;
+      border-bottom:1px solid rgba(255,255,255,.15);
+      flex:0 0 auto;
+      position:relative;
+      z-index:5;
+      width:100%;
+      box-sizing:border-box;
+      overflow:hidden;
+    }
 
-  width:100%;
-  box-sizing:border-box;
-  overflow:hidden;
-}
+    #infoTitle{
+      font-size:16px;
+      font-weight:800;
+      line-height:1.25;
+      white-space:normal;
+      word-break:break-word;
+      padding-right:44px; /* espace pour ✏️ */
+    }
 
-#infoTitle{
-  font-size:16px;
-  font-weight:800;
-  line-height:1.25;
-  white-space:normal;
-  word-break:break-word;
-  padding-right:40px; /* espace pour le bouton ✏️ */
-}
+    #infoText{
+      font-size:13px;
+      opacity:.9;
+      margin-top:4px;
+      line-height:1.3;
+      white-space:normal;
+      word-break:break-word;
+    }
 
-#infoText{
-  font-size:13px;
-  opacity:.9;
-  margin-top:4px;
-  line-height:1.3;
-  white-space:normal;
-  word-break:break-word;
-}
+    /* ✏️ icône seulement */
+    #editorState{
+      position:absolute;
+      top:8px;
+      right: calc(8px + env(safe-area-inset-right));
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#ff9800;
+      color:#000;
+      font-size:16px;
+      font-weight:900;
+      z-index:20;
+      pointer-events:none;
+    }
 
-/* ✏️ bouton ÉDITEUR — icône SEULEMENT */
-#editorState{
-  position:absolute;
-  top:8px;
-  right:8px;
-
-  width:32px;
-  height:32px;
-  border-radius:50%;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  background:#ff9800;
-  color:#000;
-  font-size:16px;
-  font-weight:900;
-
-  z-index:20;
-  pointer-events:none;
-}
-
-    /* ===== Stage (image + canvas) ===== */
-  .stage{
-  position:relative;
-  width:100%;
-
-  /* ✅ hauteur EXACTE disponible */
-  height: calc(
-    var(--vvh)
-    - var(--header-h)
-    - var(--quickbar-h)
-    - env(safe-area-inset-bottom)
-    - var(--safari-ui)
-  );
-
-  overflow:hidden;
-  background:#000;
-  touch-action:none;
-}
+    /* ===== Stage ===== */
+    .stage{
+      position:relative;
+      width:100%;
+      height: calc(
+        var(--vvh)
+        - var(--header-h)
+        - var(--quickbar-h)
+        - env(safe-area-inset-bottom)
+        - var(--safari-ui)
+      );
+      overflow:hidden;
+      background:#000;
+      touch-action:none;
+    }
 
     .media-layer,
     .canvas-wrap{
       position:absolute;
       inset:0;
+      overflow:hidden;
     }
 
-    /* ✅ l’image est positionnée exactement par JS (même left/top/size que Fabric wrapper) */
+    /* Image positionnée EXACTEMENT par JS */
     #imgLayer{
       position:absolute;
       left:0;
@@ -150,6 +135,7 @@
       pointer-events:none;
       user-select:none;
       -webkit-user-drag:none;
+      transform: translateZ(0);
     }
 
     .canvas-container, canvas{
@@ -161,12 +147,13 @@
       position:fixed;
       left:0;
       right:0;
-
-      /* ✅ remonte au-dessus de la barre Safari */
       bottom: var(--safari-ui);
 
       height: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
-      padding: 10px 10px calc(10px + env(safe-area-inset-bottom)) 10px;
+      padding: 10px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      padding-left: calc(10px + env(safe-area-inset-left));
+      padding-right: calc(10px + env(safe-area-inset-right));
 
       display:flex;
       justify-content:center;
@@ -178,6 +165,7 @@
       border-top:1px solid rgba(255,255,255,.15);
       z-index:10000;
       touch-action:none;
+      box-sizing:border-box;
     }
 
     .qbtn{
@@ -224,13 +212,13 @@
       text-transform:uppercase;
     }
 
-    /* ===== Panneau Pièce & médias : FULLSCREEN + invisible par défaut ===== */
+    /* ===== Panneau Pièce & médias ===== */
     #piecePanel{
       position:fixed;
       inset:0;
       background:#0f1a44;
       z-index:20000;
-      display:none;            /* ✅ invisible tant que pas ouvert */
+      display:none;
       flex-direction:column;
       touch-action:none;
     }
@@ -291,24 +279,29 @@
       border-radius:12px;
       background:#000;
     }
-    
+
+    /* Overlay paysage */
     #rotateHint{
-  position:fixed;
-  inset:0;
-  background:#0b1436;
-  color:#fff;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  font-size:18px;
-  z-index:99999;
-}
-#rotateHint.show{ display:flex; }
-    
+      position:fixed;
+      inset:0;
+      background:#0b1436;
+      color:#fff;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      font-size:18px;
+      z-index:99999;
+      text-align:center;
+      padding:24px;
+      box-sizing:border-box;
+    }
+    #rotateHint.show{ display:flex; }
   </style>
 </head>
 
 <body>
+
+  <div id="rotateHint">🔄 Remets ton iPhone en <b>portrait</b> pour utiliser l’éditeur.</div>
 
   <div id="app">
     <div id="infoPanel">
@@ -367,36 +360,11 @@
   </div>
 
 <script>
-
-let isLandscape = false;
 /* =========================
-   0) Helpers / iOS viewport
+   Helpers
    ========================= */
 const $ = id => document.getElementById(id);
 
-/* ✅ Calcule:
-   - vvh (hauteur visible réelle)
-   - safari-ui (overlay bas Safari)
-*/
-function updateViewportVars(){
-  const vv = window.visualViewport;
-  const vvh = vv ? vv.height : window.innerHeight;
-
-  // barre Safari overlay = ce qui reste en bas quand visualViewport est plus petit que innerHeight
-  // + prend en compte offsetTop (clavier, etc.)
-  const safariUI = vv ? Math.max(0, window.innerHeight - (vv.height + vv.offsetTop)) : 0;
-
-  document.documentElement.style.setProperty("--vvh", Math.round(vvh) + "px");
-  document.documentElement.style.setProperty("--safari-ui", Math.round(safariUI) + "px");
-}
-updateViewportVars();
-window.addEventListener("resize", updateViewportVars);
-if(window.visualViewport){
-  window.visualViewport.addEventListener("resize", updateViewportVars);
-  window.visualViewport.addEventListener("scroll", updateViewportVars);
-}
-
-/* ✅ lock scroll page sauf dans panelContent et mediaViewer */
 function allowScrollTarget(el){
   return !!(el && (el.closest(".panelContent") || el.closest("#mediaViewer")));
 }
@@ -405,7 +373,34 @@ document.addEventListener("touchmove", (e)=>{
 }, { passive:false });
 
 /* =========================
-   1) Assets / Storage keys
+   Viewport vars (iOS)
+   ========================= */
+function updateViewportVars(){
+  const vv = window.visualViewport;
+  const vvh = vv ? vv.height : window.innerHeight;
+
+  // overlay Safari en bas (approximé fiable)
+  const safariUI = vv ? Math.max(0, window.innerHeight - (vv.height + vv.offsetTop)) : 0;
+
+  document.documentElement.style.setProperty("--vvh", Math.round(vvh) + "px");
+  document.documentElement.style.setProperty("--safari-ui", Math.round(safariUI) + "px");
+
+  // hauteur header réelle
+  const headerH = $("infoPanel") ? $("infoPanel").offsetHeight : 86;
+  document.documentElement.style.setProperty("--header-h", Math.round(headerH) + "px");
+}
+
+function isLandscape(){
+  return window.innerWidth > window.innerHeight;
+}
+
+function applyOrientationUI(){
+  const show = isLandscape();
+  $("rotateHint").classList.toggle("show", show);
+}
+
+/* =========================
+   Assets / Storage keys
    ========================= */
 const ASSETS = {
   images: [
@@ -437,13 +432,12 @@ let PARTS = {};
 let PARTS_LIST = [];
 
 /* =========================
-   2) Parts load/save
+   Parts load/save
    ========================= */
 function savePartsToLocal(){
   try{ localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST)); }
   catch(e){ console.error("savePartsToLocal error", e); }
 }
-
 function loadPartsFromLocal(){
   try{
     const raw = localStorage.getItem(PARTS_STORAGE_KEY);
@@ -459,7 +453,6 @@ function loadPartsFromLocal(){
     return false;
   }
 }
-
 function remplirMenuPieces(){
   const select = $("partSelect");
   if(!select) return;
@@ -468,7 +461,6 @@ function remplirMenuPieces(){
     <option value="">— Choisir une pièce —</option>
     <option value="__new__">➕ Nouvelle pièce…</option>
   `;
-
   PARTS_LIST.forEach(p => {
     if(!p || !p.id) return;
     const opt = document.createElement("option");
@@ -496,7 +488,7 @@ function remplirMenuPieces(){
 })();
 
 /* =========================
-   3) Fabric init
+   Fabric init
    ========================= */
 let isEditor = true;
 let tool = "move";
@@ -525,53 +517,58 @@ fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 45;
 
 /* =========================
-   4) Fit canvas to image (CENTRAGE + légère réduction)
+   FIT (centrage fiable iOS)
    ========================= */
 function fitCanvasToImage(){
-  // ⛔️ ne rien faire en paysage
-  if (window.innerWidth > window.innerHeight) return;
+  if (isLandscape()) return;
 
-  const img   = document.getElementById("imgLayer");
-  const stage = document.getElementById("stage");
+  const img   = $("imgLayer");
+  const stage = $("stage");
   if(!img || !stage || !img.naturalWidth) return;
 
-  const stageH = stage.clientHeight;
+  // ✅ IMPORTANT: on prend la taille réelle rendue (iOS ment parfois sur clientWidth)
+  const r = stage.getBoundingClientRect();
+  const stageW = Math.round(r.width);
+  const stageH = Math.round(r.height);
+  if(stageW <= 0 || stageH <= 0) return;
 
-const stageW = window.visualViewport
-  ? window.visualViewport.width
-  : window.innerWidth;
   const imgW = img.naturalWidth;
   const imgH = img.naturalHeight;
 
+  // Fit contain
   const scale = Math.min(stageW / imgW, stageH / imgH);
-
   const w = Math.round(imgW * scale);
   const h = Math.round(imgH * scale);
 
   const left = Math.round((stageW - w) / 2);
   const top  = Math.round((stageH - h) / 2);
 
+  // Image
   img.style.left   = left + "px";
   img.style.top    = top  + "px";
   img.style.width  = w + "px";
   img.style.height = h + "px";
 
+  // Canvas
   canvas.setWidth(w);
   canvas.setHeight(h);
-  canvas.calcOffset();
 
   const wrap = canvas.wrapperEl;
   if(wrap){
+    wrap.style.position = "absolute";
     wrap.style.left   = left + "px";
     wrap.style.top    = top  + "px";
     wrap.style.width  = w + "px";
     wrap.style.height = h + "px";
+    wrap.style.transform = "translateZ(0)";
   }
 
+  canvas.calcOffset();
   canvas.requestRenderAll();
 }
+
 /* =========================
-   5) Zones load/save
+   Zones load/save
    ========================= */
 function saveToLocal(){
   try{
@@ -582,12 +579,10 @@ function saveToLocal(){
     console.error("Save error", e);
   }
 }
-
 function loadFromLocal(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return false;
-
     const obj = JSON.parse(raw);
     if(!obj || typeof obj !== "object") return false;
 
@@ -599,7 +594,6 @@ function loadFromLocal(){
     return false;
   }
 }
-
 function makeRectFromZone(z){
   const r = new fabric.Rect({
     left: z.x,
@@ -615,24 +609,14 @@ function makeRectFromZone(z){
   r.zoneData = z;
   return r;
 }
-
 function bootZones(){
   canvas.clear();
 
   const hasLocal = loadFromLocal();
-
   if(!hasLocal){
     currentImage = getCurrentImageKey();
-    zonesByImage = zonesByImage || {};
     zonesByImage[currentImage] = zonesByImage[currentImage] || [
-      {
-        id:"cylindre_lp",
-        x:140, y:120, w:120, h:220,
-        nom:"Cylindre LP",
-        role:"Compression initiale",
-        desc:"Première étape de compression.",
-        partId:""
-      }
+      { id:"cylindre_lp", x:140, y:120, w:120, h:220, nom:"Cylindre LP", role:"Compression initiale", desc:"Première étape de compression.", partId:"" }
     ];
     zonesData = zonesByImage[currentImage];
     saveToLocal();
@@ -645,7 +629,7 @@ function bootZones(){
 }
 
 /* =========================
-   6) UI / Modes / Selection
+   UI / Modes / Selection
    ========================= */
 function updateQuickbar(){
   ["btnMove","btnDraw","btnResize"].forEach(id => $(id).classList.remove("active"));
@@ -653,7 +637,6 @@ function updateQuickbar(){
   if(tool === "draw")   $("btnDraw").classList.add("active");
   if(tool === "resize") $("btnResize").classList.add("active");
 }
-
 function showAllResizeHandles(obj, on){
   obj.setControlsVisibility({
     tl:on, tr:on, bl:on, br:on,
@@ -661,7 +644,6 @@ function showAllResizeHandles(obj, on){
     mtr:false
   });
 }
-
 function applyMode(){
   canvas.forEachObject(o => {
     o.stroke = (o === selected) ? "orange" : "white";
@@ -672,13 +654,9 @@ function applyMode(){
       o.selectable = false;
       o.hasControls = false;
       o.hasBorders = false;
-
-      o.lockMovementX = true;
-      o.lockMovementY = true;
-      o.lockScalingX  = true;
-      o.lockScalingY  = true;
-      o.lockRotation  = true;
-
+      o.lockMovementX = o.lockMovementY = true;
+      o.lockScalingX = o.lockScalingY = true;
+      o.lockRotation = true;
       showAllResizeHandles(o,false);
       return;
     }
@@ -698,12 +676,8 @@ function applyMode(){
       o.selectable = true;
       o.hasControls = false;
       o.hasBorders = true;
-
-      o.lockMovementX = false;
-      o.lockMovementY = false;
-      o.lockScalingX  = true;
-      o.lockScalingY  = true;
-
+      o.lockMovementX = o.lockMovementY = false;
+      o.lockScalingX = o.lockScalingY = true;
       showAllResizeHandles(o,false);
       return;
     }
@@ -712,12 +686,8 @@ function applyMode(){
       o.selectable = true;
       o.hasControls = true;
       o.hasBorders = true;
-
-      o.lockMovementX = false;
-      o.lockMovementY = false;
-      o.lockScalingX  = false;
-      o.lockScalingY  = false;
-
+      o.lockMovementX = o.lockMovementY = false;
+      o.lockScalingX = o.lockScalingY = false;
       showAllResizeHandles(o,true);
       return;
     }
@@ -725,52 +695,40 @@ function applyMode(){
 
   canvas.requestRenderAll();
 }
-
 function setUI(){
   $("editorState").style.display = isEditor ? "flex" : "none";
-
-  ["btnMove","btnDraw","btnResize"].forEach(id=>{
-    $(id).disabled = !isEditor;
-  });
-
+  ["btnMove","btnDraw","btnResize"].forEach(id => $(id).disabled = !isEditor);
   updateQuickbar();
   applyMode();
 }
-
 function setTool(newTool){
   if(!isEditor) return;
   tool = newTool;
   setUI();
 }
-
 function showInfo(z){
   if(!z){
     $("infoTitle").textContent = "Sélectionne une zone";
     $("infoText").textContent = "";
     return;
   }
-
   if(z.partId && PARTS[z.partId]){
     const p = PARTS[z.partId];
     $("infoTitle").textContent = p.nom || z.partId;
     $("infoText").textContent = (p.role || "") + (p.desc ? " — " + p.desc : "");
     return;
   }
-
   $("infoTitle").textContent = z.nom || "Zone";
   $("infoText").textContent = (z.role || "") + (z.desc ? " — " + z.desc : "");
 }
-
 function selectObj(obj){
   if(!obj || !obj.zoneData) return;
   selected = obj;
   canvas.setActiveObject(obj);
-
   $("partSelect").value = selected.zoneData.partId || "";
   showInfo(obj.zoneData);
   applyMode();
 }
-
 function clearSelection(){
   selected = null;
   canvas.discardActiveObject();
@@ -779,21 +737,19 @@ function clearSelection(){
 }
 
 /* =========================
-   7) Panels open/close
+   Panels open/close
    ========================= */
 function openPiecePanel(){
   if(!selected) return;
   $("partSelect").value = selected.zoneData.partId || "";
   $("piecePanel").classList.add("open");
 }
-function closePiecePanel(){
-  $("piecePanel").classList.remove("open");
-}
+function closePiecePanel(){ $("piecePanel").classList.remove("open"); }
 function openMediaViewer(){ $("mediaViewer").classList.add("open"); }
 function closeMediaViewer(){ $("mediaViewer").classList.remove("open"); }
 
 /* =========================
-   8) Buttons wiring
+   Buttons wiring
    ========================= */
 $("btnMove").addEventListener("click", ()=> setTool("move"));
 $("btnDraw").addEventListener("click", ()=> setTool("draw"));
@@ -814,47 +770,6 @@ $("btnDelete").addEventListener("click", ()=>{
   saveToLocal();
 });
 
-const rotateHint = document.getElementById("rotateHint");
-
-window.addEventListener("resize", ()=>{
-  const landscape = window.innerWidth > window.innerHeight;
-  rotateHint?.classList.toggle("show", landscape);
-});
-
-
-
-window.addEventListener("orientationchange", () => {
-  isLandscape = window.innerWidth > window.innerHeight;
-
-  // ⛔️ en paysage : on gèle tout
-  if(isLandscape) return;
-
-  // ✅ retour portrait : reset COMPLET
-  setTimeout(() => {
-    fixIOSViewport();
-
-    // reset visuel avant recalcul
-    const img = document.getElementById("imgLayer");
-    if(img){
-      img.style.width = "0px";
-      img.style.height = "0px";
-      img.style.left = "0px";
-      img.style.top = "0px";
-    }
-
-    canvas.setWidth(1);
-    canvas.setHeight(1);
-
-    // recalcul propre
-    setTimeout(() => {
-      fitCanvasToImage();
-    }, 150);
-
-  }, 400); // ⬅️ délai CRITIQUE pour Safari
-});
-
-
-
 $("btnIO").addEventListener("click", ()=>{
   const action = prompt("Tape 1 pour EXPORT, 2 pour IMPORT");
   if(action === "1") exportZonesJSON();
@@ -862,7 +777,7 @@ $("btnIO").addEventListener("click", ()=>{
 });
 
 /* =========================
-   9) Part select
+   Part select
    ========================= */
 $("partSelect").addEventListener("change", ()=>{
   if(!selected || !selected.zoneData) return;
@@ -902,7 +817,7 @@ $("partSelect").addEventListener("change", ()=>{
 });
 
 /* =========================
-   10) Media viewer
+   Media viewer
    ========================= */
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
@@ -934,7 +849,6 @@ $("btnShowMedia").addEventListener("click", ()=>{
 
   openMediaViewer();
 });
-
 $("btnCloseMedia").addEventListener("click", closeMediaViewer);
 
 $("btnAddImage").addEventListener("click", ()=>{
@@ -951,7 +865,6 @@ $("btnAddImage").addEventListener("click", ()=>{
   part.medias.images.push(ASSETS.images[idx]);
   savePartsToLocal();
   saveToLocal();
-
   alert("Image ajoutée à la pièce");
 });
 
@@ -969,17 +882,11 @@ $("btnAddVideo").addEventListener("click", ()=>{
   part.medias.videos.push(ASSETS.videos[idx]);
   savePartsToLocal();
   saveToLocal();
-
   alert("Vidéo ajoutée à la pièce");
 });
-window.addEventListener("orientationchange", () => {
-  setTimeout(() => {
-    fixIOSViewport();
-    fitCanvasToImage();
-  }, 300);
-});
+
 /* =========================
-   11) Import / Export
+   Import / Export
    ========================= */
 $("fileInput").addEventListener("change", e=>{
   const file = e.target.files[0];
@@ -1027,7 +934,6 @@ function exportZonesJSON(){
     partId: z.partId || z.id,
     x: z.x, y: z.y, w: z.w, h: z.h
   }));
-
   const json = JSON.stringify(data, null, 2);
 
   try{
@@ -1048,7 +954,7 @@ function exportZonesJSON(){
 }
 
 /* =========================
-   12) Fabric events
+   Fabric events
    ========================= */
 canvas.on("mouse:down", opt => {
   const obj = opt.target;
@@ -1151,30 +1057,44 @@ canvas.on("object:modified", e => {
 });
 
 /* =========================
-   13) Boot / resize hooks
+   Layout orchestration (stable iOS)
+   ========================= */
+function relayout(){
+  updateViewportVars();
+  applyOrientationUI();
+
+  if (isLandscape()) return;
+
+  // Safari iOS a besoin d’un petit délai après resize/orientation
+  setTimeout(() => {
+    updateViewportVars();
+    fitCanvasToImage();
+  }, 120);
+}
+
+/* =========================
+   Boot / hooks
    ========================= */
 $("imgLayer").addEventListener("load", ()=>{
   currentImage = getCurrentImageKey();
   bootZones();
-  fitCanvasToImage();
+  relayout();
 });
 
-window.addEventListener("resize", ()=>{
-  updateViewportVars();
-  fitCanvasToImage();
-});
-
+window.addEventListener("resize", relayout);
+window.addEventListener("orientationchange", () => setTimeout(relayout, 250));
 if(window.visualViewport){
-  window.visualViewport.addEventListener("resize", ()=>{ updateViewportVars(); fitCanvasToImage(); });
-  window.visualViewport.addEventListener("scroll", ()=>{ updateViewportVars(); fitCanvasToImage(); });
+  window.visualViewport.addEventListener("resize", relayout);
+  window.visualViewport.addEventListener("scroll", relayout);
 }
 
 /* BOOT */
 tool = "move";
 setUI();
-bootZones();
 updateViewportVars();
-fitCanvasToImage();
+applyOrientationUI();
+bootZones();
+relayout();
 </script>
 
 </body>
