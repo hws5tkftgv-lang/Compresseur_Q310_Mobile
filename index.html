@@ -2,7 +2,6 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <!-- iPhone: on contrôle entièrement le viewport + on empêche le zoom -->
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Q310 – iPhone Éditeur (Clean) – FIX iOS (no scroll)</title>
@@ -12,7 +11,6 @@
   <style>
     :root{ --quickbar-h: 70px; --real-vh: 100vh; }
 
-    /* ✅ verrou total du scroll/bounce de la page */
     html, body{
       margin:0;
       padding:0;
@@ -24,11 +22,10 @@
       color:#eaf1ff;
       font-family:Arial,Segoe UI,sans-serif;
       -webkit-text-size-adjust:100%;
-      touch-action:none; /* on gère nous-mêmes */
+      touch-action:none;
     }
-    body{ position:fixed; inset:0; } /* ✅ empêche la page de “bouger” */
+    body{ position:fixed; inset:0; }
 
-    /* App = colonne fixe (info + stage) */
     #app{
       position:fixed;
       inset:0;
@@ -51,10 +48,7 @@
       position:relative;
       width:100%;
       flex:1 1 auto;
-
-      /* ✅ hauteur réelle iOS (visualViewport) */
       height: calc(var(--real-vh) - var(--quickbar-h) - env(safe-area-inset-bottom) - 60px);
-
       overflow:hidden;
       background:#000;
       touch-action:none;
@@ -70,8 +64,6 @@
     }
 
     #imgLayer{
-      max-width:100%;
-      max-height:100%;
       width:auto;
       height:auto;
       object-fit:contain;
@@ -80,12 +72,10 @@
       -webkit-user-drag:none;
     }
 
-    /* Fabric injecte .canvas-container; on la verrouille aussi */
     .canvas-container, canvas{
       touch-action:none !important;
     }
 
-    /* ====== Quickbar (toujours visible, jamais “scrollée”) ====== */
     #quickbar{
       position:fixed;
       left:0;
@@ -93,12 +83,10 @@
       bottom:0;
       padding-bottom: env(safe-area-inset-bottom);
       height: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
-
       display:flex;
       justify-content:center;
       align-items:center;
       gap:10px;
-
       background:rgba(15,26,68,.95);
       backdrop-filter:blur(10px);
       border-top:1px solid rgba(255,255,255,.15);
@@ -133,7 +121,6 @@
       pointer-events:none;
     }
 
-    /* ====== Panels / overlays ====== */
     .btn{
       width:100%;
       min-height:44px;
@@ -204,7 +191,7 @@
     }
     .panelContent{
       padding:16px;
-      overflow:auto; /* ✅ on autorise le scroll ICI */
+      overflow:auto;
       -webkit-overflow-scrolling:touch;
       flex:1 1 auto;
       touch-action:pan-y;
@@ -216,16 +203,14 @@
       display:block;
     }
 
-    /* Media viewer overlay */
     #mediaViewer{
       position:fixed;
       inset:0;
       background:#050b24;
       z-index:30000;
-      overflow:auto;               /* ✅ scroll autorisé */
+      overflow:auto;
       -webkit-overflow-scrolling:touch;
       padding:16px 16px calc(16px + env(safe-area-inset-bottom)) 16px;
-
       display:none;
       pointer-events:none;
       touch-action:pan-y;
@@ -248,13 +233,11 @@
 <body>
 
   <div id="app">
-    <!-- Bande info -->
     <div id="infoPanel">
       <div id="infoTitle">Sélectionne une zone</div>
       <div id="infoText"></div>
     </div>
 
-    <!-- Image + Canvas -->
     <div class="stage" id="stage">
       <div class="media-layer">
         <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
@@ -265,7 +248,6 @@
     </div>
   </div>
 
-  <!-- Barre outils rapide -->
   <div id="quickbar">
     <button id="btnMove" class="qbtn active" title="Déplacer">✋</button>
     <button id="btnDraw" class="qbtn" title="Dessiner">＋</button>
@@ -278,7 +260,6 @@
 
   <div id="editorState">✏️ MODE ÉDITEUR</div>
 
-  <!-- ===== PANNEAU PIÈCE / MÉDIAS ===== -->
   <div id="piecePanel">
     <div class="panelHeader">
       <span>📦 Pièce & médias</span>
@@ -300,16 +281,12 @@
     </div>
   </div>
 
-  <!-- Viewer médias -->
   <div id="mediaViewer">
     <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">❌ Fermer</button>
     <div id="mediaContent"></div>
   </div>
 
 <script>
-/* =========================
-   0) Helpers / iOS viewport
-   ========================= */
 const $ = id => document.getElementById(id);
 
 function fixIOSViewport(){
@@ -323,7 +300,6 @@ if(window.visualViewport){
   window.visualViewport.addEventListener("scroll", fixIOSViewport);
 }
 
-/* ✅ Verrou scroll page: on autorise seulement le scroll dans .panelContent et #mediaViewer */
 function allowScrollTarget(el){
   return !!(el && (el.closest(".panelContent") || el.closest("#mediaViewer")));
 }
@@ -331,9 +307,6 @@ document.addEventListener("touchmove", (e)=>{
   if(!allowScrollTarget(e.target)) e.preventDefault();
 }, { passive:false });
 
-/* =========================
-   1) Assets / Storage keys
-   ========================= */
 const ASSETS = {
   images: [
     "actif/vues/cylindre_lp_face.jpg",
@@ -357,15 +330,12 @@ function getCurrentImageKey(){
 }
 
 let currentImage = getCurrentImageKey();
-let zonesByImage = {};     // { [imageKey]: Zone[] }
-let zonesData = [];        // Zone[] current image
+let zonesByImage = {};
+let zonesData = [];
 
-let PARTS = {};            // { [id]: Part }
-let PARTS_LIST = [];       // Part[]
+let PARTS = {};
+let PARTS_LIST = [];
 
-/* =========================
-   2) Parts load/save
-   ========================= */
 function savePartsToLocal(){
   try{ localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST)); }
   catch(e){ console.error("savePartsToLocal error", e); }
@@ -405,7 +375,6 @@ function remplirMenuPieces(){
   });
 }
 
-/* init PARTS */
 (function initParts(){
   if(loadPartsFromLocal()){
     remplirMenuPieces();
@@ -423,11 +392,8 @@ function remplirMenuPieces(){
     .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
 })();
 
-/* =========================
-   3) Fabric canvas init
-   ========================= */
-let isEditor = true;   // tu peux mettre false si tu veux un mode lecture
-let tool = "move";     // move | draw | resize
+let isEditor = true;
+let tool = "move";
 let selected = null;
 
 let drawing = false;
@@ -441,12 +407,10 @@ const canvas = new fabric.Canvas("c", {
 });
 canvas.selection = false;
 
-/* iOS: évite sélection/menus */
 canvas.upperCanvasEl.style.touchAction = "none";
 canvas.upperCanvasEl.style.webkitUserSelect = "none";
 canvas.upperCanvasEl.style.webkitTouchCallout = "none";
 
-/* gros handles iPhone */
 fabric.Object.prototype.cornerSize = 36;
 fabric.Object.prototype.cornerStyle = "circle";
 fabric.Object.prototype.transparentCorners = false;
@@ -454,9 +418,7 @@ fabric.Object.prototype.padding = 10;
 fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 45;
 
-/* =========================
-   4) Fit canvas to image
-   ========================= */
+/* ✅ FIX MAJEUR: on centre le wrapper Fabric (.canvas-container) + on force l'image à la même taille */
 function fitCanvasToImage(){
   const img = $("imgLayer");
   const stage = $("stage");
@@ -464,6 +426,7 @@ function fitCanvasToImage(){
 
   const stageW = stage.clientWidth;
   const stageH = stage.clientHeight;
+  if(stageW <= 0 || stageH <= 0) return;
 
   const imgRatio   = img.naturalWidth / img.naturalHeight;
   const stageRatio = stageW / stageH;
@@ -485,17 +448,23 @@ function fitCanvasToImage(){
   canvas.setHeight(canvasH);
   canvas.calcOffset();
 
-  const el = canvas.getElement();
-  el.style.position = "absolute";
-  el.style.left = ((stageW - canvasW) / 2) + "px";
-  el.style.top  = ((stageH - canvasH) / 2) + "px";
+  // ✅ centre le WRAPPER (sinon upper canvas peut décaler)
+  const wrap = canvas.wrapperEl;
+  if(wrap){
+    wrap.style.position = "absolute";
+    wrap.style.left = ((stageW - canvasW) / 2) + "px";
+    wrap.style.top  = ((stageH - canvasH) / 2) + "px";
+    wrap.style.width  = canvasW + "px";
+    wrap.style.height = canvasH + "px";
+  }
+
+  // ✅ force l'image à EXACTEMENT la même taille + même centre
+  img.style.width  = canvasW + "px";
+  img.style.height = canvasH + "px";
 
   canvas.requestRenderAll();
 }
 
-/* =========================
-   5) Zones load/save + build rects
-   ========================= */
 function saveToLocal(){
   try{
     currentImage = getCurrentImageKey();
@@ -567,9 +536,6 @@ function bootZones(){
   fitCanvasToImage();
 }
 
-/* =========================
-   6) UI / Modes / Selection
-   ========================= */
 function updateQuickbar(){
   ["btnMove","btnDraw","btnResize"].forEach(id => $(id).classList.remove("active"));
   if(tool === "move")   $("btnMove").classList.add("active");
@@ -651,11 +617,9 @@ function applyMode(){
 
 function setUI(){
   $("editorState").style.display = isEditor ? "block" : "none";
-
   ["btnMove","btnDraw","btnResize"].forEach(id=>{
     $(id).disabled = !isEditor;
   });
-
   updateQuickbar();
   applyMode();
 }
@@ -701,27 +665,15 @@ function clearSelection(){
   applyMode();
 }
 
-/* =========================
-   7) Panels: open/close (touch)
-   ========================= */
 function openPiecePanel(){
   if(!selected) return;
   $("partSelect").value = selected.zoneData.partId || "";
   $("piecePanel").classList.add("open");
 }
-function closePiecePanel(){
-  $("piecePanel").classList.remove("open");
-}
-function openMediaViewer(){
-  $("mediaViewer").classList.add("open");
-}
-function closeMediaViewer(){
-  $("mediaViewer").classList.remove("open");
-}
+function closePiecePanel(){ $("piecePanel").classList.remove("open"); }
+function openMediaViewer(){ $("mediaViewer").classList.add("open"); }
+function closeMediaViewer(){ $("mediaViewer").classList.remove("open"); }
 
-/* =========================
-   8) Buttons wiring
-   ========================= */
 $("btnMove").addEventListener("click", ()=> setTool("move"));
 $("btnDraw").addEventListener("click", ()=> setTool("draw"));
 $("btnResize").addEventListener("click", ()=> setTool("resize"));
@@ -747,7 +699,6 @@ $("btnIO").addEventListener("click", ()=>{
   if(action === "2") $("fileInput").click();
 });
 
-/* PART SELECT */
 $("partSelect").addEventListener("change", ()=>{
   if(!selected || !selected.zoneData) return;
 
@@ -785,9 +736,6 @@ $("partSelect").addEventListener("change", ()=>{
   showInfo(selected.zoneData);
 });
 
-/* =========================
-   9) Media viewer
-   ========================= */
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
 
@@ -835,7 +783,6 @@ $("btnAddImage").addEventListener("click", ()=>{
   part.medias.images.push(ASSETS.images[idx]);
   savePartsToLocal();
   saveToLocal();
-
   alert("Image ajoutée à la pièce");
 });
 
@@ -853,13 +800,9 @@ $("btnAddVideo").addEventListener("click", ()=>{
   part.medias.videos.push(ASSETS.videos[idx]);
   savePartsToLocal();
   saveToLocal();
-
   alert("Vidéo ajoutée à la pièce");
 });
 
-/* =========================
-   10) Import / Export
-   ========================= */
 $("fileInput").addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -871,7 +814,7 @@ $("fileInput").addEventListener("change", e=>{
       if(!Array.isArray(data)) throw new Error("format invalide");
 
       zonesData = data.map(z=>({
-        id: z.partId || ("zone_" + Date.now()),
+        id: ("zone_" + Date.now() + "_" + Math.floor(Math.random()*100000)), /* ✅ évite doublons */
         x: Number(z.x)||0,
         y: Number(z.y)||0,
         w: Number(z.w)||20,
@@ -926,9 +869,6 @@ function exportZonesJSON(){
   }
 }
 
-/* =========================
-   11) Fabric events (draw/select/resize sync)
-   ========================= */
 canvas.on("mouse:down", opt => {
   const obj = opt.target;
 
@@ -1029,9 +969,6 @@ canvas.on("object:modified", e => {
   saveToLocal();
 });
 
-/* =========================
-   12) Image load + resize hooks + boot
-   ========================= */
 $("imgLayer").addEventListener("load", ()=>{
   currentImage = getCurrentImageKey();
   bootZones();
@@ -1043,7 +980,6 @@ window.addEventListener("resize", ()=>{
   fitCanvasToImage();
 });
 
-/* BOOT */
 tool = "move";
 setUI();
 bootZones();
