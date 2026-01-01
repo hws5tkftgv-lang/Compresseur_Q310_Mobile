@@ -9,8 +9,11 @@
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
   <style>
-    :root{ --quickbar-h: 70px; --real-vh: 100vh; }
-
+  :root{
+  --quickbar-h: 70px;
+  --real-vh: 100vh;
+  --safari-ui: 0px; /* ✅ AJOUT */
+}
     html, body{
       margin:0;
       padding:0;
@@ -45,15 +48,19 @@
     #infoText{ font-size:14px; opacity:.9; margin-top:4px; }
 
     .stage{
-      position:relative;
-      width:100%;
-      flex:1 1 auto;
-      height: calc(var(--real-vh) - var(--quickbar-h) - env(safe-area-inset-bottom) - 60px);
-      overflow:hidden;
-      background:#000;
-      touch-action:none;
-    }
+  position:relative;
+  width:100%;
+  flex:1 1 auto;
+  height: calc(var(--real-vh) - var(--quickbar-h) - env(safe-area-inset-bottom) - 60px);
+  overflow:hidden;
+  background:#000;
+  touch-action:none;
 
+  /* ✅ AJOUT – centrage visuel stable */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
     .media-layer,
     .canvas-wrap{
       position:absolute;
@@ -77,22 +84,23 @@
     }
 
     #quickbar{
-      position:fixed;
-      left:0;
-      right:0;
-      bottom:0;
-      padding-bottom: env(safe-area-inset-bottom);
-      height: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      gap:10px;
-      background:rgba(15,26,68,.95);
-      backdrop-filter:blur(10px);
-      border-top:1px solid rgba(255,255,255,.15);
-      z-index:10000;
-      touch-action:none;
-    }
+  position:fixed;
+  left:0;
+  right:0;
+  bottom: var(--safari-ui); /* ✅ AU-DESSUS de Safari */
+  padding-bottom: env(safe-area-inset-bottom);
+  height: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+
+  background:rgba(15,26,68,.95);
+  backdrop-filter:blur(10px);
+  border-top:1px solid rgba(255,255,255,.15);
+  z-index:10000;
+}
     .qbtn{
       width:46px;
       height:46px;
@@ -106,7 +114,7 @@
     .qbtn.active{ background:#ff9800; color:#000; }
 
     #editorState{
-      position:fixed;
+      position:absolute; /* ✅ */
       top:10px;
       right:10px;
       background:#ff9800;
@@ -299,6 +307,20 @@ if(window.visualViewport){
   window.visualViewport.addEventListener("resize", fixIOSViewport);
   window.visualViewport.addEventListener("scroll", fixIOSViewport);
 }
+
+function fixSafariUI(){
+  if(!window.visualViewport) return;
+  const safariBar = window.innerHeight - window.visualViewport.height;
+  document.documentElement.style.setProperty(
+    "--safari-ui",
+    safariBar > 0 ? safariBar + "px" : "0px"
+  );
+}
+
+fixSafariUI();
+window.visualViewport?.addEventListener("resize", fixSafariUI);
+window.visualViewport?.addEventListener("scroll", fixSafariUI);
+
 
 function allowScrollTarget(el){
   return !!(el && (el.closest(".panelContent") || el.closest("#mediaViewer")));
