@@ -109,15 +109,16 @@
     }
 
     #imgLayer{
-      max-width:100%;
-      max-height:100%;
-      width:auto;
-      height:auto;
-      object-fit:contain;
-      pointer-events:none;
-      user-select:none;
-      -webkit-user-drag:none;
-    }
+  position:absolute;      /* ✅ clé */
+  left:0;
+  top:0;
+  width:0;                /* sera fixé par JS */
+  height:0;               /* sera fixé par JS */
+  object-fit:contain;     /* ok mais inutile si width/height fixés */
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
 
     /* Fabric injecte .canvas-container; on la verrouille aussi */
     .canvas-container, canvas{
@@ -502,36 +503,41 @@ function fitCanvasToImage(){
   const imgRatio   = img.naturalWidth / img.naturalHeight;
   const stageRatio = stageW / stageH;
 
-  let canvasW, canvasH;
-
+  let w, h;
   if(stageRatio > imgRatio){
-    canvasH = stageH;
-    canvasW = canvasH * imgRatio;
+    h = stageH;
+    w = h * imgRatio;
   }else{
-    canvasW = stageW;
-    canvasH = canvasW / imgRatio;
+    w = stageW;
+    h = w / imgRatio;
   }
 
-  canvasW = Math.min(canvasW, stageW);
-  canvasH = Math.min(canvasH, stageH);
+  // ✅ arrondi pour éviter les demi-pixels iOS
+  w = Math.round(w);
+  h = Math.round(h);
 
-  canvas.setWidth(canvasW);
-  canvas.setHeight(canvasH);
+  const left = Math.round((stageW - w) / 2);
+  const top  = Math.round((stageH - h) / 2);
+
+  // ===== CANVAS =====
+  canvas.setWidth(w);
+  canvas.setHeight(h);
   canvas.calcOffset();
 
-  /* ✅ centre le WRAPPER Fabric (sinon upper canvas peut décaler) */
   const wrap = canvas.wrapperEl;
   if(wrap){
     wrap.style.position = "absolute";
-    wrap.style.left = ((stageW - canvasW) / 2) + "px";
-    wrap.style.top  = ((stageH - canvasH) / 2) + "px";
-    wrap.style.width  = canvasW + "px";
-    wrap.style.height = canvasH + "px";
+    wrap.style.left = left + "px";
+    wrap.style.top  = top + "px";
+    wrap.style.width  = w + "px";
+    wrap.style.height = h + "px";
   }
 
-  /* ✅ force l'image à EXACTEMENT la même taille */
-  img.style.width  = canvasW + "px";
-  img.style.height = canvasH + "px";
+  // ===== IMAGE (même left/top/size que canvas) =====
+  img.style.left = left + "px";
+  img.style.top  = top + "px";
+  img.style.width  = w + "px";
+  img.style.height = h + "px";
 
   canvas.requestRenderAll();
 }
