@@ -1,275 +1,372 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>Q310 – iPhone Éditeur (Clean)</title>
+  <meta charset="utf-8">
+  <!-- iPhone: on contrôle le viewport + on empêche le zoom -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Q310 – iPhone Éditeur (FINAL iOS Safari)</title>
 
-<script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
-<style>
-.mediaBlock{ margin-bottom:20px; }
-.mediaBlock img,
-.mediaBlock iframe,
-.mediaBlock video{
-  width:100%;
-  border-radius:12px;
-  background:#000;
-}
+  <style>
+    :root{
+      --quickbar-h: 70px;
+      --real-vh: 100vh;
 
-:root{ --quickbar-h: 70px; }
+      /* ✅ IMPORTANT: Safari iOS superpose sa barre du bas.
+         On réserve une hauteur stable pour éviter que la quickbar soit cachée. */
+      --safari-toolbar: 80px; /* ajuste 70–90 au besoin */
+    }
 
-body{
-  padding-bottom: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
-}
+    /* ✅ verrou total du scroll/bounce de la page */
+    html, body{
+      margin:0;
+      padding:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      overscroll-behavior:none;
+      background:#0b1436;
+      color:#eaf1ff;
+      font-family:Arial,Segoe UI,sans-serif;
+      -webkit-text-size-adjust:100%;
+      touch-action:none;
+    }
+    body{ position:fixed; inset:0; }
 
-html, body{
-  margin:0;
-  height:100%;
-  background:#0b1436;
-  color:#eaf1ff;
-  font-family:Arial,Segoe UI,sans-serif;
-}
+    /* App = colonne fixe (info + stage)
+       ✅ On réserve l’espace pour quickbar + safe-area + barre Safari */
+    #app{
+      position:fixed;
+      top:0;
+      left:0;
+      width:100vw;
+      height: var(--real-vh);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      background:#0b1436;
 
-body{ padding-bottom:90px; }
+      padding-bottom: calc(
+        var(--quickbar-h)
+        + env(safe-area-inset-bottom)
+        + var(--safari-toolbar)
+      );
+    }
 
-#infoPanel{
-  padding:10px;
-  background:#0f1a44;
-  border-bottom:1px solid rgba(255,255,255,.15);
-}
-#infoTitle{ font-size:18px; font-weight:800; }
-#infoText{ font-size:14px; opacity:.9; margin-top:4px; }
+    #infoPanel{
+      padding:10px;
+      background:#0f1a44;
+      border-bottom:1px solid rgba(255,255,255,.15);
+      flex:0 0 auto;
+      position:relative;
+      z-index:5;
+    }
+    #infoTitle{ font-size:18px; font-weight:800; }
+    #infoText{ font-size:14px; opacity:.9; margin-top:4px; }
 
-.stage{
-  position:relative;
-  height:calc(100dvh - 120px);
-  overflow:hidden;
-  touch-action:none;
-}
+    /* ✅ badge MODE ÉDITEUR — DOIT être dans #app */
+    #editorState{
+      position:absolute;
+      top:10px;
+      right:10px;
+      background:#ff9800;
+      color:#000;
+      padding:6px 12px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:12px;
+      z-index:20;
+      display:none;
+      box-shadow:0 2px 6px rgba(0,0,0,.35);
+      pointer-events:none;
+      white-space:nowrap;
+      max-width: calc(100vw - 20px);
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
 
-.media-layer, .canvas-wrap{ position:absolute; inset:0; }
+    .stage{
+      position:relative;
+      width:100%;
+      flex:1 1 auto;          /* ✅ prend le reste automatiquement */
+      overflow:hidden;
+      background:#000;
+      touch-action:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
 
-#imgLayer{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  pointer-events:none;
-}
+    .media-layer,
+    .canvas-wrap{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
 
-/* IMPORTANT iOS : empêcher Safari de prendre le scroll/pinch */
-.stage, .canvas-container, canvas{
-  touch-action:none !important;
-}
+    #imgLayer{
+      max-width:100%;
+      max-height:100%;
+      width:auto;
+      height:auto;
+      object-fit:contain;
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
 
-#piecePanel{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:70vh;
-  background:#0f1a44;
-  border-top-left-radius:16px;
-  border-top-right-radius:16px;
-  transform:translateY(100%);
-  transition:transform .25s ease;
-  z-index:20000;
-  display:flex;
-  flex-direction:column;
+    /* Fabric injecte .canvas-container; on la verrouille aussi */
+    .canvas-container, canvas{
+      touch-action:none !important;
+    }
 
-  pointer-events:none;   /* 👈 important */
-}
+    /* ====== Quickbar (toujours visible, jamais “cachée” par Safari) ====== */
+    #quickbar{
+      position:fixed;
+      left:0;
+      right:0;
 
-#piecePanel.open{
-  transform:translateY(0);
-  pointer-events:auto;
-}
+      /* ✅ remonte au-dessus de la barre Safari */
+      bottom: var(--safari-toolbar);
 
-.panelHeader{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:12px 16px;
-  font-weight:900;
-  border-bottom:1px solid rgba(255,255,255,.15);
-}
+      padding-bottom: env(safe-area-inset-bottom);
+      height: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
 
-.panelHeader button{
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:20px;
-}
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:10px;
 
-.panelContent{
-  padding:16px;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-}
+      background:rgba(15,26,68,.95);
+      backdrop-filter:blur(10px);
+      border-top:1px solid rgba(255,255,255,.15);
+      z-index:10000;
+      touch-action:none;
+    }
 
-.panelLabel{
-  font-size:12px;
-  opacity:.7;
-  margin-bottom:6px;
-  display:block;
-}
+    .qbtn{
+      width:46px;
+      height:46px;
+      border-radius:10px;
+      background:#1b2553;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.25);
+      font-size:18px;
+      font-weight:900;
+    }
+    .qbtn.active{ background:#ff9800; color:#000; }
 
-.btn{
-  width:100%;
-  min-height:44px;
-  margin-top:8px;
-  background:#1b2553;
-  color:#fff;
-  border:1px solid rgba(255,255,255,.2);
-  border-radius:10px;
-  font-size:15px;
-  font-weight:800;
-}
-.btn.active{ background:#ff9800; color:#000; }
+    /* ====== Panels / overlays ====== */
+    .btn{
+      width:100%;
+      min-height:44px;
+      margin-top:8px;
+      background:#1b2553;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.2);
+      border-radius:10px;
+      font-size:15px;
+      font-weight:800;
+    }
+    .btn.active{ background:#ff9800; color:#000; }
 
-.input{
-  width:100%;
-  min-height:44px;
-  margin-top:8px;
-  background:#101a40;
-  color:#fff;
-  border:1px solid rgba(255,255,255,.2);
-  border-radius:10px;
-  font-size:15px;
-  padding:10px;
-  box-sizing:border-box;
-}
+    .input{
+      width:100%;
+      min-height:44px;
+      margin-top:8px;
+      background:#101a40;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.2);
+      border-radius:10px;
+      font-size:15px;
+      padding:10px;
+      box-sizing:border-box;
+    }
 
-#editorState{
-  position:fixed;
-  top:10px;
-  right:10px;
-  background:#ff9800;
-  color:#000;
-  padding:6px 12px;
-  border-radius:999px;
-  font-weight:900;
-  font-size:12px;
-  z-index:9999;
-  display:none;
-  box-shadow:0 2px 6px rgba(0,0,0,.35);
-}
+    .sectionTitle{
+      margin-top:12px;
+      font-size:12px;
+      opacity:.7;
+      font-weight:700;
+      text-transform:uppercase;
+    }
 
-#quickbar{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:var(--quickbar-h);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:10px;
-  background:rgba(15,26,68,.95);
-  backdrop-filter:blur(10px);
-  border-top:1px solid rgba(255,255,255,.15);
-  z-index:10000;
-  padding-bottom:env(safe-area-inset-bottom);
-}
+    #piecePanel{
+      position:fixed;
+      left:0; right:0;
 
-.qbtn{
-  width:46px;
-  height:46px;
-  border-radius:10px;
-  background:#1b2553;
-  color:#fff;
-  border:1px solid rgba(255,255,255,.25);
-  font-size:18px;
-  font-weight:900;
-}
+      /* ✅ au-dessus de la quickbar, et au-dessus de la barre Safari */
+      bottom: calc(var(--quickbar-h) + env(safe-area-inset-bottom) + var(--safari-toolbar));
 
-.qbtn.active{ background:#ff9800; color:#000; }
+      height:70vh;
+      background:#0f1a44;
+      border-top-left-radius:16px;
+      border-top-right-radius:16px;
+      transform:translateY(110%);
+      transition:transform .25s ease;
+      z-index:20000;
+      display:flex;
+      flex-direction:column;
+      pointer-events:none;
+      touch-action:none;
+    }
+    #piecePanel.open{
+      transform:translateY(0);
+      pointer-events:auto;
+    }
+    .panelHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px 16px;
+      font-weight:900;
+      border-bottom:1px solid rgba(255,255,255,.15);
+      flex:0 0 auto;
+    }
+    .panelHeader button{
+      background:none;
+      border:none;
+      color:#fff;
+      font-size:20px;
+    }
+    .panelContent{
+      padding:16px;
+      overflow:auto; /* ✅ scroll autorisé ICI */
+      -webkit-overflow-scrolling:touch;
+      flex:1 1 auto;
+      touch-action:pan-y;
+    }
+    .panelLabel{
+      font-size:12px;
+      opacity:.7;
+      margin-bottom:6px;
+      display:block;
+    }
 
-#mediaViewer{
-  position:fixed;
-  inset:0;
-  background:#050b24;
-  z-index:30000;
-  overflow-y:auto;
-  padding:16px;
+    /* Media viewer overlay */
+    #mediaViewer{
+      position:fixed;
+      inset:0;
+      background:#050b24;
+      z-index:30000;
+      overflow:auto;               /* ✅ scroll autorisé */
+      -webkit-overflow-scrolling:touch;
+      padding:16px 16px calc(16px + env(safe-area-inset-bottom)) 16px;
 
-  display:none;
-  pointer-events:none;
-}
-
-#mediaViewer.open{
-  display:block;
-  pointer-events:auto;
-}
-</style>
+      display:none;
+      pointer-events:none;
+      touch-action:pan-y;
+    }
+    #mediaViewer.open{
+      display:block;
+      pointer-events:auto;
+    }
+    .mediaBlock{ margin-bottom:20px; }
+    .mediaBlock img,
+    .mediaBlock iframe,
+    .mediaBlock video{
+      width:100%;
+      border-radius:12px;
+      background:#000;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- ===== PANNEAU PIÈCE / MÉDIAS ===== -->
-<div id="piecePanel">
-  <div class="panelHeader">
-    <span>📦 Pièce & médias</span>
-    <button id="btnClosePiecePanel">✕</button>
+  <div id="app">
+    <!-- Bande info -->
+    <div id="infoPanel">
+      <div id="infoTitle">Sélectionne une zone</div>
+      <div id="infoText"></div>
+
+      <!-- ✅ DOIT être ici (dans #app) -->
+      <div id="editorState">✏️ MODE ÉDITEUR</div>
+    </div>
+
+    <!-- Image + Canvas -->
+    <div class="stage" id="stage">
+      <div class="media-layer">
+        <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="c"></canvas>
+      </div>
+    </div>
   </div>
 
-  <div class="panelContent">
-    <label class="panelLabel">Associer une pièce</label>
-    <select id="partSelect" class="input">
-      <option value="">— Choisir une pièce —</option>
-      <option value="__new__">➕ Nouvelle pièce…</option>
-    </select>
-
-    <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
-    <div class="sectionTitle">Ajouter depuis actif/</div>
-
-<button id="btnAddImage" class="btn">
-  ➕ Ajouter une image
-</button>
-
-<button id="btnAddVideo" class="btn">
-  ➕ Ajouter une vidéo
-</button>
+  <!-- Barre outils rapide -->
+  <div id="quickbar">
+    <button id="btnMove" class="qbtn active" title="Déplacer">✋</button>
+    <button id="btnDraw" class="qbtn" title="Dessiner">＋</button>
+    <button id="btnResize" class="qbtn" title="Redimensionner">↕</button>
+    <button id="btnDelete" class="qbtn" title="Supprimer">🗑️</button>
+    <button id="btnIO" class="qbtn" title="Import/Export">⇄</button>
+    <button id="btnPiece" class="qbtn" title="Pièce/Médias">📦</button>
+    <input type="file" id="fileInput" accept="application/json" hidden>
   </div>
-</div>
 
-<!-- Bande info -->
-<div id="infoPanel">
-  <div id="infoTitle">Sélectionne une zone</div>
-  <div id="infoText"></div>
-</div>
+  <!-- ===== PANNEAU PIÈCE / MÉDIAS ===== -->
+  <div id="piecePanel">
+    <div class="panelHeader">
+      <span>📦 Pièce & médias</span>
+      <button id="btnClosePiecePanel">✕</button>
+    </div>
 
-<!-- Image + Canvas -->
-<div class="stage" id="stage">
-  <div class="media-layer">
-    <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
+    <div class="panelContent">
+      <label class="panelLabel">Associer une pièce</label>
+      <select id="partSelect" class="input">
+        <option value="">— Choisir une pièce —</option>
+        <option value="__new__">➕ Nouvelle pièce…</option>
+      </select>
+
+      <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
+      <div class="sectionTitle">Ajouter depuis actif/</div>
+
+      <button id="btnAddImage" class="btn">➕ Ajouter une image</button>
+      <button id="btnAddVideo" class="btn">➕ Ajouter une vidéo</button>
+    </div>
   </div>
-  <div class="canvas-wrap">
-    <canvas id="c"></canvas>
+
+  <!-- Viewer médias -->
+  <div id="mediaViewer">
+    <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">❌ Fermer</button>
+    <div id="mediaContent"></div>
   </div>
-</div>
-
-<!-- Barre outils rapide -->
-<div id="quickbar">
-  <button id="btnMove" class="qbtn active">✋</button>
-  <button id="btnDraw" class="qbtn">+</button>
-  <button id="btnResize" class="qbtn">↕</button>
-  <button id="btnDelete" class="qbtn">🗑️</button>
-  <button id="btnIO" class="qbtn">⇄</button>
-  <button id="btnPiece" class="qbtn">📦</button>
-  <input type="file" id="fileInput" accept="application/json" hidden>
-</div>
-
-<div id="editorState">✏️ MODE ÉDITEUR</div>
-
-<div id="mediaViewer">
-  <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">❌ Fermer</button>
-  <div id="mediaContent"></div>
-</div>
 
 <script>
+/* =========================
+   0) Helpers / iOS viewport
+   ========================= */
+const $ = id => document.getElementById(id);
 
+/* ✅ vh stable */
+function fixIOSViewport(){
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty("--real-vh", `${Math.round(vh)}px`);
+}
+fixIOSViewport();
+window.addEventListener("resize", fixIOSViewport);
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", fixIOSViewport);
+  window.visualViewport.addEventListener("scroll", fixIOSViewport);
+}
+
+/* ✅ Verrou scroll page: autorise seulement dans .panelContent et #mediaViewer */
+function allowScrollTarget(el){
+  return !!(el && (el.closest(".panelContent") || el.closest("#mediaViewer")));
+}
+document.addEventListener("touchmove", (e)=>{
+  if(!allowScrollTarget(e.target)) e.preventDefault();
+}, { passive:false });
+
+/* =========================
+   1) Assets / Storage keys
+   ========================= */
 const ASSETS = {
   images: [
     "actif/vues/cylindre_lp_face.jpg",
@@ -282,13 +379,9 @@ const ASSETS = {
   ]
 };
 
-const $ = id => document.getElementById(id);
+const STORAGE_KEY = "q310_zones_v1";
+const PARTS_STORAGE_KEY = "q310_parts_v1";
 
-/* =========================
-   IMAGE KEY (important)
-   Ton <img> est "actif/compresseur_bg.png"
-   Donc la clé doit être "compresseur_bg.png"
-========================= */
 function getCurrentImageKey(){
   const img = $("imgLayer");
   const src = (img && img.getAttribute("src")) ? img.getAttribute("src") : "";
@@ -297,35 +390,18 @@ function getCurrentImageKey(){
 }
 
 let currentImage = getCurrentImageKey();
-let zonesByImage = {};
+let zonesByImage = {};     // { [imageKey]: Zone[] }
+let zonesData = [];        // Zone[] current image
 
-let PARTS = {};        // index par id
-let PARTS_LIST = [];   // liste brute depuis JSON
+let PARTS = {};            // { [id]: Part }
+let PARTS_LIST = [];       // Part[]
 
-// 1) Essaie localStorage d'abord
-if(loadPartsFromLocal()){
-  remplirMenuPieces();
-}else{
-  // 2) Sinon charge le JSON
-  fetch("quincy_310L_parts.json")
-    .then(res => res.json())
-    .then(data => {
-      PARTS_LIST = Array.isArray(data) ? data : [];
-      PARTS = {};
-      PARTS_LIST.forEach(p => { if(p && p.id) PARTS[p.id] = p; });
-      savePartsToLocal();
-      remplirMenuPieces();
-    })
-    .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
-}
-const PARTS_STORAGE_KEY = "q310_parts_v1";
-
+/* =========================
+   2) Parts load/save
+   ========================= */
 function savePartsToLocal(){
-  try{
-    localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST));
-  }catch(e){
-    console.error("savePartsToLocal error", e);
-  }
+  try{ localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST)); }
+  catch(e){ console.error("savePartsToLocal error", e); }
 }
 
 function loadPartsFromLocal(){
@@ -343,19 +419,54 @@ function loadPartsFromLocal(){
     return false;
   }
 }
-let isEditor = false;
-let tool = "view"; // move | resize | draw
+
+function remplirMenuPieces(){
+  const select = $("partSelect");
+  if(!select) return;
+
+  select.innerHTML = `
+    <option value="">— Choisir une pièce —</option>
+    <option value="__new__">➕ Nouvelle pièce…</option>
+  `;
+
+  PARTS_LIST.forEach(p => {
+    if(!p || !p.id) return;
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.nom || p.id} (${p.circuit || "?"})`;
+    select.appendChild(opt);
+  });
+}
+
+/* init PARTS */
+(function initParts(){
+  if(loadPartsFromLocal()){
+    remplirMenuPieces();
+    return;
+  }
+  fetch("quincy_310L_parts.json")
+    .then(res => res.json())
+    .then(data => {
+      PARTS_LIST = Array.isArray(data) ? data : [];
+      PARTS = {};
+      PARTS_LIST.forEach(p => { if(p && p.id) PARTS[p.id] = p; });
+      savePartsToLocal();
+      remplirMenuPieces();
+    })
+    .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
+})();
+
+/* =========================
+   3) Fabric canvas init
+   ========================= */
+let isEditor = true;   // true = édition
+let tool = "move";     // move | draw | resize
 let selected = null;
 
 let drawing = false;
 let startPt = null;
 let tempRect = null;
 
-let zonesData = []; // [{id,x,y,w,h,nom,role,desc,partId?}]
-
-/* =========================
-   CANVAS
-========================= */
 const canvas = new fabric.Canvas("c", {
   selection:false,
   preserveObjectStacking:true,
@@ -363,12 +474,12 @@ const canvas = new fabric.Canvas("c", {
 });
 canvas.selection = false;
 
-/* iOS: empêcher gestes Safari */
+/* iOS: évite sélection/menus */
 canvas.upperCanvasEl.style.touchAction = "none";
 canvas.upperCanvasEl.style.webkitUserSelect = "none";
 canvas.upperCanvasEl.style.webkitTouchCallout = "none";
 
-/* ergonomie tactile */
+/* gros handles iPhone */
 fabric.Object.prototype.cornerSize = 36;
 fabric.Object.prototype.cornerStyle = "circle";
 fabric.Object.prototype.transparentCorners = false;
@@ -377,8 +488,8 @@ fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 45;
 
 /* =========================
-   FIT CANVAS TO IMAGE (contain)
-========================= */
+   4) Fit canvas to image  ✅ (wrapper + image match)
+   ========================= */
 function fitCanvasToImage(){
   const img = $("imgLayer");
   const stage = $("stage");
@@ -386,8 +497,9 @@ function fitCanvasToImage(){
 
   const stageW = stage.clientWidth;
   const stageH = stage.clientHeight;
+  if(stageW <= 0 || stageH <= 0) return;
 
-  const imgRatio = img.naturalWidth / img.naturalHeight;
+  const imgRatio   = img.naturalWidth / img.naturalHeight;
   const stageRatio = stageW / stageH;
 
   let canvasW, canvasH;
@@ -400,32 +512,33 @@ function fitCanvasToImage(){
     canvasH = canvasW / imgRatio;
   }
 
-  const offsetX = (stageW - canvasW) / 2;
-  const offsetY = (stageH - canvasH) / 2;
+  canvasW = Math.min(canvasW, stageW);
+  canvasH = Math.min(canvasH, stageH);
 
   canvas.setWidth(canvasW);
   canvas.setHeight(canvasH);
   canvas.calcOffset();
 
-  const el = canvas.getElement();
-  el.style.position = "absolute";
-  el.style.left = offsetX + "px";
-  el.style.top  = offsetY + "px";
+  /* ✅ centre le WRAPPER Fabric (sinon upper canvas peut décaler) */
+  const wrap = canvas.wrapperEl;
+  if(wrap){
+    wrap.style.position = "absolute";
+    wrap.style.left = ((stageW - canvasW) / 2) + "px";
+    wrap.style.top  = ((stageH - canvasH) / 2) + "px";
+    wrap.style.width  = canvasW + "px";
+    wrap.style.height = canvasH + "px";
+  }
+
+  /* ✅ force l'image à EXACTEMENT la même taille */
+  img.style.width  = canvasW + "px";
+  img.style.height = canvasH + "px";
 
   canvas.requestRenderAll();
 }
 
-$("imgLayer").addEventListener("load", ()=>{
-  currentImage = getCurrentImageKey();
-  bootZones();        // recharge zones selon la bonne clé d'image
-  fitCanvasToImage();
-});
-
-window.addEventListener("resize", fitCanvasToImage);
-
 /* =========================
-   SAVE / LOAD (localStorage)
-========================= */
+   5) Zones load/save + build rects
+   ========================= */
 function saveToLocal(){
   try{
     currentImage = getCurrentImageKey();
@@ -453,9 +566,6 @@ function loadFromLocal(){
   }
 }
 
-/* =========================
-   CREATE RECT FROM DATA
-========================= */
 function makeRectFromZone(z){
   const r = new fabric.Rect({
     left: z.x,
@@ -472,22 +582,18 @@ function makeRectFromZone(z){
   return r;
 }
 
-/* =========================
-   BOOT: load zones
-========================= */
 function bootZones(){
   canvas.clear();
 
   const hasLocal = loadFromLocal();
 
   if(!hasLocal){
-    // valeur par défaut si rien en storage
     currentImage = getCurrentImageKey();
     zonesByImage = zonesByImage || {};
     zonesByImage[currentImage] = zonesByImage[currentImage] || [
       {
         id:"cylindre_lp",
-        x:420, y:180, w:120, h:260,
+        x:140, y:120, w:120, h:220,
         nom:"Cylindre LP",
         role:"Compression initiale",
         desc:"Première étape de compression.",
@@ -499,61 +605,14 @@ function bootZones(){
   }
 
   zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
-
   clearSelection();
   applyMode();
   fitCanvasToImage();
 }
 
 /* =========================
-   PARTS MENU
-========================= */
-function remplirMenuPieces(){
-  const select = $("partSelect");
-  if(!select) return;
-
-  select.innerHTML = `
-    <option value="">— Choisir une pièce —</option>
-    <option value="__new__">➕ Nouvelle pièce…</option>
-  `;
-
-  PARTS_LIST.forEach(p => {
-    if(!p || !p.id) return;
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.nom || p.id} (${p.circuit || "?"})`;
-    select.appendChild(opt);
-  });
-}
-
-/* =========================
-   iOS SAFE TOUCH BLOCKING (anti-gel)
-========================= */
-let canvasTouchBlocked = false;
-
-function blockCanvasTouch(e){
-  // Empêche Safari de "prendre" le geste (scroll/pinch),
-  // MAIS on l'active seulement quand il faut.
-  e.preventDefault();
-}
-
-function enableCanvasTouch(){
-  if(canvasTouchBlocked) return;
-  canvas.upperCanvasEl.addEventListener("touchmove", blockCanvasTouch, { passive:false });
-  canvas.upperCanvasEl.addEventListener("touchstart", blockCanvasTouch, { passive:false });
-  canvasTouchBlocked = true;
-}
-
-function disableCanvasTouch(){
-  if(!canvasTouchBlocked) return;
-  canvas.upperCanvasEl.removeEventListener("touchmove", blockCanvasTouch);
-  canvas.upperCanvasEl.removeEventListener("touchstart", blockCanvasTouch);
-  canvasTouchBlocked = false;
-}
-
-/* =========================
-   UI / MODES
-========================= */
+   6) UI / Modes / Selection
+   ========================= */
 function updateQuickbar(){
   ["btnMove","btnDraw","btnResize"].forEach(id => $(id).classList.remove("active"));
   if(tool === "move")   $("btnMove").classList.add("active");
@@ -634,12 +693,10 @@ function applyMode(){
 }
 
 function setUI(){
-  const badge = $("editorState");
-  if(badge) badge.style.display = isEditor ? "block" : "none";
+  $("editorState").style.display = isEditor ? "block" : "none";
 
   ["btnMove","btnDraw","btnResize"].forEach(id=>{
-    const b = $(id);
-    if(b) b.disabled = !isEditor;
+    $(id).disabled = !isEditor;
   });
 
   updateQuickbar();
@@ -652,9 +709,6 @@ function setTool(newTool){
   setUI();
 }
 
-/* =========================
-   SELECTION + INFO
-========================= */
 function showInfo(z){
   if(!z){
     $("infoTitle").textContent = "Sélectionne une zone";
@@ -678,12 +732,7 @@ function selectObj(obj){
   selected = obj;
   canvas.setActiveObject(obj);
 
-  // sync le select quand on ouvre le panneau
-  const ps = $("partSelect");
-  if(ps){
-    ps.value = selected.zoneData.partId || "";
-  }
-
+  $("partSelect").value = selected.zoneData.partId || "";
   showInfo(obj.zoneData);
   applyMode();
 }
@@ -696,24 +745,32 @@ function clearSelection(){
 }
 
 /* =========================
-   BUTTONS
-========================= */
+   7) Panels: open/close
+   ========================= */
+function openPiecePanel(){
+  if(!selected) return;
+  $("partSelect").value = selected.zoneData.partId || "";
+  $("piecePanel").classList.add("open");
+}
+function closePiecePanel(){
+  $("piecePanel").classList.remove("open");
+}
+function openMediaViewer(){
+  $("mediaViewer").classList.add("open");
+}
+function closeMediaViewer(){
+  $("mediaViewer").classList.remove("open");
+}
+
+/* =========================
+   8) Buttons wiring
+   ========================= */
 $("btnMove").addEventListener("click", ()=> setTool("move"));
 $("btnDraw").addEventListener("click", ()=> setTool("draw"));
 $("btnResize").addEventListener("click", ()=> setTool("resize"));
 
-$("btnPiece").addEventListener("click", ()=>{
-  if(!selected) return;
-  // quand un panneau est ouvert, on évite que le canvas capte les gestures
-  disableCanvasTouch();
-  $("partSelect").value = selected.zoneData.partId || "";
-  $("piecePanel").classList.add("open");
-});
-
-$("btnClosePiecePanel").addEventListener("click", ()=>{
-  $("piecePanel").classList.remove("open");
-  enableCanvasTouch();
-});
+$("btnPiece").addEventListener("click", openPiecePanel);
+$("btnClosePiecePanel").addEventListener("click", closePiecePanel);
 
 $("btnDelete").addEventListener("click", ()=>{
   if(!isEditor || !selected) return;
@@ -733,15 +790,12 @@ $("btnIO").addEventListener("click", ()=>{
   if(action === "2") $("fileInput").click();
 });
 
-/* =========================
-   PART SELECT: associer une pièce à la zone
-========================= */
+/* PART SELECT */
 $("partSelect").addEventListener("change", ()=>{
   if(!selected || !selected.zoneData) return;
 
   const v = $("partSelect").value;
 
-  // Nouvelle pièce
   if(v === "__new__"){
     const nom = prompt("Nom de la nouvelle pièce ?");
     if(!nom){
@@ -749,20 +803,19 @@ $("partSelect").addEventListener("change", ()=>{
       return;
     }
 
-    // ID simple (slug)
     const baseId = nom.toLowerCase().trim()
       .replace(/\s+/g,"_")
       .replace(/[^a-z0-9_]/g,"");
 
     const id = baseId ? baseId : ("piece_" + Date.now());
-
-    // Ajoute dans PARTS_LIST / PARTS
     const newPart = { id, nom, circuit:"", role:"", desc:"", medias:{ images:[], videos:[] } };
+
     PARTS_LIST.push(newPart);
     PARTS[id] = newPart;
+
+    savePartsToLocal();
     remplirMenuPieces();
 
-    // applique à la zone
     selected.zoneData.partId = id;
     $("partSelect").value = id;
     saveToLocal();
@@ -770,19 +823,16 @@ $("partSelect").addEventListener("change", ()=>{
     return;
   }
 
-  // Associer / désassocier
   selected.zoneData.partId = v || "";
   saveToLocal();
   showInfo(selected.zoneData);
 });
 
 /* =========================
-   MEDIA VIEWER
-========================= */
+   9) Media viewer
+   ========================= */
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
-
-  disableCanvasTouch();
 
   const part = PARTS[selected.zoneData.partId];
   if(!part || !part.medias){
@@ -796,7 +846,7 @@ $("btnShowMedia").addEventListener("click", ()=>{
   (part.medias.images || []).forEach(src=>{
     const d = document.createElement("div");
     d.className = "mediaBlock";
-    d.innerHTML = `<img src="${src}" loading="lazy">`;
+    d.innerHTML = `<img src="${src}" loading="lazy" alt="">`;
     box.appendChild(d);
   });
 
@@ -804,31 +854,24 @@ $("btnShowMedia").addEventListener("click", ()=>{
     const d = document.createElement("div");
     d.className = "mediaBlock";
     d.innerHTML = (src.includes("youtube"))
-      ? `<iframe src="${src}" allowfullscreen></iframe>`
-      : `<video src="${src}" controls></video>`;
+      ? `<iframe src="${src}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`
+      : `<video src="${src}" controls playsinline preload="metadata"></video>`;
     box.appendChild(d);
   });
 
-  $("mediaViewer").classList.add("open");
+  openMediaViewer();
 });
 
-$("btnCloseMedia").addEventListener("click", ()=>{
-  $("mediaViewer").classList.remove("open");
-  enableCanvasTouch();
-});
+$("btnCloseMedia").addEventListener("click", closeMediaViewer);
 
 $("btnAddImage").addEventListener("click", ()=>{
   if(!selected) return alert("Sélectionne une zone d’abord.");
-if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
+  if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
 
   const part = PARTS[selected.zoneData.partId];
   if(!part.medias) part.medias = { images:[], videos:[] };
 
-  const choix = prompt(
-    "Choisis une image :\n\n" +
-    ASSETS.images.map((p,i)=>`${i+1}. ${p}`).join("\n")
-  );
-
+  const choix = prompt("Choisis une image :\n\n" + ASSETS.images.map((p,i)=>`${i+1}. ${p}`).join("\n"));
   const idx = parseInt(choix,10) - 1;
   if(isNaN(idx) || !ASSETS.images[idx]) return;
 
@@ -839,19 +882,14 @@ if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant
   alert("Image ajoutée à la pièce");
 });
 
-
 $("btnAddVideo").addEventListener("click", ()=>{
- if(!selected) return alert("Sélectionne une zone d’abord.");
-if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
+  if(!selected) return alert("Sélectionne une zone d’abord.");
+  if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
 
   const part = PARTS[selected.zoneData.partId];
   if(!part.medias) part.medias = { images:[], videos:[] };
 
-  const choix = prompt(
-    "Choisis une vidéo :\n\n" +
-    ASSETS.videos.map((p,i)=>`${i+1}. ${p}`).join("\n")
-  );
-
+  const choix = prompt("Choisis une vidéo :\n\n" + ASSETS.videos.map((p,i)=>`${i+1}. ${p}`).join("\n"));
   const idx = parseInt(choix,10) - 1;
   if(isNaN(idx) || !ASSETS.videos[idx]) return;
 
@@ -862,12 +900,9 @@ if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant
   alert("Vidéo ajoutée à la pièce");
 });
 
-
-
-
 /* =========================
-   IMPORT JSON
-========================= */
+   10) Import / Export
+   ========================= */
 $("fileInput").addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -879,7 +914,7 @@ $("fileInput").addEventListener("change", e=>{
       if(!Array.isArray(data)) throw new Error("format invalide");
 
       zonesData = data.map(z=>({
-        id: z.partId || ("zone_" + Date.now()),
+        id: ("zone_" + Date.now() + "_" + Math.floor(Math.random()*100000)),
         x: Number(z.x)||0,
         y: Number(z.y)||0,
         w: Number(z.w)||20,
@@ -906,18 +941,13 @@ $("fileInput").addEventListener("change", e=>{
     }
   };
   reader.readAsText(file);
+  e.target.value = "";
 });
 
-/* =========================
-   EXPORT JSON
-========================= */
 function exportZonesJSON(){
   const data = zonesData.map(z => ({
     partId: z.partId || z.id,
-    x: z.x,
-    y: z.y,
-    w: z.w,
-    h: z.h
+    x: z.x, y: z.y, w: z.w, h: z.h
   }));
 
   const json = JSON.stringify(data, null, 2);
@@ -940,12 +970,11 @@ function exportZonesJSON(){
 }
 
 /* =========================
-   FABRIC EVENTS: select / draw
-========================= */
+   11) Fabric events (draw/select/resize sync)
+   ========================= */
 canvas.on("mouse:down", opt => {
   const obj = opt.target;
 
-  // DRAW
   if(isEditor && tool === "draw"){
     drawing = true;
     startPt = canvas.getPointer(opt.e);
@@ -967,7 +996,6 @@ canvas.on("mouse:down", opt => {
     return;
   }
 
-  // SELECT
   if(obj) selectObj(obj);
   else clearSelection();
 });
@@ -1023,7 +1051,6 @@ canvas.on("mouse:up", () => {
   saveToLocal();
 });
 
-/* Synchroniser coords lors d’un drag/resize */
 canvas.on("object:modified", e => {
   if(!isEditor) return;
   const o = e.target;
@@ -1031,7 +1058,6 @@ canvas.on("object:modified", e => {
 
   const z = o.zoneData;
 
-  // valeurs “propres”
   const newW = Math.round(o.getScaledWidth());
   const newH = Math.round(o.getScaledHeight());
 
@@ -1040,7 +1066,6 @@ canvas.on("object:modified", e => {
   z.w = newW;
   z.h = newH;
 
-  // reset scale pour éviter l’accumulation
   o.set({ scaleX:1, scaleY:1, width:z.w, height:z.h, left:z.x, top:z.y });
   o.setCoords();
 
@@ -1048,13 +1073,25 @@ canvas.on("object:modified", e => {
 });
 
 /* =========================
-   BOOT
-========================= */
-isEditor = true;
+   12) Image load + resize hooks + boot
+   ========================= */
+$("imgLayer").addEventListener("load", ()=>{
+  currentImage = getCurrentImageKey();
+  bootZones();
+  fitCanvasToImage();
+});
+
+window.addEventListener("resize", ()=>{
+  fixIOSViewport();
+  fitCanvasToImage();
+});
+
+/* BOOT */
 tool = "move";
 setUI();
 bootZones();
-enableCanvasTouch();
+fixIOSViewport();
+fitCanvasToImage();
 </script>
 
 </body>
