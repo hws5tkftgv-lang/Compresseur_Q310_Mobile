@@ -502,39 +502,35 @@ fabric.Object.prototype.targetFindTolerance = 45;
    4) Fit canvas to image (CENTRAGE + légère réduction)
    ========================= */
 function fitCanvasToImage(){
-  const img = $("imgLayer");
-  const stage = $("stage");
+  const img   = document.getElementById("imgLayer");
+  const stage = document.getElementById("stage");
   if(!img || !stage || !img.naturalWidth) return;
 
   const stageW = stage.clientWidth;
   const stageH = stage.clientHeight;
-  if(stageW <= 0 || stageH <= 0) return;
 
-  const imgRatio   = img.naturalWidth / img.naturalHeight;
-  const stageRatio = stageW / stageH;
+  const imgW = img.naturalWidth;
+  const imgH = img.naturalHeight;
 
-  const SCALE = 0.90;                   // ✅ réduit un peu l’image/canvas
-  const SIDE_PAD = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--side-pad")) || 16;
+  /* 📱 RÈGLE PORTRAIT :
+     on fit STRICTEMENT par la hauteur */
+  const scale = stageH / imgH;
 
-  const usableW = stageW - (SIDE_PAD * 2);
-  const usableH = stageH;
+  const w = Math.round(imgW * scale);
+  const h = Math.round(imgH * scale);
 
-  let w, h;
-
-  if((usableW / usableH) > imgRatio){
-    h = usableH * SCALE;
-    w = h * imgRatio;
-  }else{
-    w = usableW * SCALE;
-    h = w / imgRatio;
-  }
-
-  w = Math.round(w);
-  h = Math.round(h);
-
+  /* centre horizontal seulement */
   const left = Math.round((stageW - w) / 2);
-  const top  = Math.round((stageH - h) / 2);
+  const top  = 0;
 
+  /* ===== IMAGE ===== */
+  img.style.position = "absolute";
+  img.style.left   = left + "px";
+  img.style.top    = top + "px";
+  img.style.width  = w + "px";
+  img.style.height = h + "px";
+
+  /* ===== CANVAS ===== */
   canvas.setWidth(w);
   canvas.setHeight(h);
   canvas.calcOffset();
@@ -542,20 +538,14 @@ function fitCanvasToImage(){
   const wrap = canvas.wrapperEl;
   if(wrap){
     wrap.style.position = "absolute";
-    wrap.style.left = left + "px";
-    wrap.style.top  = top  + "px";
+    wrap.style.left   = left + "px";
+    wrap.style.top    = top + "px";
     wrap.style.width  = w + "px";
     wrap.style.height = h + "px";
   }
 
-  img.style.left = left + "px";
-  img.style.top  = top  + "px";
-  img.style.width  = w + "px";
-  img.style.height = h + "px";
-
   canvas.requestRenderAll();
 }
-
 /* =========================
    5) Zones load/save
    ========================= */
