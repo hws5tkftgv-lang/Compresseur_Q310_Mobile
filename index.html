@@ -535,9 +535,11 @@ function fitCanvasToImage(){
   const stage = document.getElementById("stage");
   if(!img || !stage || !img.naturalWidth) return;
 
-  const stageW = stage.clientWidth;
   const stageH = stage.clientHeight;
 
+const stageW = window.visualViewport
+  ? window.visualViewport.width
+  : window.innerWidth;
   const imgW = img.naturalWidth;
   const imgH = img.naturalHeight;
 
