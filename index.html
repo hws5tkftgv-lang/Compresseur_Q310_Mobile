@@ -4,22 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Q310 – iPhone Éditeur (FINAL iOS Safari)</title>
+  <title>Q310 – iPhone Éditeur (Portrait FINAL iOS Safari)</title>
 
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
   <style>
     :root{
       --quickbar-h: 70px;
-      --real-vh: 100vh;
 
-      /* ✅ calculé par JS (barre Safari du bas) */
-      --vv-bottom: 0px;
+      /* ✅ hauteur visible réelle (visualViewport) */
+      --vvh: 100vh;
 
-      /* hauteur totale occupée par la quickbar (incluant safe-area) */
-      --qb-total: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
+      /* ✅ “barre Safari” réelle en bas (calculée en JS) */
+      --safari-ui: 0px;
+
+      /* ✅ marge latérale pour éviter l’effet “collé à gauche” iOS */
+      --side-pad: 16px;
     }
 
+    /* ✅ lock bounce/scroll */
     html, body{
       margin:0;
       padding:0;
@@ -35,51 +38,68 @@
     }
     body{ position:fixed; inset:0; }
 
-    /* ===== APP ===== */
+    /* ✅ App en portrait-first, avec un padding latéral iOS */
     #app{
       position:fixed;
       inset:0;
+      height: var(--vvh);
       display:flex;
       flex-direction:column;
       overflow:hidden;
       background:#0b1436;
+
+      /* ✅ réserve l’espace réel pour quickbar + safe-area + barre Safari */
+      padding-bottom: calc(
+        var(--quickbar-h)
+        + env(safe-area-inset-bottom)
+        + var(--safari-ui)
+      );
     }
 
+    /* ===== Bande info ===== */
     #infoPanel{
-      padding:10px 10px;
+      padding:12px var(--side-pad); /* ✅ évite texte trop à gauche */
       background:#0f1a44;
       border-bottom:1px solid rgba(255,255,255,.15);
       flex:0 0 auto;
       position:relative;
-      z-index:5;
+      z-index:10;
     }
-    #infoTitle{ font-size:18px; font-weight:800; }
-    #infoText{ font-size:14px; opacity:.9; margin-top:4px; }
+    #infoTitle{
+      font-size:18px;
+      font-weight:800;
+      line-height:1.2;
+      margin:0;
+    }
+    #infoText{
+      font-size:14px;
+      opacity:.9;
+      margin-top:4px;
+      line-height:1.3;
+      min-height:18px;
+    }
 
-    /* ✅ badge en haut à droite, sans sortir du cadre */
+    /* ✅ Badge éditeur compact : ✏️ seulement */
     #editorState{
       position:absolute;
-      top:10px;
-      right: calc(10px + env(safe-area-inset-right));
+      top:8px;
+      right:8px;
+      width:32px;
+      height:32px;
+      border-radius:999px;
       background:#ff9800;
       color:#000;
-      padding:6px 12px;
-      border-radius:999px;
+      display:none; /* show si isEditor */
+      align-items:center;
+      justify-content:center;
       font-weight:900;
-      font-size:12px;
+      font-size:16px;
       z-index:20;
-      display:none;
       box-shadow:0 2px 6px rgba(0,0,0,.35);
       pointer-events:none;
-      white-space:nowrap;
-      max-width: calc(100vw - 20px - env(safe-area-inset-right));
-      overflow:hidden;
-      text-overflow:ellipsis;
     }
 
-    /* ===== STAGE =====
-       ✅ on protège le bas : quickbar + barre Safari du bas
-    */
+    /* ===== Stage (image + canvas) ===== */
     .stage{
       position:relative;
       width:100%;
@@ -87,20 +107,15 @@
       overflow:hidden;
       background:#000;
       touch-action:none;
-
-      /* ✅ empêche que l’image/canvas passe sous la quickbar */
-      padding-bottom: calc(var(--qb-total) + var(--vv-bottom));
     }
 
-    /* couches (image + canvas) */
-    .media-layer, .canvas-wrap{
+    .media-layer,
+    .canvas-wrap{
       position:absolute;
       inset:0;
-      pointer-events:none;
     }
-    .canvas-wrap{ pointer-events:auto; } /* canvas doit recevoir les touches */
 
-    /* ✅ image pilotée par JS (mêmes left/top/width/height que le canvas wrapper) */
+    /* ✅ l’image est positionnée exactement par JS (même left/top/size que Fabric wrapper) */
     #imgLayer{
       position:absolute;
       left:0;
@@ -113,19 +128,21 @@
       -webkit-user-drag:none;
     }
 
-    .canvas-container, canvas{ touch-action:none !important; }
+    .canvas-container, canvas{
+      touch-action:none !important;
+    }
 
-    /* ===== QUICKBAR =====
-       ✅ toujours visible : on la remonte exactement du bottom Safari (vv-bottom)
-    */
+    /* ===== Quickbar ===== */
     #quickbar{
       position:fixed;
       left:0;
       right:0;
-      bottom: var(--vv-bottom);
 
-      height: var(--quickbar-h);
-      padding-bottom: env(safe-area-inset-bottom);
+      /* ✅ remonte au-dessus de la barre Safari */
+      bottom: var(--safari-ui);
+
+      height: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
+      padding: 10px 10px calc(10px + env(safe-area-inset-bottom)) 10px;
 
       display:flex;
       justify-content:center;
@@ -151,50 +168,7 @@
     }
     .qbtn.active{ background:#ff9800; color:#000; }
 
-    /* ===== FULLSCREEN PANEL : PIÈCE & MÉDIAS ===== */
-    #piecePanel{
-      position:fixed;
-      inset:0;
-      background:#0f1a44;
-      z-index:30000;
-
-      display:none;            /* ✅ invisible par défaut */
-      flex-direction:column;
-
-      touch-action:none;
-    }
-    #piecePanel.open{ display:flex; }
-
-    .panelHeader{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:12px 16px;
-      font-weight:900;
-      border-bottom:1px solid rgba(255,255,255,.15);
-      flex:0 0 auto;
-    }
-    .panelHeader button{
-      background:none;
-      border:none;
-      color:#fff;
-      font-size:20px;
-    }
-
-    .panelContent{
-      padding:16px;
-      overflow:auto;
-      -webkit-overflow-scrolling:touch;
-      flex:1 1 auto;
-      touch-action:pan-y;
-    }
-    .panelLabel{
-      font-size:12px;
-      opacity:.7;
-      margin-bottom:6px;
-      display:block;
-    }
-
+    /* ===== Inputs / buttons ===== */
     .btn{
       width:100%;
       min-height:44px;
@@ -226,16 +200,57 @@
       text-transform:uppercase;
     }
 
-    /* Media viewer */
+    /* ===== Panneau Pièce & médias : FULLSCREEN + invisible par défaut ===== */
+    #piecePanel{
+      position:fixed;
+      inset:0;
+      background:#0f1a44;
+      z-index:20000;
+      display:none;            /* ✅ invisible tant que pas ouvert */
+      flex-direction:column;
+      touch-action:none;
+    }
+    #piecePanel.open{ display:flex; }
+
+    .panelHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px 16px;
+      font-weight:900;
+      border-bottom:1px solid rgba(255,255,255,.15);
+      flex:0 0 auto;
+    }
+    .panelHeader button{
+      background:none;
+      border:none;
+      color:#fff;
+      font-size:22px;
+      font-weight:900;
+    }
+    .panelContent{
+      padding:16px;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      flex:1 1 auto;
+      touch-action:pan-y;
+    }
+    .panelLabel{
+      font-size:12px;
+      opacity:.7;
+      margin-bottom:6px;
+      display:block;
+    }
+
+    /* ===== Viewer médias ===== */
     #mediaViewer{
       position:fixed;
       inset:0;
       background:#050b24;
-      z-index:31000;
+      z-index:30000;
       overflow:auto;
       -webkit-overflow-scrolling:touch;
       padding:16px 16px calc(16px + env(safe-area-inset-bottom)) 16px;
-
       display:none;
       pointer-events:none;
       touch-action:pan-y;
@@ -252,11 +267,6 @@
       border-radius:12px;
       background:#000;
     }
-
-    /* ✅ quand panel ouvert : on cache quickbar + on bloque l’app */
-    body.panel-open #quickbar{ display:none; }
-    body.panel-open #app{ pointer-events:none; }
-    body.panel-open #piecePanel{ pointer-events:auto; }
   </style>
 </head>
 
@@ -266,7 +276,7 @@
     <div id="infoPanel">
       <div id="infoTitle">Sélectionne une zone</div>
       <div id="infoText"></div>
-      <div id="editorState">✏️ MODE ÉDITEUR</div>
+      <div id="editorState">✏️</div>
     </div>
 
     <div class="stage" id="stage">
@@ -279,6 +289,7 @@
     </div>
   </div>
 
+  <!-- Quickbar -->
   <div id="quickbar">
     <button id="btnMove" class="qbtn active" title="Déplacer">✋</button>
     <button id="btnDraw" class="qbtn" title="Dessiner">＋</button>
@@ -289,7 +300,7 @@
     <input type="file" id="fileInput" accept="application/json" hidden>
   </div>
 
-  <!-- FULLSCREEN PANEL -->
+  <!-- Panneau pièce & médias -->
   <div id="piecePanel">
     <div class="panelHeader">
       <span>📦 Pièce & médias</span>
@@ -311,6 +322,7 @@
     </div>
   </div>
 
+  <!-- Viewer médias -->
   <div id="mediaViewer">
     <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">❌ Fermer</button>
     <div id="mediaContent"></div>
@@ -322,21 +334,20 @@
    ========================= */
 const $ = id => document.getElementById(id);
 
+/* ✅ Calcule:
+   - vvh (hauteur visible réelle)
+   - safari-ui (overlay bas Safari)
+*/
 function updateViewportVars(){
   const vv = window.visualViewport;
+  const vvh = vv ? vv.height : window.innerHeight;
 
-  const vh = vv ? vv.height : window.innerHeight;
-  document.documentElement.style.setProperty("--real-vh", Math.round(vh) + "px");
+  // barre Safari overlay = ce qui reste en bas quand visualViewport est plus petit que innerHeight
+  // + prend en compte offsetTop (clavier, etc.)
+  const safariUI = vv ? Math.max(0, window.innerHeight - (vv.height + vv.offsetTop)) : 0;
 
-  // ✅ vrai espace "mangé" en bas par Safari (barre inférieure)
-  // innerHeight = layout viewport, vv.height = visible viewport
-  // le delta = barres UI (souvent la barre du bas)
-  let bottom = 0;
-  if(vv){
-    bottom = window.innerHeight - (vv.height + vv.offsetTop);
-    if(bottom < 0) bottom = 0;
-  }
-  document.documentElement.style.setProperty("--vv-bottom", Math.round(bottom) + "px");
+  document.documentElement.style.setProperty("--vvh", Math.round(vvh) + "px");
+  document.documentElement.style.setProperty("--safari-ui", Math.round(safariUI) + "px");
 }
 updateViewportVars();
 window.addEventListener("resize", updateViewportVars);
@@ -345,7 +356,7 @@ if(window.visualViewport){
   window.visualViewport.addEventListener("scroll", updateViewportVars);
 }
 
-/* ✅ lock scroll page sauf dans panel/media */
+/* ✅ lock scroll page sauf dans panelContent et mediaViewer */
 function allowScrollTarget(el){
   return !!(el && (el.closest(".panelContent") || el.closest("#mediaViewer")));
 }
@@ -392,6 +403,7 @@ function savePartsToLocal(){
   try{ localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST)); }
   catch(e){ console.error("savePartsToLocal error", e); }
 }
+
 function loadPartsFromLocal(){
   try{
     const raw = localStorage.getItem(PARTS_STORAGE_KEY);
@@ -407,6 +419,7 @@ function loadPartsFromLocal(){
     return false;
   }
 }
+
 function remplirMenuPieces(){
   const select = $("partSelect");
   if(!select) return;
@@ -443,7 +456,7 @@ function remplirMenuPieces(){
 })();
 
 /* =========================
-   3) Fabric canvas init
+   3) Fabric init
    ========================= */
 let isEditor = true;
 let tool = "move";
@@ -472,34 +485,36 @@ fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 45;
 
 /* =========================
-   4) Fit canvas to image ✅ (superposition parfaite)
+   4) Fit canvas to image (CENTRAGE + légère réduction)
    ========================= */
 function fitCanvasToImage(){
   const img = $("imgLayer");
   const stage = $("stage");
   if(!img || !stage || !img.naturalWidth) return;
 
-  // ✅ zone réellement dispo = stage moins son padding-bottom
-  const cs = getComputedStyle(stage);
-  const padB = parseFloat(cs.paddingBottom) || 0;
-
   const stageW = stage.clientWidth;
-  const stageH = stage.clientHeight - padB;
+  const stageH = stage.clientHeight;
   if(stageW <= 0 || stageH <= 0) return;
 
   const imgRatio   = img.naturalWidth / img.naturalHeight;
   const stageRatio = stageW / stageH;
 
-  let w, h;
-const SCALE = 0.92; // ✅ réduction volontaire ~8 %
+  const SCALE = 0.94;                   // ✅ réduit un peu l’image/canvas
+  const SIDE_PAD = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--side-pad")) || 16;
 
-if(stageRatio > imgRatio){
-  h = stageH * SCALE;
-  w = h * imgRatio;
-}else{
-  w = stageW * SCALE;
-  h = w / imgRatio;
-}
+  const usableW = stageW - (SIDE_PAD * 2);
+  const usableH = stageH;
+
+  let w, h;
+
+  if((usableW / usableH) > imgRatio){
+    h = usableH * SCALE;
+    w = h * imgRatio;
+  }else{
+    w = usableW * SCALE;
+    h = w / imgRatio;
+  }
+
   w = Math.round(w);
   h = Math.round(h);
 
@@ -514,13 +529,13 @@ if(stageRatio > imgRatio){
   if(wrap){
     wrap.style.position = "absolute";
     wrap.style.left = left + "px";
-    wrap.style.top  = top + "px";
+    wrap.style.top  = top  + "px";
     wrap.style.width  = w + "px";
     wrap.style.height = h + "px";
   }
 
   img.style.left = left + "px";
-  img.style.top  = top + "px";
+  img.style.top  = top  + "px";
   img.style.width  = w + "px";
   img.style.height = h + "px";
 
@@ -539,6 +554,7 @@ function saveToLocal(){
     console.error("Save error", e);
   }
 }
+
 function loadFromLocal(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -576,10 +592,19 @@ function bootZones(){
   canvas.clear();
 
   const hasLocal = loadFromLocal();
+
   if(!hasLocal){
     currentImage = getCurrentImageKey();
-    zonesByImage[currentImage] = [
-      { id:"cylindre_lp", x:140, y:120, w:120, h:220, nom:"Cylindre LP", role:"Compression initiale", desc:"Première étape de compression.", partId:"" }
+    zonesByImage = zonesByImage || {};
+    zonesByImage[currentImage] = zonesByImage[currentImage] || [
+      {
+        id:"cylindre_lp",
+        x:140, y:120, w:120, h:220,
+        nom:"Cylindre LP",
+        role:"Compression initiale",
+        desc:"Première étape de compression.",
+        partId:""
+      }
     ];
     zonesData = zonesByImage[currentImage];
     saveToLocal();
@@ -592,7 +617,7 @@ function bootZones(){
 }
 
 /* =========================
-   6) UI / Modes
+   6) UI / Modes / Selection
    ========================= */
 function updateQuickbar(){
   ["btnMove","btnDraw","btnResize"].forEach(id => $(id).classList.remove("active"));
@@ -619,9 +644,13 @@ function applyMode(){
       o.selectable = false;
       o.hasControls = false;
       o.hasBorders = false;
-      o.lockMovementX = o.lockMovementY = true;
-      o.lockScalingX  = o.lockScalingY  = true;
+
+      o.lockMovementX = true;
+      o.lockMovementY = true;
+      o.lockScalingX  = true;
+      o.lockScalingY  = true;
       o.lockRotation  = true;
+
       showAllResizeHandles(o,false);
       return;
     }
@@ -641,8 +670,12 @@ function applyMode(){
       o.selectable = true;
       o.hasControls = false;
       o.hasBorders = true;
-      o.lockMovementX = o.lockMovementY = false;
-      o.lockScalingX  = o.lockScalingY  = true;
+
+      o.lockMovementX = false;
+      o.lockMovementY = false;
+      o.lockScalingX  = true;
+      o.lockScalingY  = true;
+
       showAllResizeHandles(o,false);
       return;
     }
@@ -651,8 +684,12 @@ function applyMode(){
       o.selectable = true;
       o.hasControls = true;
       o.hasBorders = true;
-      o.lockMovementX = o.lockMovementY = false;
-      o.lockScalingX  = o.lockScalingY  = false;
+
+      o.lockMovementX = false;
+      o.lockMovementY = false;
+      o.lockScalingX  = false;
+      o.lockScalingY  = false;
+
       showAllResizeHandles(o,true);
       return;
     }
@@ -662,11 +699,16 @@ function applyMode(){
 }
 
 function setUI(){
-  $("editorState").style.display = isEditor ? "block" : "none";
-  ["btnMove","btnDraw","btnResize"].forEach(id => $(id).disabled = !isEditor);
+  $("editorState").style.display = isEditor ? "flex" : "none";
+
+  ["btnMove","btnDraw","btnResize"].forEach(id=>{
+    $(id).disabled = !isEditor;
+  });
+
   updateQuickbar();
   applyMode();
 }
+
 function setTool(newTool){
   if(!isEditor) return;
   tool = newTool;
@@ -695,12 +737,10 @@ function selectObj(obj){
   if(!obj || !obj.zoneData) return;
   selected = obj;
   canvas.setActiveObject(obj);
+
   $("partSelect").value = selected.zoneData.partId || "";
   showInfo(obj.zoneData);
   applyMode();
-
-  // ✅ IMPORTANT: on N’ouvre PAS le panneau automatiquement
-  // (tu veux l’ouvrir seulement avec le bouton 📦)
 }
 
 function clearSelection(){
@@ -711,22 +751,21 @@ function clearSelection(){
 }
 
 /* =========================
-   7) Panels
+   7) Panels open/close
    ========================= */
 function openPiecePanel(){
-  if(!selected) return alert("Sélectionne une zone d’abord.");
-  document.body.classList.add("panel-open");
+  if(!selected) return;
+  $("partSelect").value = selected.zoneData.partId || "";
   $("piecePanel").classList.add("open");
 }
 function closePiecePanel(){
   $("piecePanel").classList.remove("open");
-  document.body.classList.remove("panel-open");
 }
 function openMediaViewer(){ $("mediaViewer").classList.add("open"); }
 function closeMediaViewer(){ $("mediaViewer").classList.remove("open"); }
 
 /* =========================
-   8) Buttons
+   8) Buttons wiring
    ========================= */
 $("btnMove").addEventListener("click", ()=> setTool("move"));
 $("btnDraw").addEventListener("click", ()=> setTool("draw"));
@@ -753,7 +792,9 @@ $("btnIO").addEventListener("click", ()=>{
   if(action === "2") $("fileInput").click();
 });
 
-/* PART SELECT */
+/* =========================
+   9) Part select
+   ========================= */
 $("partSelect").addEventListener("change", ()=>{
   if(!selected || !selected.zoneData) return;
 
@@ -792,7 +833,7 @@ $("partSelect").addEventListener("change", ()=>{
 });
 
 /* =========================
-   9) Media viewer
+   10) Media viewer
    ========================= */
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
@@ -824,6 +865,7 @@ $("btnShowMedia").addEventListener("click", ()=>{
 
   openMediaViewer();
 });
+
 $("btnCloseMedia").addEventListener("click", closeMediaViewer);
 
 $("btnAddImage").addEventListener("click", ()=>{
@@ -863,7 +905,7 @@ $("btnAddVideo").addEventListener("click", ()=>{
 });
 
 /* =========================
-   10) Import / Export
+   11) Import / Export
    ========================= */
 $("fileInput").addEventListener("change", e=>{
   const file = e.target.files[0];
@@ -932,7 +974,7 @@ function exportZonesJSON(){
 }
 
 /* =========================
-   11) Fabric events
+   12) Fabric events
    ========================= */
 canvas.on("mouse:down", opt => {
   const obj = opt.target;
@@ -1035,7 +1077,7 @@ canvas.on("object:modified", e => {
 });
 
 /* =========================
-   12) Boot + resize hooks
+   13) Boot / resize hooks
    ========================= */
 $("imgLayer").addEventListener("load", ()=>{
   currentImage = getCurrentImageKey();
@@ -1043,21 +1085,22 @@ $("imgLayer").addEventListener("load", ()=>{
   fitCanvasToImage();
 });
 
-function relayout(){
+window.addEventListener("resize", ()=>{
   updateViewportVars();
   fitCanvasToImage();
-}
-window.addEventListener("resize", relayout);
+});
+
 if(window.visualViewport){
-  window.visualViewport.addEventListener("resize", relayout);
-  window.visualViewport.addEventListener("scroll", relayout);
+  window.visualViewport.addEventListener("resize", ()=>{ updateViewportVars(); fitCanvasToImage(); });
+  window.visualViewport.addEventListener("scroll", ()=>{ updateViewportVars(); fitCanvasToImage(); });
 }
 
 /* BOOT */
 tool = "move";
 setUI();
 bootZones();
-relayout();
+updateViewportVars();
+fitCanvasToImage();
 </script>
 
 </body>
