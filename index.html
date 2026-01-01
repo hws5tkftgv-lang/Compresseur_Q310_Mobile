@@ -1,317 +1,339 @@
-<html lang="fr">
 <!doctype html>
+<html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>Q310 – iPhone Éditeur (Clean)</title>
+  <meta charset="utf-8">
+  <!-- iPhone: on contrôle entièrement le viewport + on empêche le zoom -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Q310 – iPhone Éditeur (Clean) – FIX iOS (no scroll)</title>
 
-<script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
-<style>
-.mediaBlock{ margin-bottom:20px; }
-.mediaBlock img,
-.mediaBlock iframe,
-.mediaBlock video{
-  width:100%;
-  border-radius:12px;
-  background:#000;
-}
+  <style>
+    :root{ --quickbar-h: 70px; --real-vh: 100vh; }
 
-.sectionTitle{
-  margin-top:12px;
-  font-size:12px;
-  opacity:.7;
-  font-weight:700;
-  text-transform:uppercase;
-}
+    /* ✅ verrou total du scroll/bounce de la page */
+    html, body{
+      margin:0;
+      padding:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      overscroll-behavior:none;
+      background:#0b1436;
+      color:#eaf1ff;
+      font-family:Arial,Segoe UI,sans-serif;
+      -webkit-text-size-adjust:100%;
+      touch-action:none; /* on gère nous-mêmes */
+    }
+    body{ position:fixed; inset:0; } /* ✅ empêche la page de “bouger” */
 
-:root{ --quickbar-h: 70px; }
+    /* App = colonne fixe (info + stage) */
+    #app{
+      position:fixed;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      padding-bottom: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
+    }
 
-body{
-  padding-bottom: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
-}
+    #infoPanel{
+      padding:10px;
+      background:#0f1a44;
+      border-bottom:1px solid rgba(255,255,255,.15);
+      flex:0 0 auto;
+    }
+    #infoTitle{ font-size:18px; font-weight:800; }
+    #infoText{ font-size:14px; opacity:.9; margin-top:4px; }
 
-html, body{
-  margin:0;
-  height:100%;
-  overflow:hidden;          /* 🔒 verrou global */
-  overscroll-behavior:none; /* 🔒 empêche bounce iOS */
-}
+    .stage{
+      position:relative;
+      width:100%;
+      flex:1 1 auto;
 
-#infoPanel{
-  padding:10px;
-  background:#0f1a44;
-  border-bottom:1px solid rgba(255,255,255,.15);
-}
-#infoTitle{ font-size:18px; font-weight:800; }
-#infoText{ font-size:14px; opacity:.9; margin-top:4px; }
+      /* ✅ hauteur réelle iOS (visualViewport) */
+      height: calc(var(--real-vh) - var(--quickbar-h) - env(safe-area-inset-bottom) - 60px);
 
-.stage{
-  position:relative;
-  width:100%;
-  
+      overflow:hidden;
+      background:#000;
+      touch-action:none;
+    }
 
-  height: calc(
-    var(--real-vh)
-    - var(--quickbar-h)
-    - 60px
-  );
+    .media-layer,
+    .canvas-wrap{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
 
-  overflow:hidden;
-  background:#000;
+    #imgLayer{
+      max-width:100%;
+      max-height:100%;
+      width:auto;
+      height:auto;
+      object-fit:contain;
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
 
-}
-.canvas-container{
-  max-width:100%;
-  max-height:100%;
-}
+    /* Fabric injecte .canvas-container; on la verrouille aussi */
+    .canvas-container, canvas{
+      touch-action:none !important;
+    }
 
-.media-layer,
-.canvas-wrap{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+    /* ====== Quickbar (toujours visible, jamais “scrollée”) ====== */
+    #quickbar{
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      padding-bottom: env(safe-area-inset-bottom);
+      height: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
 
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:10px;
 
+      background:rgba(15,26,68,.95);
+      backdrop-filter:blur(10px);
+      border-top:1px solid rgba(255,255,255,.15);
+      z-index:10000;
+      touch-action:none;
+    }
+    .qbtn{
+      width:46px;
+      height:46px;
+      border-radius:10px;
+      background:#1b2553;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.25);
+      font-size:18px;
+      font-weight:900;
+    }
+    .qbtn.active{ background:#ff9800; color:#000; }
 
-#imgLayer{
-  max-width:100%;
-  max-height:100%;
-  width:auto;
-  height:auto;
-  object-fit:contain;
-  pointer-events:none;
-}
-/* IMPORTANT iOS : empêcher Safari de prendre le scroll/pinch */
-.stage, .canvas-container, canvas{
-  touch-action:none !important;
-}
+    #editorState{
+      position:fixed;
+      top:10px;
+      right:10px;
+      background:#ff9800;
+      color:#000;
+      padding:6px 12px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:12px;
+      z-index:9999;
+      display:none;
+      box-shadow:0 2px 6px rgba(0,0,0,.35);
+      pointer-events:none;
+    }
 
-#piecePanel{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:70vh;
-  background:#0f1a44;
-  border-top-left-radius:16px;
-  border-top-right-radius:16px;
-  transform:translateY(100%);
-  transition:transform .25s ease;
-  z-index:20000;
-  display:flex;
-  flex-direction:column;
-  pointer-events:none;
-}
+    /* ====== Panels / overlays ====== */
+    .btn{
+      width:100%;
+      min-height:44px;
+      margin-top:8px;
+      background:#1b2553;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.2);
+      border-radius:10px;
+      font-size:15px;
+      font-weight:800;
+    }
+    .btn.active{ background:#ff9800; color:#000; }
 
-#piecePanel.open{
-  transform:translateY(0);
-  pointer-events:auto;
-}
+    .input{
+      width:100%;
+      min-height:44px;
+      margin-top:8px;
+      background:#101a40;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.2);
+      border-radius:10px;
+      font-size:15px;
+      padding:10px;
+      box-sizing:border-box;
+    }
 
-.panelHeader{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:12px 16px;
-  font-weight:900;
-  border-bottom:1px solid rgba(255,255,255,.15);
-}
+    .sectionTitle{
+      margin-top:12px;
+      font-size:12px;
+      opacity:.7;
+      font-weight:700;
+      text-transform:uppercase;
+    }
 
-.panelHeader button{
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:20px;
-}
+    #piecePanel{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      height:70vh;
+      background:#0f1a44;
+      border-top-left-radius:16px;
+      border-top-right-radius:16px;
+      transform:translateY(100%);
+      transition:transform .25s ease;
+      z-index:20000;
+      display:flex;
+      flex-direction:column;
+      pointer-events:none;
+      touch-action:none;
+    }
+    #piecePanel.open{
+      transform:translateY(0);
+      pointer-events:auto;
+    }
+    .panelHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px 16px;
+      font-weight:900;
+      border-bottom:1px solid rgba(255,255,255,.15);
+      flex:0 0 auto;
+    }
+    .panelHeader button{
+      background:none;
+      border:none;
+      color:#fff;
+      font-size:20px;
+    }
+    .panelContent{
+      padding:16px;
+      overflow:auto; /* ✅ on autorise le scroll ICI */
+      -webkit-overflow-scrolling:touch;
+      flex:1 1 auto;
+      touch-action:pan-y;
+    }
+    .panelLabel{
+      font-size:12px;
+      opacity:.7;
+      margin-bottom:6px;
+      display:block;
+    }
 
-.panelContent{
-  padding:16px;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-}
+    /* Media viewer overlay */
+    #mediaViewer{
+      position:fixed;
+      inset:0;
+      background:#050b24;
+      z-index:30000;
+      overflow:auto;               /* ✅ scroll autorisé */
+      -webkit-overflow-scrolling:touch;
+      padding:16px 16px calc(16px + env(safe-area-inset-bottom)) 16px;
 
-.panelLabel{
-  font-size:12px;
-  opacity:.7;
-  margin-bottom:6px;
-  display:block;
-}
-
-.btn{
-  width:100%;
-  min-height:44px;
-  margin-top:8px;
-  background:#1b2553;
-  color:#fff;
-  border:1px solid rgba(255,255,255,.2);
-  border-radius:10px;
-  font-size:15px;
-  font-weight:800;
-}
-.btn.active{ background:#ff9800; color:#000; }
-
-.input{
-  width:100%;
-  min-height:44px;
-  margin-top:8px;
-  background:#101a40;
-  color:#fff;
-  border:1px solid rgba(255,255,255,.2);
-  border-radius:10px;
-  font-size:15px;
-  padding:10px;
-  box-sizing:border-box;
-}
-
-#editorState{
-  position:fixed;
-  top:10px;
-  right:10px;
-  background:#ff9800;
-  color:#000;
-  padding:6px 12px;
-  border-radius:999px;
-  font-weight:900;
-  font-size:12px;
-  z-index:9999;
-  display:none;
-  box-shadow:0 2px 6px rgba(0,0,0,.35);
-}
-
-#app{
-  position:fixed;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden; /* 🔒 plus aucun scroll possible */
-}
-
-
-
-#quickbar{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-
-  padding-bottom: env(safe-area-inset-bottom);
-  height: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
-
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:10px;
-
-  background:rgba(15,26,68,.95);
-  backdrop-filter:blur(10px);
-  border-top:1px solid rgba(255,255,255,.15);
-
-  z-index:10000;
-}
-.qbtn{
-  width:46px;
-  height:46px;
-  border-radius:10px;
-  background:#1b2553;
-  color:#fff;
-  border:1px solid rgba(255,255,255,.25);
-  font-size:18px;
-  font-weight:900;
-}
-
-.qbtn.active{ background:#ff9800; color:#000; }
-
-#mediaViewer{
-  position:fixed;
-  inset:0;
-  background:#050b24;
-  z-index:30000;
-  overflow-y:auto;
-
-  /* ✅ CORRECTION iOS */
-  padding:
-    16px
-    16px
-    calc(16px + env(safe-area-inset-bottom))
-    16px;
-
-  display:none;
-  pointer-events:none;
-}
-
-#mediaViewer.open{
-  display:block;
-  pointer-events:auto;
-}
-</style>
+      display:none;
+      pointer-events:none;
+      touch-action:pan-y;
+    }
+    #mediaViewer.open{
+      display:block;
+      pointer-events:auto;
+    }
+    .mediaBlock{ margin-bottom:20px; }
+    .mediaBlock img,
+    .mediaBlock iframe,
+    .mediaBlock video{
+      width:100%;
+      border-radius:12px;
+      background:#000;
+    }
+  </style>
 </head>
 
 <body>
-<div id="app">
-  <!-- TOUT ton contenu EXISTANT ici -->
-</div>
-<!-- ===== PANNEAU PIÈCE / MÉDIAS ===== -->
-<div id="piecePanel">
-  <div class="panelHeader">
-    <span>📦 Pièce & médias</span>
-    <button id="btnClosePiecePanel">✕</button>
+
+  <div id="app">
+    <!-- Bande info -->
+    <div id="infoPanel">
+      <div id="infoTitle">Sélectionne une zone</div>
+      <div id="infoText"></div>
+    </div>
+
+    <!-- Image + Canvas -->
+    <div class="stage" id="stage">
+      <div class="media-layer">
+        <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="c"></canvas>
+      </div>
+    </div>
   </div>
 
-  <div class="panelContent">
-    <label class="panelLabel">Associer une pièce</label>
-    <select id="partSelect" class="input">
-      <option value="">— Choisir une pièce —</option>
-      <option value="__new__">➕ Nouvelle pièce…</option>
-    </select>
-
-    <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
-    <div class="sectionTitle">Ajouter depuis actif/</div>
-
-    <button id="btnAddImage" class="btn">➕ Ajouter une image</button>
-    <button id="btnAddVideo" class="btn">➕ Ajouter une vidéo</button>
+  <!-- Barre outils rapide -->
+  <div id="quickbar">
+    <button id="btnMove" class="qbtn active" title="Déplacer">✋</button>
+    <button id="btnDraw" class="qbtn" title="Dessiner">＋</button>
+    <button id="btnResize" class="qbtn" title="Redimensionner">↕</button>
+    <button id="btnDelete" class="qbtn" title="Supprimer">🗑️</button>
+    <button id="btnIO" class="qbtn" title="Import/Export">⇄</button>
+    <button id="btnPiece" class="qbtn" title="Pièce/Médias">📦</button>
+    <input type="file" id="fileInput" accept="application/json" hidden>
   </div>
-</div>
 
-<!-- Bande info -->
-<div id="infoPanel">
-  <div id="infoTitle">Sélectionne une zone</div>
-  <div id="infoText"></div>
-</div>
+  <div id="editorState">✏️ MODE ÉDITEUR</div>
 
-<!-- Image + Canvas -->
-<div class="stage" id="stage">
-  <div class="media-layer">
-    <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
+  <!-- ===== PANNEAU PIÈCE / MÉDIAS ===== -->
+  <div id="piecePanel">
+    <div class="panelHeader">
+      <span>📦 Pièce & médias</span>
+      <button id="btnClosePiecePanel">✕</button>
+    </div>
+
+    <div class="panelContent">
+      <label class="panelLabel">Associer une pièce</label>
+      <select id="partSelect" class="input">
+        <option value="">— Choisir une pièce —</option>
+        <option value="__new__">➕ Nouvelle pièce…</option>
+      </select>
+
+      <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
+      <div class="sectionTitle">Ajouter depuis actif/</div>
+
+      <button id="btnAddImage" class="btn">➕ Ajouter une image</button>
+      <button id="btnAddVideo" class="btn">➕ Ajouter une vidéo</button>
+    </div>
   </div>
-  <div class="canvas-wrap">
-    <canvas id="c"></canvas>
+
+  <!-- Viewer médias -->
+  <div id="mediaViewer">
+    <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">❌ Fermer</button>
+    <div id="mediaContent"></div>
   </div>
-</div>
-
-<!-- Barre outils rapide -->
-<div id="quickbar">
-  <button id="btnMove" class="qbtn active">✋</button>
-  <button id="btnDraw" class="qbtn">+</button>
-  <button id="btnResize" class="qbtn">↕</button>
-  <button id="btnDelete" class="qbtn">🗑️</button>
-  <button id="btnIO" class="qbtn">⇄</button>
-  <button id="btnPiece" class="qbtn">📦</button>
-  <input type="file" id="fileInput" accept="application/json" hidden>
-</div>
-
-<div id="editorState">✏️ MODE ÉDITEUR</div>
-
-<div id="mediaViewer">
-  <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">❌ Fermer</button>
-  <div id="mediaContent"></div>
-</div>
 
 <script>
+/* =========================
+   0) Helpers / iOS viewport
+   ========================= */
+const $ = id => document.getElementById(id);
+
+function fixIOSViewport(){
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty("--real-vh", `${Math.round(vh)}px`);
+}
+fixIOSViewport();
+window.addEventListener("resize", fixIOSViewport);
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", fixIOSViewport);
+  window.visualViewport.addEventListener("scroll", fixIOSViewport);
+}
+
+/* ✅ Verrou scroll page: on autorise seulement le scroll dans .panelContent et #mediaViewer */
+function allowScrollTarget(el){
+  return !!(el && (el.closest(".panelContent") || el.closest("#mediaViewer")));
+}
+document.addEventListener("touchmove", (e)=>{
+  if(!allowScrollTarget(e.target)) e.preventDefault();
+}, { passive:false });
+
+/* =========================
+   1) Assets / Storage keys
+   ========================= */
 const ASSETS = {
   images: [
     "actif/vues/cylindre_lp_face.jpg",
@@ -324,9 +346,6 @@ const ASSETS = {
   ]
 };
 
-const $ = id => document.getElementById(id);
-
-/* ✅ AJOUT: clés storage manquantes */
 const STORAGE_KEY = "q310_zones_v1";
 const PARTS_STORAGE_KEY = "q310_parts_v1";
 
@@ -338,18 +357,18 @@ function getCurrentImageKey(){
 }
 
 let currentImage = getCurrentImageKey();
-let zonesByImage = {};
+let zonesByImage = {};     // { [imageKey]: Zone[] }
+let zonesData = [];        // Zone[] current image
 
-let PARTS = {};
-let PARTS_LIST = [];
+let PARTS = {};            // { [id]: Part }
+let PARTS_LIST = [];       // Part[]
 
-/* ✅ functions PARTS storage (déclarées AVANT usage) */
+/* =========================
+   2) Parts load/save
+   ========================= */
 function savePartsToLocal(){
-  try{
-    localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST));
-  }catch(e){
-    console.error("savePartsToLocal error", e);
-  }
+  try{ localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST)); }
+  catch(e){ console.error("savePartsToLocal error", e); }
 }
 
 function loadPartsFromLocal(){
@@ -368,10 +387,30 @@ function loadPartsFromLocal(){
   }
 }
 
-/* ✅ init PARTS */
-if(loadPartsFromLocal()){
-  remplirMenuPieces();
-}else{
+function remplirMenuPieces(){
+  const select = $("partSelect");
+  if(!select) return;
+
+  select.innerHTML = `
+    <option value="">— Choisir une pièce —</option>
+    <option value="__new__">➕ Nouvelle pièce…</option>
+  `;
+
+  PARTS_LIST.forEach(p => {
+    if(!p || !p.id) return;
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.nom || p.id} (${p.circuit || "?"})`;
+    select.appendChild(opt);
+  });
+}
+
+/* init PARTS */
+(function initParts(){
+  if(loadPartsFromLocal()){
+    remplirMenuPieces();
+    return;
+  }
   fetch("quincy_310L_parts.json")
     .then(res => res.json())
     .then(data => {
@@ -382,19 +421,19 @@ if(loadPartsFromLocal()){
       remplirMenuPieces();
     })
     .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
-}
+})();
 
-let isEditor = false;
-let tool = "view";
+/* =========================
+   3) Fabric canvas init
+   ========================= */
+let isEditor = true;   // tu peux mettre false si tu veux un mode lecture
+let tool = "move";     // move | draw | resize
 let selected = null;
 
 let drawing = false;
 let startPt = null;
 let tempRect = null;
 
-let zonesData = [];
-
-/* CANVAS */
 const canvas = new fabric.Canvas("c", {
   selection:false,
   preserveObjectStacking:true,
@@ -402,10 +441,12 @@ const canvas = new fabric.Canvas("c", {
 });
 canvas.selection = false;
 
+/* iOS: évite sélection/menus */
 canvas.upperCanvasEl.style.touchAction = "none";
 canvas.upperCanvasEl.style.webkitUserSelect = "none";
 canvas.upperCanvasEl.style.webkitTouchCallout = "none";
 
+/* gros handles iPhone */
 fabric.Object.prototype.cornerSize = 36;
 fabric.Object.prototype.cornerStyle = "circle";
 fabric.Object.prototype.transparentCorners = false;
@@ -413,6 +454,9 @@ fabric.Object.prototype.padding = 10;
 fabric.Object.prototype.perPixelTargetFind = false;
 fabric.Object.prototype.targetFindTolerance = 45;
 
+/* =========================
+   4) Fit canvas to image
+   ========================= */
 function fitCanvasToImage(){
   const img = $("imgLayer");
   const stage = $("stage");
@@ -434,7 +478,6 @@ function fitCanvasToImage(){
     canvasH = canvasW / imgRatio;
   }
 
-  /* 🔒 CLAMP FINAL (CRITIQUE) */
   canvasW = Math.min(canvasW, stageW);
   canvasH = Math.min(canvasH, stageH);
 
@@ -449,15 +492,10 @@ function fitCanvasToImage(){
 
   canvas.requestRenderAll();
 }
-$("imgLayer").addEventListener("load", ()=>{
-  currentImage = getCurrentImageKey();
-  bootZones();
-  fitCanvasToImage();
-});
 
-window.addEventListener("resize", fitCanvasToImage);
-
-/* ZONES storage */
+/* =========================
+   5) Zones load/save + build rects
+   ========================= */
 function saveToLocal(){
   try{
     currentImage = getCurrentImageKey();
@@ -512,7 +550,7 @@ function bootZones(){
     zonesByImage[currentImage] = zonesByImage[currentImage] || [
       {
         id:"cylindre_lp",
-        x:420, y:180, w:120, h:260,
+        x:140, y:120, w:120, h:220,
         nom:"Cylindre LP",
         role:"Compression initiale",
         desc:"Première étape de compression.",
@@ -524,48 +562,14 @@ function bootZones(){
   }
 
   zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
-
   clearSelection();
   applyMode();
   fitCanvasToImage();
 }
 
-function remplirMenuPieces(){
-  const select = $("partSelect");
-  if(!select) return;
-
-  select.innerHTML = `
-    <option value="">— Choisir une pièce —</option>
-    <option value="__new__">➕ Nouvelle pièce…</option>
-  `;
-
-  PARTS_LIST.forEach(p => {
-    if(!p || !p.id) return;
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.nom || p.id} (${p.circuit || "?"})`;
-    select.appendChild(opt);
-  });
-}
-
-/* iOS touch block canvas */
-let canvasTouchBlocked = false;
-function blockCanvasTouch(e){ e.preventDefault(); }
-
-function enableCanvasTouch(){
-  if(canvasTouchBlocked) return;
-  canvas.upperCanvasEl.addEventListener("touchmove", blockCanvasTouch, { passive:false });
-  canvas.upperCanvasEl.addEventListener("touchstart", blockCanvasTouch, { passive:false });
-  canvasTouchBlocked = true;
-}
-function disableCanvasTouch(){
-  if(!canvasTouchBlocked) return;
-  canvas.upperCanvasEl.removeEventListener("touchmove", blockCanvasTouch);
-  canvas.upperCanvasEl.removeEventListener("touchstart", blockCanvasTouch);
-  canvasTouchBlocked = false;
-}
-
-/* UI / MODES */
+/* =========================
+   6) UI / Modes / Selection
+   ========================= */
 function updateQuickbar(){
   ["btnMove","btnDraw","btnResize"].forEach(id => $(id).classList.remove("active"));
   if(tool === "move")   $("btnMove").classList.add("active");
@@ -646,12 +650,10 @@ function applyMode(){
 }
 
 function setUI(){
-  const badge = $("editorState");
-  if(badge) badge.style.display = isEditor ? "block" : "none";
+  $("editorState").style.display = isEditor ? "block" : "none";
 
   ["btnMove","btnDraw","btnResize"].forEach(id=>{
-    const b = $(id);
-    if(b) b.disabled = !isEditor;
+    $(id).disabled = !isEditor;
   });
 
   updateQuickbar();
@@ -664,7 +666,6 @@ function setTool(newTool){
   setUI();
 }
 
-/* SELECTION + INFO */
 function showInfo(z){
   if(!z){
     $("infoTitle").textContent = "Sélectionne une zone";
@@ -688,9 +689,7 @@ function selectObj(obj){
   selected = obj;
   canvas.setActiveObject(obj);
 
-  const ps = $("partSelect");
-  if(ps) ps.value = selected.zoneData.partId || "";
-
+  $("partSelect").value = selected.zoneData.partId || "";
   showInfo(obj.zoneData);
   applyMode();
 }
@@ -702,22 +701,33 @@ function clearSelection(){
   applyMode();
 }
 
-/* BUTTONS */
+/* =========================
+   7) Panels: open/close (touch)
+   ========================= */
+function openPiecePanel(){
+  if(!selected) return;
+  $("partSelect").value = selected.zoneData.partId || "";
+  $("piecePanel").classList.add("open");
+}
+function closePiecePanel(){
+  $("piecePanel").classList.remove("open");
+}
+function openMediaViewer(){
+  $("mediaViewer").classList.add("open");
+}
+function closeMediaViewer(){
+  $("mediaViewer").classList.remove("open");
+}
+
+/* =========================
+   8) Buttons wiring
+   ========================= */
 $("btnMove").addEventListener("click", ()=> setTool("move"));
 $("btnDraw").addEventListener("click", ()=> setTool("draw"));
 $("btnResize").addEventListener("click", ()=> setTool("resize"));
 
-$("btnPiece").addEventListener("click", ()=>{
-  if(!selected) return;
-  disableCanvasTouch();
-  $("partSelect").value = selected.zoneData.partId || "";
-  $("piecePanel").classList.add("open");
-});
-
-$("btnClosePiecePanel").addEventListener("click", ()=>{
-  $("piecePanel").classList.remove("open");
-  enableCanvasTouch();
-});
+$("btnPiece").addEventListener("click", openPiecePanel);
+$("btnClosePiecePanel").addEventListener("click", closePiecePanel);
 
 $("btnDelete").addEventListener("click", ()=>{
   if(!isEditor || !selected) return;
@@ -755,12 +765,12 @@ $("partSelect").addEventListener("change", ()=>{
       .replace(/[^a-z0-9_]/g,"");
 
     const id = baseId ? baseId : ("piece_" + Date.now());
-
     const newPart = { id, nom, circuit:"", role:"", desc:"", medias:{ images:[], videos:[] } };
+
     PARTS_LIST.push(newPart);
     PARTS[id] = newPart;
 
-    savePartsToLocal();   /* ✅ AJOUT CRITIQUE */
+    savePartsToLocal();
     remplirMenuPieces();
 
     selected.zoneData.partId = id;
@@ -775,11 +785,11 @@ $("partSelect").addEventListener("change", ()=>{
   showInfo(selected.zoneData);
 });
 
-/* MEDIA VIEWER */
+/* =========================
+   9) Media viewer
+   ========================= */
 $("btnShowMedia").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
-
-  disableCanvasTouch();
 
   const part = PARTS[selected.zoneData.partId];
   if(!part || !part.medias){
@@ -793,7 +803,7 @@ $("btnShowMedia").addEventListener("click", ()=>{
   (part.medias.images || []).forEach(src=>{
     const d = document.createElement("div");
     d.className = "mediaBlock";
-    d.innerHTML = `<img src="${src}" loading="lazy">`;
+    d.innerHTML = `<img src="${src}" loading="lazy" alt="">`;
     box.appendChild(d);
   });
 
@@ -806,13 +816,10 @@ $("btnShowMedia").addEventListener("click", ()=>{
     box.appendChild(d);
   });
 
-  $("mediaViewer").classList.add("open");
+  openMediaViewer();
 });
 
-$("btnCloseMedia").addEventListener("click", ()=>{
-  $("mediaViewer").classList.remove("open");
-  enableCanvasTouch();
-});
+$("btnCloseMedia").addEventListener("click", closeMediaViewer);
 
 $("btnAddImage").addEventListener("click", ()=>{
   if(!selected) return alert("Sélectionne une zone d’abord.");
@@ -821,17 +828,12 @@ $("btnAddImage").addEventListener("click", ()=>{
   const part = PARTS[selected.zoneData.partId];
   if(!part.medias) part.medias = { images:[], videos:[] };
 
-  const choix = prompt(
-    "Choisis une image :\n\n" +
-    ASSETS.images.map((p,i)=>`${i+1}. ${p}`).join("\n")
-  );
-
+  const choix = prompt("Choisis une image :\n\n" + ASSETS.images.map((p,i)=>`${i+1}. ${p}`).join("\n"));
   const idx = parseInt(choix,10) - 1;
   if(isNaN(idx) || !ASSETS.images[idx]) return;
 
   part.medias.images.push(ASSETS.images[idx]);
-
-  savePartsToLocal();  /* ✅ */
+  savePartsToLocal();
   saveToLocal();
 
   alert("Image ajoutée à la pièce");
@@ -844,23 +846,20 @@ $("btnAddVideo").addEventListener("click", ()=>{
   const part = PARTS[selected.zoneData.partId];
   if(!part.medias) part.medias = { images:[], videos:[] };
 
-  const choix = prompt(
-    "Choisis une vidéo :\n\n" +
-    ASSETS.videos.map((p,i)=>`${i+1}. ${p}`).join("\n")
-  );
-
+  const choix = prompt("Choisis une vidéo :\n\n" + ASSETS.videos.map((p,i)=>`${i+1}. ${p}`).join("\n"));
   const idx = parseInt(choix,10) - 1;
   if(isNaN(idx) || !ASSETS.videos[idx]) return;
 
   part.medias.videos.push(ASSETS.videos[idx]);
-
-  savePartsToLocal();  /* ✅ */
+  savePartsToLocal();
   saveToLocal();
 
   alert("Vidéo ajoutée à la pièce");
 });
 
-/* IMPORT JSON */
+/* =========================
+   10) Import / Export
+   ========================= */
 $("fileInput").addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -899,16 +898,13 @@ $("fileInput").addEventListener("change", e=>{
     }
   };
   reader.readAsText(file);
+  e.target.value = "";
 });
 
-/* EXPORT JSON */
 function exportZonesJSON(){
   const data = zonesData.map(z => ({
     partId: z.partId || z.id,
-    x: z.x,
-    y: z.y,
-    w: z.w,
-    h: z.h
+    x: z.x, y: z.y, w: z.w, h: z.h
   }));
 
   const json = JSON.stringify(data, null, 2);
@@ -930,7 +926,9 @@ function exportZonesJSON(){
   }
 }
 
-/* FABRIC EVENTS */
+/* =========================
+   11) Fabric events (draw/select/resize sync)
+   ========================= */
 canvas.on("mouse:down", opt => {
   const obj = opt.target;
 
@@ -1030,28 +1028,27 @@ canvas.on("object:modified", e => {
 
   saveToLocal();
 });
-<script>
-function fixIOSViewport(){
-  const vh = window.visualViewport
-    ? window.visualViewport.height
-    : window.innerHeight;
 
-  document.documentElement.style.setProperty(
-    "--real-vh",
-    `${vh}px`
-  );
-}
+/* =========================
+   12) Image load + resize hooks + boot
+   ========================= */
+$("imgLayer").addEventListener("load", ()=>{
+  currentImage = getCurrentImageKey();
+  bootZones();
+  fitCanvasToImage();
+});
 
-fixIOSViewport();
-window.addEventListener("resize", fixIOSViewport);
-window.visualViewport?.addEventListener("resize", fixIOSViewport);
+window.addEventListener("resize", ()=>{
+  fixIOSViewport();
+  fitCanvasToImage();
+});
 
 /* BOOT */
-isEditor = true;
 tool = "move";
 setUI();
 bootZones();
-enableCanvasTouch();
+fixIOSViewport();
+fitCanvasToImage();
 </script>
 
 </body>
