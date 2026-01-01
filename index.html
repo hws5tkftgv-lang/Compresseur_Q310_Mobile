@@ -1103,19 +1103,24 @@ if(window.visualViewport){
   window.visualViewport.addEventListener("scroll", () => scheduleRelayout(300));
 }
 
-$("imgLayer").addEventListener("load", ()=>{
-  currentViewId = getCurrentImageKey();
-  bootZones();
-  scheduleRelayout(350);
-});
+
 
 /* =========================================================
    BOOT
    ========================================================= */
 tool = "move";
 setUI();
-bootZones();
-scheduleRelayout(500);
+const img = $("imgLayer");
+
+// vue de base (image principale)
+img.src = "actif/compresseur_bg.png";
+
+// BOOT STABLE — UNIQUEMENT APRÈS CHARGEMENT IMAGE
+img.onload = () => {
+  currentViewId = img.getAttribute("src");
+  bootZones();
+  scheduleRelayout(300);
+};
 </script>
 
 </body>
