@@ -291,6 +291,20 @@
       border-radius:12px;
       background:#000;
     }
+    
+    #rotateHint{
+  position:fixed;
+  inset:0;
+  background:#0b1436;
+  color:#fff;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  z-index:99999;
+}
+#rotateHint.show{ display:flex; }
+    
   </style>
 </head>
 
@@ -353,6 +367,8 @@
   </div>
 
 <script>
+
+let isLandscape = false;
 /* =========================
    0) Helpers / iOS viewport
    ========================= */
@@ -512,6 +528,9 @@ fabric.Object.prototype.targetFindTolerance = 45;
    4) Fit canvas to image (CENTRAGE + légère réduction)
    ========================= */
 function fitCanvasToImage(){
+  // ⛔️ ne rien faire en paysage
+  if (window.innerWidth > window.innerHeight) return;
+
   const img   = document.getElementById("imgLayer");
   const stage = document.getElementById("stage");
   if(!img || !stage || !img.naturalWidth) return;
@@ -522,10 +541,7 @@ function fitCanvasToImage(){
   const imgW = img.naturalWidth;
   const imgH = img.naturalHeight;
 
-  /* 🔒 DOUBLE CONTRAINTE (LA CLÉ DE LA STABILITÉ) */
-  const scaleH = stageH / imgH;
-  const scaleW = stageW / imgW;
-  const scale  = Math.min(scaleH, scaleW);
+  const scale = Math.min(stageW / imgW, stageH / imgH);
 
   const w = Math.round(imgW * scale);
   const h = Math.round(imgH * scale);
@@ -533,23 +549,19 @@ function fitCanvasToImage(){
   const left = Math.round((stageW - w) / 2);
   const top  = Math.round((stageH - h) / 2);
 
-  /* IMAGE */
-  img.style.position = "absolute";
   img.style.left   = left + "px";
-  img.style.top    = top + "px";
+  img.style.top    = top  + "px";
   img.style.width  = w + "px";
   img.style.height = h + "px";
 
-  /* CANVAS */
   canvas.setWidth(w);
   canvas.setHeight(h);
   canvas.calcOffset();
 
   const wrap = canvas.wrapperEl;
   if(wrap){
-    wrap.style.position = "absolute";
     wrap.style.left   = left + "px";
-    wrap.style.top    = top + "px";
+    wrap.style.top    = top  + "px";
     wrap.style.width  = w + "px";
     wrap.style.height = h + "px";
   }
@@ -799,6 +811,47 @@ $("btnDelete").addEventListener("click", ()=>{
   clearSelection();
   saveToLocal();
 });
+
+const rotateHint = document.getElementById("rotateHint");
+
+window.addEventListener("resize", ()=>{
+  const landscape = window.innerWidth > window.innerHeight;
+  rotateHint?.classList.toggle("show", landscape);
+});
+
+
+
+window.addEventListener("orientationchange", () => {
+  isLandscape = window.innerWidth > window.innerHeight;
+
+  // ⛔️ en paysage : on gèle tout
+  if(isLandscape) return;
+
+  // ✅ retour portrait : reset COMPLET
+  setTimeout(() => {
+    fixIOSViewport();
+
+    // reset visuel avant recalcul
+    const img = document.getElementById("imgLayer");
+    if(img){
+      img.style.width = "0px";
+      img.style.height = "0px";
+      img.style.left = "0px";
+      img.style.top = "0px";
+    }
+
+    canvas.setWidth(1);
+    canvas.setHeight(1);
+
+    // recalcul propre
+    setTimeout(() => {
+      fitCanvasToImage();
+    }, 150);
+
+  }, 400); // ⬅️ délai CRITIQUE pour Safari
+});
+
+
 
 $("btnIO").addEventListener("click", ()=>{
   const action = prompt("Tape 1 pour EXPORT, 2 pour IMPORT");
