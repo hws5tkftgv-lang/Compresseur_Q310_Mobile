@@ -317,7 +317,10 @@
 
       <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
       <div class="sectionTitle">Ajouter depuis actif/</div>
-
+<div class="sectionTitle">Changer de vue</div>
+<button id="btnViewMain" class="btn">🧱 Vue principale</button>
+<button id="btnView1" class="btn">📐 Cylindre LP – Face</button>
+<button id="btnView2" class="btn">✂️ Cylindre LP – Coupe</button>
       <button id="btnAddImage" class="btn">➕ Ajouter une image</button>
       <button id="btnAddVideo" class="btn">➕ Ajouter une vidéo</button>
     </div>
@@ -1113,6 +1116,23 @@ function loadView(src){
   };
   img.src = src;
 }
+
+$("btnViewMain").onclick = () => {
+  closePiecePanel();
+  loadView("actif/compresseur_bg.png");
+};
+
+$("btnView1").onclick = () => {
+  closePiecePanel();
+  loadView("actif/vues/cylindre_lp_face.jpg");
+};
+
+$("btnView2").onclick = () => {
+  closePiecePanel();
+  loadView("actif/vues/cylindre_lp_coupe.jpg");
+};
+
+
 
 /* =========================================================
    BOOT
