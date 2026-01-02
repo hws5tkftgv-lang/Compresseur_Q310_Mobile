@@ -878,14 +878,9 @@ function updateBreadcrumb(){
   bc.textContent = "🔙 " + labels.join(" › ");
 }
 
-$("breadcrumb").addEventListener("click", ()=>{
-  if(viewStack.length === 0) return;
-const backBtn = $("btnBackView");
-if(backBtn){
-  backBtn.style.display = viewStack.length > 0 ? "inline-block" : "none";
-}
-  const previous = viewStack.pop();
-  loadView(previous);
+$("breadcrumb").addEventListener("click", () => {
+  if (viewStack.length === 0) return;
+  loadView(viewStack.pop());
 });
 
 function selectObj(obj){
