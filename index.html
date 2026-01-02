@@ -462,12 +462,7 @@ const VIEWS_CATALOG = [
 const STORAGE_KEY = "q310_views_v1"; // ✅ nouveau storage
 const PARTS_STORAGE_KEY = "q310_parts_v1";
 
-function getCurrentImageKey(){
-  const img = $("imgLayer");
-  const src = (img && img.getAttribute("src")) ? img.getAttribute("src") : "";
-  const base = src.split("?")[0].split("#")[0].split("/").pop();
-  return base || "compresseur_bg.png";
-}
+
 
 let currentViewId = "reference"; // 🔒 vue logique de départ
 let viewStack = []; // 🧭 historique de navigation
@@ -1252,9 +1247,11 @@ function loadView(viewId){
 
   img.src = meta.src;         // ✅ SRC UNIQUEMENT ICI
 }
-const btnViewMenu = $("btnViewMenu");
 
 btnViewMenu.addEventListener("click", openViewMenu);
+const viewMenu = $("viewMenu");
+const viewList = $("viewList");
+
 
 function openViewMenu(){
   viewList.innerHTML = "";
@@ -1267,10 +1264,10 @@ function openViewMenu(){
   closeViewMenu();
   loadView(v.id);
 };
-    viewList.appendChild(b);
+    
   });
 
-  viewMenu.style.display = "flex";
+  
 }
 
 function closeViewMenu(){
