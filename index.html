@@ -282,6 +282,22 @@
       <div id="infoText"></div>
       <div id="breadcrumb" style="font-size:12px; opacity:.75; margin-top:4px;"></div>
       
+      
+      <button id="btnBackView"
+  style="
+    display:none;
+    margin-top:8px;
+    background:#1b2553;
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:8px 12px;
+    font-weight:900;
+  ">
+  🔙 Retour
+</button>
+      
+      
         <button id="btnOpenLinkedView"
     style="
       display:none;
@@ -864,7 +880,10 @@ function updateBreadcrumb(){
 
 $("breadcrumb").addEventListener("click", ()=>{
   if(viewStack.length === 0) return;
-
+const backBtn = $("btnBackView");
+if(backBtn){
+  backBtn.style.display = viewStack.length > 0 ? "inline-block" : "none";
+}
   const previous = viewStack.pop();
   loadView(previous);
 });
@@ -1016,14 +1035,50 @@ $("btnShowMedia").addEventListener("click", ()=>{
     box.appendChild(d);
   });
 
-  (part.medias.videos || []).forEach(src=>{
-    const d = document.createElement("div");
-    d.className = "mediaBlock";
-    d.innerHTML = (src.includes("youtube"))
-      ? `<iframe src="${src}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`
-      : `<video src="${src}" controls playsinline preload="metadata"></video>`;
-    box.appendChild(d);
+(part.medias.videos || []).forEach(src=>{
+  const d = document.createElement("div");
+  d.className = "mediaBlock";
+
+  d.innerHTML = `
+    <div style="position:relative;">
+      <video src="${src}" playsinline preload="metadata" style="width:100%; border-radius:12px;"></video>
+      <button class="videoToggle"
+        style="
+          position:absolute;
+          bottom:12px;
+          right:12px;
+          padding:8px 12px;
+          font-size:18px;
+          font-weight:900;
+          border-radius:10px;
+          border:none;
+          background:#ff9800;
+          color:#000;
+        ">
+        ▶️
+      </button>
+    </div>
+  `;
+
+  const video = d.querySelector("video");
+  const btn = d.querySelector(".videoToggle");
+
+  btn.addEventListener("click", ()=>{
+    if(video.paused){
+      video.play();
+      btn.textContent = "⏸️";
+    }else{
+      video.pause();
+      btn.textContent = "▶️";
+    }
   });
+
+  video.addEventListener("ended", ()=>{
+    btn.textContent = "▶️";
+  });
+
+  box.appendChild(d);
+});
 
   openMediaViewer();
 });
@@ -1315,7 +1370,11 @@ function closeViewMenu(){
   loadView(selected.zoneData.linkedViewId);
 });
 
-
+$("btnBackView").addEventListener("click", ()=>{
+  if(viewStack.length === 0) return;
+  const prev = viewStack.pop();
+  loadView(prev);
+});
 
 /* =========================================================
    BOOT
