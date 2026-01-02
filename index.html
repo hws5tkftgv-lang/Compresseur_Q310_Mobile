@@ -298,6 +298,7 @@
     <button id="btnDelete" class="qbtn" title="Supprimer">🗑️</button>
     <button id="btnIO" class="qbtn" title="Import/Export">⇄</button>
     <button id="btnPiece" class="qbtn" title="Pièce/Médias">📦</button>
+    <button id="btnViewMenu" class="qbtn" title="Vue active">🖼️</button>
     <input type="file" id="fileInput" accept="application/json" hidden>
   </div>
 
@@ -318,9 +319,7 @@
       <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
       <div class="sectionTitle">Ajouter depuis actif/</div>
 <div class="sectionTitle">Changer de vue</div>
-<button id="btnViewMain" class="btn">🧱 Vue principale</button>
-<button id="btnView1" class="btn">📐 Cylindre LP – Face</button>
-<button id="btnView2" class="btn">✂️ Cylindre LP – Coupe</button>
+<button id="btnViewMenu" class="qbtn" title="Changer de vue">🖼️</button>
       <button id="btnAddImage" class="btn">➕ Ajouter une image</button>
       <button id="btnAddVideo" class="btn">➕ Ajouter une vidéo</button>
     </div>
@@ -401,6 +400,26 @@ const ASSETS = {
     "actif/compresseur_2_stages.mp4"
   ]
 };
+
+
+const VIEWS_CATALOG = [
+  { id:"vue_generale", label:"Vue générale", src:"actif/VUE_GENERAL.jpeg", type:"image" },
+  { id:"vue_generale_2", label:"Vue générale 2", src:"actif/VUE_GENERAL_2.jpeg", type:"image" },
+  { id:"vue_pompe", label:"Vue pompe", src:"actif/VUE_POMPE.jpeg", type:"image" },
+  { id:"vue_tete", label:"Tête", src:"actif/TETE.jpeg", type:"image" },
+  { id:"vue_tete_2", label:"Tête (détail)", src:"actif/TETE_2.jpeg", type:"image" },
+  { id:"vue_poulie", label:"Poulie", src:"actif/POULIE.jpeg", type:"image" },
+  { id:"vue_filtre", label:"Filtre à air", src:"actif/FILTRE_AIR_COUVERCLE.jpeg", type:"image" },
+  { id:"vue_side", label:"Côté charge", src:"actif/LOAD_SIDE.jpeg", type:"image" },
+  { id:"vue_unloader", label:"Soupape unloader", src:"actif/SOUPAPE_UNLOADER.jpeg", type:"image" },
+  { id:"vue_top", label:"Vue du dessus", src:"actif/TOP.jpeg", type:"image" },
+  { id:"vue_reservoir", label:"Vers réservoir", src:"actif/VERS_RESERVOIR.jpeg", type:"image" },
+
+  { id:"video_global", label:"Vidéo – compresseur", src:"actif/compresseur_2_stages.mp4", type:"video" }
+];
+
+
+
 const STORAGE_KEY = "q310_views_v1"; // ✅ nouveau storage
 const PARTS_STORAGE_KEY = "q310_parts_v1";
 
@@ -816,6 +835,9 @@ $("btnIO").addEventListener("click", ()=>{
   if(action === "2") $("fileInput").click();
 });
 
+
+$("btnViewMenu").addEventListener("click", openViewMenu);
+
 /* =========================================================
    PART SELECT
    ========================================================= */
@@ -1123,6 +1145,40 @@ function loadView(src){
 
   img.src = src;              // 🔥 déclenche le onload
 }
+img.onload = () => {
+  currentViewId = img.getAttribute("src");
+  $("btnViewMenu").textContent = "🖼️";
+  bootZones();
+  scheduleRelayout(300);
+};
+const viewMenu = $("viewMenu");
+const viewList = $("viewList");
+const btnViewMenu = $("btnViewMenu");
+
+btnViewMenu.addEventListener("click", openViewMenu);
+
+function openViewMenu(){
+  viewList.innerHTML = "";
+
+  VIEWS_CATALOG.forEach(v=>{
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.textContent = (currentViewId === v.src ? "✅ " : "") + v.label;
+    b.onclick = () => {
+      closeViewMenu();
+      if(v.type === "image") loadView(v.src);
+      if(v.type === "video") loadVideoView(v.src);
+    };
+    viewList.appendChild(b);
+  });
+
+  viewMenu.style.display = "flex";
+}
+
+function closeViewMenu(){
+  viewMenu.style.display = "none";
+}
+
 
 $("btnViewMain").onclick = () => {
   closePiecePanel();
@@ -1148,6 +1204,37 @@ tool = "move";
 setUI();
 loadView("actif/compresseur_bg.png");
 </script>
+<div id="viewMenu" style="
+  position:fixed;
+  inset:0;
+  background:rgba(5,11,36,.95);
+  z-index:25000;
+  display:none;
+  flex-direction:column;
+">
+  <div style="padding:14px;font-weight:900;">
+    📂 Choisir une vue
+  </div>
+  <div id="viewList" style="overflow:auto;padding:10px;"></div>
+  <button class="btn" onclick="closeViewMenu()">❌ Fermer</button>
+</div>
+
+<!-- MENU DES VUES -->
+<div id="viewMenu" style="
+  position:fixed;
+  inset:0;
+  background:#0f1a44;
+  z-index:25000;
+  display:none;
+  flex-direction:column;
+">
+  <div class="panelHeader">
+    <span>🖼️ Choisir une vue</span>
+    <button onclick="closeViewMenu()">✕</button>
+  </div>
+
+  <div class="panelContent" id="viewList"></div>
+</div>
 
 </body>
 </html>
