@@ -1372,6 +1372,7 @@ $("btnBackView").addEventListener("click", ()=>{
   if(viewStack.length === 0) return;
   const prev = viewStack.pop();
   loadView(prev);
+  updateBackButton();
 });
 
 /* =========================================================
