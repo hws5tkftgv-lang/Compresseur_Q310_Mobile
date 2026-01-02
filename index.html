@@ -609,9 +609,7 @@ function bootZones(){
   const hasLocal = loadFromLocal();
 
   // 2) définir la vue courante = image affichée
-  currentViewId = $("imgLayer").getAttribute("src");
-  const img = $("imgLayer");
-  const src = img ? img.getAttribute("src") : "actif/compresseur_bg.png";
+  const src = currentViewId;
 
   // 3) créer la vue si absente
   ensureView(currentViewId, src);
@@ -1109,12 +1107,14 @@ if(window.visualViewport){
 
 function loadView(src){
   const img = $("imgLayer");
+
   img.onload = () => {
-    currentViewId = img.getAttribute("src");
-    bootZones();
-    scheduleRelayout(300);
+    currentViewId = src;      // ✅ SOURCE UNIQUE
+    bootZones();              // ✅ charge les zones de cette vue
+    scheduleRelayout(300);    // ✅ recentrage
   };
-  img.src = src;
+
+  img.src = src;              // 🔥 déclenche le onload
 }
 
 $("btnViewMain").onclick = () => {
