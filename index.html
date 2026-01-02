@@ -1262,7 +1262,7 @@ function openViewMenu(){
   VIEWS_CATALOG.forEach(v=>{
     const b = document.createElement("button");
     b.className = "btn";
-    b.textContent = (currentViewId === v.src ? "✅ " : "") + v.label;
+    b.textContent = (currentViewId === v.id ? "✅ " : "") + v.label;
     b.onclick = () => {
       closeViewMenu();
       if(v.type === "image") loadView(v.id);
@@ -1281,13 +1281,11 @@ function closeViewMenu(){
 $("btnOpenLinkedView").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData?.linkedViewId) return;
 
-  const targetId = selected.zoneData.linkedViewId;
-  if(!target) return;
-  if(targetId) loadView(targetId);
-  if(target.type === "image") loadView(target.src);
-  if(target.type === "video") loadVideoView(target.src);
-});
+  $("btnOpenLinkedView").addEventListener("click", ()=>{
+  if(!selected || !selected.zoneData?.linkedViewId) return;
 
+  loadView(selected.zoneData.linkedViewId);
+});
 
 
 
@@ -1296,7 +1294,7 @@ $("btnOpenLinkedView").addEventListener("click", ()=>{
    ========================================================= */
 tool = "move";
 setUI();
-loadView("actif/compresseur_bg.png");
+loadView("reference");
 </script>
 
 <!-- MENU DES VUES -->
