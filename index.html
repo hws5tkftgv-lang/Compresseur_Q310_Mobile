@@ -78,20 +78,6 @@
       word-break:break-word;
     }
 
-<button id="btnOpenLinkedView"
-        style="
-          display:none;
-          margin-top:8px;
-          background:#ff9800;
-          color:#000;
-          border:none;
-          border-radius:10px;
-          padding:8px 12px;
-          font-weight:900;
-        ">
-  ▶️ Voir la vue associée
-</button>
-
 
 
     /* ✏️ badge */
@@ -294,6 +280,21 @@
     <div id="infoPanel">
       <div id="infoTitle">Sélectionne une zone</div>
       <div id="infoText"></div>
+      
+        <button id="btnOpenLinkedView"
+    style="
+      display:none;
+      margin-top:8px;
+      background:#ff9800;
+      color:#000;
+      border:none;
+      border-radius:10px;
+      padding:8px 12px;
+      font-weight:900;
+    ">
+    ▶️ Voir la vue associée
+  </button>
+      
       <div id="editorState">✏️</div>
     </div>
 
@@ -832,22 +833,25 @@ function selectObj(obj){
   canvas.setActiveObject(obj);
 
   $("partSelect").value = selected.zoneData.partId || "";
+  $("linkViewSelect").value = selected.zoneData.linkedViewId || "";
+
   showInfo(obj.zoneData);
   applyMode();
-  $("linkViewSelect").value = obj.zoneData.linkedViewId || "";
-}
-const btn = $("btnOpenLinkedView");
 
-if(!isEditor && obj.zoneData.linkedViewId){
-  btn.style.display = "inline-block";
-} else {
-  btn.style.display = "none";
+  const btn = $("btnOpenLinkedView");
+  if(!isEditor && selected.zoneData.linkedViewId){
+    btn.style.display = "inline-block";
+  } else {
+    btn.style.display = "none";
+  }
 }
+
 function clearSelection(){
   selected = null;
   canvas.discardActiveObject();
   showInfo(null);
   applyMode();
+  $("btnOpenLinkedView").style.display = "none";
 }
 
 /* =========================================================
