@@ -78,6 +78,22 @@
       word-break:break-word;
     }
 
+<button id="btnOpenLinkedView"
+        style="
+          display:none;
+          margin-top:8px;
+          background:#ff9800;
+          color:#000;
+          border:none;
+          border-radius:10px;
+          padding:8px 12px;
+          font-weight:900;
+        ">
+  ▶️ Voir la vue associée
+</button>
+
+
+
     /* ✏️ badge */
     #editorState{
       position:absolute;
@@ -820,7 +836,13 @@ function selectObj(obj){
   applyMode();
   $("linkViewSelect").value = obj.zoneData.linkedViewId || "";
 }
+const btn = $("btnOpenLinkedView");
 
+if(!isEditor && obj.zoneData.linkedViewId){
+  btn.style.display = "inline-block";
+} else {
+  btn.style.display = "none";
+}
 function clearSelection(){
   selected = null;
   canvas.discardActiveObject();
@@ -1218,7 +1240,15 @@ function closeViewMenu(){
   viewMenu.style.display = "none";
 }
 
+$("btnOpenLinkedView").addEventListener("click", ()=>{
+  if(!selected || !selected.zoneData?.linkedViewId) return;
 
+  const target = VIEWS_CATALOG.find(v=>v.id === selected.zoneData.linkedViewId);
+  if(!target) return;
+
+  if(target.type === "image") loadView(target.src);
+  if(target.type === "video") loadVideoView(target.src);
+});
 
 
 
