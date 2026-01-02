@@ -94,7 +94,8 @@
       font-size:16px;
       font-weight:900;
       z-index:20;
-      pointer-events:none;
+      pointer-events:auto;
+      cursor:pointer;
     }
 
     /* ===== Stage ===== */
@@ -765,7 +766,7 @@ function applyMode(){
 }
 
 function setUI(){
-  $("editorState").style.display = isEditor ? "flex" : "none";
+$("editorState").style.opacity = isEditor ? "1" : "0.35";
 
   ["btnMove","btnDraw","btnResize"].forEach(id=>{
     $(id).disabled = !isEditor;
@@ -774,6 +775,15 @@ function setUI(){
   updateQuickbar();
   applyMode();
 }
+// =========================================================
+// TOGGLE MODE ÉDITEUR / LECTURE
+// =========================================================
+$("editorState").addEventListener("click", ()=>{
+  isEditor = !isEditor;
+  setUI();
+  clearSelection();
+});
+
 
 function setTool(newTool){
   if(!isEditor) return;
