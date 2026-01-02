@@ -469,7 +469,7 @@ function getCurrentImageKey(){
   return base || "compresseur_bg.png";
 }
 
-let currentViewId = getCurrentImageKey(); // ex: compresseur_bg.png
+let currentViewId = "reference"; // 🔒 vue logique de départ
 let viewStack = []; // 🧭 historique de navigation
 let VIEWS = {};  // { [viewId]: { id, type, src, zones, linkedFromZone } }
 let zonesData = []; // alias = zones de la vue courante
@@ -636,19 +636,21 @@ function loadFromLocal(){
   }
 }
 
-function ensureView(viewId, src){
+function ensureView(viewId){
   if(!VIEWS[viewId]){
+    const meta = VIEWS_CATALOG.find(v => v.id === viewId);
+    if(!meta) return;
+
     VIEWS[viewId] = {
-      id: viewId,
-      type: "image",
-      src: src,
+      id: meta.id,
+      type: meta.type,
+      src: meta.src,
       zones: [],
       linkedFromZone: null
     };
   }
-  zonesData = VIEWS[viewId].zones; // ✅ alias zonesData vers cette vue
+  zonesData = VIEWS[viewId].zones;
 }
-
 
 
 
@@ -674,11 +676,7 @@ function bootZones(){
   // 1) charger views depuis local si existe
   const hasLocal = loadFromLocal();
 
-  // 2) définir la vue courante = image affichée
-  const src = currentViewId;
-
-  // 3) créer la vue si absente
-  ensureView(currentViewId, src);
+  ensureView(currentViewId);
 
   // 4) si aucune donnée locale, créer une zone démo dans la vue courante
   if(!hasLocal && zonesData.length === 0){
@@ -1234,23 +1232,26 @@ if(window.visualViewport){
   window.visualViewport.addEventListener("scroll", () => scheduleRelayout(300));
 }
 
-function loadView(src){
-  if(currentViewId && currentViewId !== src){
+function loadView(viewId){
+  if(currentViewId && currentViewId !== viewId){
     viewStack.push(currentViewId); // 🧭 mémorise d’où on vient
   }
+
+  const meta = VIEWS_CATALOG.find(v => v.id === viewId);
+  if(!meta) return;
 
   const img = $("imgLayer");
 
   img.onload = () => {
-    currentViewId = src;
+    currentViewId = viewId;   // ✅ ID LOGIQUE
+    ensureView(viewId);
     bootZones();
     updateBreadcrumb();
     scheduleRelayout(300);
   };
 
-  img.src = src;
+  img.src = meta.src;         // ✅ SRC UNIQUEMENT ICI
 }
-
 const btnViewMenu = $("btnViewMenu");
 
 btnViewMenu.addEventListener("click", openViewMenu);
@@ -1264,7 +1265,7 @@ function openViewMenu(){
     b.textContent = (currentViewId === v.src ? "✅ " : "") + v.label;
     b.onclick = () => {
       closeViewMenu();
-      if(v.type === "image") loadView(v.src);
+      if(v.type === "image") loadView(v.id);
       if(v.type === "video") loadVideoView(v.src);
     };
     viewList.appendChild(b);
@@ -1280,7 +1281,8 @@ function closeViewMenu(){
 $("btnOpenLinkedView").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData?.linkedViewId) return;
 
-  const target = VIEWS_CATALOG.find(v=>v.id === selected.zoneData.linkedViewId);
+  const targetId = selected.zoneData.linkedViewId;
+if(targetId) loadView(targetId);
   if(!target) return;
 
   if(target.type === "image") loadView(target.src);
