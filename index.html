@@ -1248,9 +1248,15 @@ function loadView(viewId){
   img.src = meta.src;         // ✅ SRC UNIQUEMENT ICI
 }
 
-btnViewMenu.addEventListener("click", openViewMenu);
+
+const btnViewMenu = $("btnViewMenu");
 const viewMenu = $("viewMenu");
 const viewList = $("viewList");
+
+btnViewMenu.addEventListener("click", openViewMenu);
+
+
+
 
 
 function openViewMenu(){
@@ -1261,13 +1267,13 @@ function openViewMenu(){
     b.className = "btn";
     b.textContent = (currentViewId === v.id ? "✅ " : "") + v.label;
     b.onclick = () => {
-  closeViewMenu();
-  loadView(v.id);
-};
-    
+      closeViewMenu();
+      loadView(v.id);
+    };
+    viewList.appendChild(b);
   });
 
-  
+  viewMenu.style.display = "flex";
 }
 
 function closeViewMenu(){
