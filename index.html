@@ -353,6 +353,27 @@
     <div id="mediaContent"></div>
   </div>
 
+
+<!-- MENU DES VUES -->
+<div id="viewMenu" style="
+  position:fixed;
+  inset:0;
+  background:#0f1a44;
+  z-index:25000;
+  display:none;
+  flex-direction:column;
+">
+  <div class="panelHeader">
+    <span>🖼️ Choisir une vue</span>
+    <button onclick="closeViewMenu()">✕</button>
+  </div>
+
+  <div class="panelContent" id="viewList"></div>
+</div>
+
+
+
+
 <script>
 /* =========================================================
    HELPERS
@@ -1298,22 +1319,7 @@ setUI();
 loadView("reference");
 </script>
 
-<!-- MENU DES VUES -->
-<div id="viewMenu" style="
-  position:fixed;
-  inset:0;
-  background:#0f1a44;
-  z-index:25000;
-  display:none;
-  flex-direction:column;
-">
-  <div class="panelHeader">
-    <span>🖼️ Choisir une vue</span>
-    <button onclick="closeViewMenu()">✕</button>
-  </div>
 
-  <div class="panelContent" id="viewList"></div>
-</div>
 
 </body>
 </html>
