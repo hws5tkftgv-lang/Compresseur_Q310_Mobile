@@ -1309,6 +1309,14 @@ if(window.visualViewport){
   window.visualViewport.addEventListener("scroll", () => scheduleRelayout(300));
 }
 
+function updateBackButton(){
+  const btn = $("btnBackView");
+  if(!btn) return;
+  btn.style.display = viewStack.length > 0 ? "inline-block" : "none";
+}
+
+
+
 function loadView(viewId){
   if(currentViewId && currentViewId !== viewId){
     viewStack.push(currentViewId); // 🧭 mémorise d’où on vient
@@ -1324,22 +1332,12 @@ function loadView(viewId){
     ensureView(viewId);
     bootZones();
     updateBreadcrumb();
+    updateBackButton();   // ✅ AJOUT CRITIQUE
     scheduleRelayout(300);
   };
 
   img.src = meta.src;         // ✅ SRC UNIQUEMENT ICI
 }
-
-
-const btnViewMenu = $("btnViewMenu");
-const viewMenu = $("viewMenu");
-const viewList = $("viewList");
-
-btnViewMenu.addEventListener("click", openViewMenu);
-
-
-
-
 
 function openViewMenu(){
   viewList.innerHTML = "";
