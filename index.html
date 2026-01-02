@@ -319,7 +319,7 @@
       <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
       <div class="sectionTitle">Ajouter depuis actif/</div>
 <div class="sectionTitle">Changer de vue</div>
-<button id="btnViewMenu" class="qbtn" title="Changer de vue">🖼️</button>
+
       <button id="btnAddImage" class="btn">➕ Ajouter une image</button>
       <button id="btnAddVideo" class="btn">➕ Ajouter une vidéo</button>
     </div>
@@ -1145,14 +1145,8 @@ function loadView(src){
 
   img.src = src;              // 🔥 déclenche le onload
 }
-img.onload = () => {
-  currentViewId = img.getAttribute("src");
-  $("btnViewMenu").textContent = "🖼️";
-  bootZones();
-  scheduleRelayout(300);
-};
-const viewMenu = $("viewMenu");
-const viewList = $("viewList");
+
+
 const btnViewMenu = $("btnViewMenu");
 
 btnViewMenu.addEventListener("click", openViewMenu);
@@ -1180,20 +1174,7 @@ function closeViewMenu(){
 }
 
 
-$("btnViewMain").onclick = () => {
-  closePiecePanel();
-  loadView("actif/compresseur_bg.png");
-};
 
-$("btnView1").onclick = () => {
-  closePiecePanel();
-  loadView("actif/vues/cylindre_lp_face.jpg");
-};
-
-$("btnView2").onclick = () => {
-  closePiecePanel();
-  loadView("actif/vues/cylindre_lp_coupe.jpg");
-};
 
 
 
@@ -1204,20 +1185,6 @@ tool = "move";
 setUI();
 loadView("actif/compresseur_bg.png");
 </script>
-<div id="viewMenu" style="
-  position:fixed;
-  inset:0;
-  background:rgba(5,11,36,.95);
-  z-index:25000;
-  display:none;
-  flex-direction:column;
-">
-  <div style="padding:14px;font-weight:900;">
-    📂 Choisir une vue
-  </div>
-  <div id="viewList" style="overflow:auto;padding:10px;"></div>
-  <button class="btn" onclick="closeViewMenu()">❌ Fermer</button>
-</div>
 
 <!-- MENU DES VUES -->
 <div id="viewMenu" style="
