@@ -840,7 +840,7 @@ function updateBreadcrumb(){
     return v ? v.label.replace(/^🔰 /,"") : id;
   });
 
-  const current = VIEWS_CATALOG.find(v=>v.src === currentViewId);
+  const current = VIEWS_CATALOG.find(v=>v.id === currentViewId);
   if(current) labels.push(current.label.replace(/^🔰 /,""));
 
   bc.textContent = "🔙 " + labels.join(" › ");
@@ -1264,10 +1264,9 @@ function openViewMenu(){
     b.className = "btn";
     b.textContent = (currentViewId === v.id ? "✅ " : "") + v.label;
     b.onclick = () => {
-      closeViewMenu();
-      if(v.type === "image") loadView(v.id);
-      if(v.type === "video") loadVideoView(v.src);
-    };
+  closeViewMenu();
+  loadView(v.id);
+};
     viewList.appendChild(b);
   });
 
@@ -1278,8 +1277,7 @@ function closeViewMenu(){
   viewMenu.style.display = "none";
 }
 
-$("btnOpenLinkedView").addEventListener("click", ()=>{
-  if(!selected || !selected.zoneData?.linkedViewId) return;
+
 
   $("btnOpenLinkedView").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData?.linkedViewId) return;
