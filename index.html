@@ -280,6 +280,7 @@
     <div id="infoPanel">
       <div id="infoTitle">Sélectionne une zone</div>
       <div id="infoText"></div>
+      <div id="breadcrumb" style="font-size:12px; opacity:.75; margin-top:4px;"></div>
       
         <button id="btnOpenLinkedView"
     style="
@@ -469,6 +470,7 @@ function getCurrentImageKey(){
 }
 
 let currentViewId = getCurrentImageKey(); // ex: compresseur_bg.png
+let viewStack = []; // 🧭 historique de navigation
 let VIEWS = {};  // { [viewId]: { id, type, src, zones, linkedFromZone } }
 let zonesData = []; // alias = zones de la vue courante
 
@@ -825,6 +827,33 @@ function showInfo(z){
   $("infoTitle").textContent = z.nom || "Zone";
   $("infoText").textContent = (z.role || "") + (z.desc ? " — " + z.desc : "");
 }
+
+function updateBreadcrumb(){
+  const bc = $("breadcrumb");
+  if(!bc) return;
+
+  if(viewStack.length === 0){
+    bc.textContent = "";
+    return;
+  }
+
+  const labels = viewStack.map(id=>{
+    const v = VIEWS_CATALOG.find(x=>x.id === id);
+    return v ? v.label.replace(/^🔰 /,"") : id;
+  });
+
+  const current = VIEWS_CATALOG.find(v=>v.src === currentViewId);
+  if(current) labels.push(current.label.replace(/^🔰 /,""));
+
+  bc.textContent = "🔙 " + labels.join(" › ");
+}
+
+$("breadcrumb").addEventListener("click", ()=>{
+  if(viewStack.length === 0) return;
+
+  const previous = viewStack.pop();
+  loadView(previous);
+});
 
 function selectObj(obj){
   if(!obj || !obj.zoneData) return;
@@ -1206,17 +1235,21 @@ if(window.visualViewport){
 }
 
 function loadView(src){
+  if(currentViewId && currentViewId !== src){
+    viewStack.push(currentViewId); // 🧭 mémorise d’où on vient
+  }
+
   const img = $("imgLayer");
 
   img.onload = () => {
-    currentViewId = src;      // ✅ SOURCE UNIQUE
-    bootZones();              // ✅ charge les zones de cette vue
-    scheduleRelayout(300);    // ✅ recentrage
+    currentViewId = src;
+    bootZones();
+    updateBreadcrumb();
+    scheduleRelayout(300);
   };
 
-  img.src = src;              // 🔥 déclenche le onload
+  img.src = src;
 }
-
 
 const btnViewMenu = $("btnViewMenu");
 
