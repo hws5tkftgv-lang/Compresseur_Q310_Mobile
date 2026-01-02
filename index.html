@@ -879,6 +879,12 @@ function selectObj(obj){
   $("linkViewSelect").value = selected.zoneData.linkedViewId || "";
 
   showInfo(obj.zoneData);
+  if(!isEditor && obj.zoneData.linkedViewId){
+  $("infoText").innerHTML +=
+    `<div style="margin-top:6px; font-weight:700; opacity:.85;">
+      👉 Vue détaillée disponible
+    </div>`;
+}
   applyMode();
 
   const btn = $("btnOpenLinkedView");
