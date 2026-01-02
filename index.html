@@ -1089,19 +1089,11 @@ canvas.on("mouse:down", opt => {
   }
 
   if(obj){
-  if(!isEditor && obj.zoneData?.linkedViewId){
-    const target = VIEWS_CATALOG.find(v=>v.id === obj.zoneData.linkedViewId);
-    if(target){
-      if(target.type === "image") loadView(target.src);
-      if(target.type === "video") loadVideoView(target.src);
-      return;
-    }
+    selectObj(obj);   // ✅ toujours afficher l’info
+  } else {
+    clearSelection();
   }
-  selectObj(obj);
-}
-  else clearSelection();
 });
-
 canvas.on("mouse:move", opt => {
   if(!(drawing && tempRect)) return;
   const p = canvas.getPointer(opt.e);
