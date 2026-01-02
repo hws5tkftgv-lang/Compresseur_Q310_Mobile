@@ -1282,9 +1282,8 @@ $("btnOpenLinkedView").addEventListener("click", ()=>{
   if(!selected || !selected.zoneData?.linkedViewId) return;
 
   const targetId = selected.zoneData.linkedViewId;
-if(targetId) loadView(targetId);
   if(!target) return;
-
+  if(targetId) loadView(targetId);
   if(target.type === "image") loadView(target.src);
   if(target.type === "video") loadVideoView(target.src);
 });
