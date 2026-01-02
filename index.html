@@ -319,7 +319,10 @@
       <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
       <div class="sectionTitle">Ajouter depuis actif/</div>
 <div class="sectionTitle">Changer de vue</div>
-
+<label class="panelLabel">Lier cette zone à une vue</label>
+<select id="linkViewSelect" class="input">
+  <option value="">— Aucune —</option>
+</select>
       <button id="btnAddImage" class="btn">➕ Ajouter une image</button>
       <button id="btnAddVideo" class="btn">➕ Ajouter une vidéo</button>
     </div>
@@ -341,6 +344,23 @@ const $ = id => document.getElementById(id);
 function allowScrollTarget(el){
   return !!(el && (el.closest(".panelContent") || el.closest("#mediaViewer")));
 }
+
+function remplirMenuVuesLiees(){
+  const select = $("linkViewSelect");
+  if(!select) return;
+
+  select.innerHTML = `<option value="">— Aucune —</option>`;
+
+  VIEWS_CATALOG.forEach(v=>{
+    if(v.type !== "image" && v.type !== "video") return;
+
+    const opt = document.createElement("option");
+    opt.value = v.id;
+    opt.textContent = v.label;
+    select.appendChild(opt);
+  });
+}
+
 document.addEventListener("touchmove", (e)=>{
   if(!allowScrollTarget(e.target)) e.preventDefault();
 }, { passive:false });
@@ -786,6 +806,7 @@ function selectObj(obj){
   $("partSelect").value = selected.zoneData.partId || "";
   showInfo(obj.zoneData);
   applyMode();
+  $("linkViewSelect").value = obj.zoneData.linkedViewId || "";
 }
 
 function clearSelection(){
@@ -810,6 +831,14 @@ function closeMediaViewer(){ $("mediaViewer").classList.remove("open"); }
 /* =========================================================
    BUTTONS
    ========================================================= */
+$("linkViewSelect").addEventListener("change", ()=>{
+  if(!selected || !selected.zoneData) return;
+
+  selected.zoneData.linkedViewId = $("linkViewSelect").value || "";
+  saveToLocal();
+});
+
+
 $("btnMove").addEventListener("click", ()=> setTool("move"));
 $("btnDraw").addEventListener("click", ()=> setTool("draw"));
 $("btnResize").addEventListener("click", ()=> setTool("resize"));
@@ -964,16 +993,17 @@ $("fileInput").addEventListener("change", e=>{
       if(!Array.isArray(data)) throw new Error("format invalide");
 
       zonesData = data.map(z=>({
-        id: ("zone_" + Date.now() + "_" + Math.floor(Math.random()*100000)),
-        x: Number(z.x)||0,
-        y: Number(z.y)||0,
-        w: Number(z.w)||20,
-        h: Number(z.h)||20,
-        nom:"",
-        role:"",
-        desc:"",
-        partId: z.partId || ""
-      }));
+  id: ("zone_" + Date.now() + "_" + Math.floor(Math.random()*100000)),
+  x: Number(z.x)||0,
+  y: Number(z.y)||0,
+  w: Number(z.w)||20,
+  h: Number(z.h)||20,
+  nom:"",
+  role:"",
+  desc:"",
+  partId: z.partId || "",
+  linkedViewId: z.linkedViewId || ""
+}));
 
       VIEWS[currentViewId].zones = zonesData;
 
@@ -1046,7 +1076,17 @@ canvas.on("mouse:down", opt => {
     return;
   }
 
-  if(obj) selectObj(obj);
+  if(obj){
+  if(!isEditor && obj.zoneData?.linkedViewId){
+    const target = VIEWS_CATALOG.find(v=>v.id === obj.zoneData.linkedViewId);
+    if(target){
+      if(target.type === "image") loadView(target.src);
+      if(target.type === "video") loadVideoView(target.src);
+      return;
+    }
+  }
+  selectObj(obj);
+}
   else clearSelection();
 });
 
@@ -1078,16 +1118,17 @@ canvas.on("mouse:up", () => {
 
   const id = "zone_" + Date.now();
   const z = {
-    id,
-    x: Math.round(r.left),
-    y: Math.round(r.top),
-    w: Math.round(w),
-    h: Math.round(h),
-    nom:"",
-    role:"",
-    desc:"",
-    partId:""
-  };
+  id,
+  x: Math.round(r.left),
+  y: Math.round(r.top),
+  w: Math.round(w),
+  h: Math.round(h),
+  nom:"",
+  role:"",
+  desc:"",
+  partId:"",
+  linkedViewId: ""   // 🔗 NOUVEAU
+};
 
   zonesData.push(z);
   VIEWS[currentViewId].zones = zonesData;
