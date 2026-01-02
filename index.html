@@ -795,10 +795,11 @@ $("btnDelete").addEventListener("click", ()=>{
   if(!confirm("Supprimer cette zone ?")) return;
 
   canvas.remove(selected);
-zonesData = zonesData.filter(z => z !== selected.zoneData);
-VIEWS[currentViewId].zones = zonesData;
-clearSelection();
-saveToLocal();
+  zonesData = zonesData.filter(z => z !== selected.zoneData);
+
+  VIEWS[currentViewId].zones = zonesData;
+  clearSelection();
+  saveToLocal();
 });
 
 $("btnIO").addEventListener("click", ()=>{
@@ -1103,24 +1104,22 @@ if(window.visualViewport){
   window.visualViewport.addEventListener("scroll", () => scheduleRelayout(300));
 }
 
-
+function loadView(src){
+  const img = $("imgLayer");
+  img.onload = () => {
+    currentViewId = img.getAttribute("src");
+    bootZones();
+    scheduleRelayout(300);
+  };
+  img.src = src;
+}
 
 /* =========================================================
    BOOT
    ========================================================= */
 tool = "move";
 setUI();
-const img = $("imgLayer");
-
-// vue de base (image principale)
-img.src = "actif/compresseur_bg.png";
-
-// BOOT STABLE — UNIQUEMENT APRÈS CHARGEMENT IMAGE
-img.onload = () => {
-  currentViewId = img.getAttribute("src");
-  bootZones();
-  scheduleRelayout(300);
-};
+loadView("actif/compresseur_bg.png");
 </script>
 
 </body>
