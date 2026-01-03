@@ -77,7 +77,9 @@
       white-space:normal;
       word-break:break-word;
     }
-
+#breadcrumb{
+  pointer-events: none;
+}
 
 
     /* ✏️ badge */
@@ -897,10 +899,7 @@ function updateBreadcrumb(){
   bc.textContent = "🔙 " + labels.join(" › ");
 }
 
-$("breadcrumb").addEventListener("click", () => {
-  if (viewStack.length === 0) return;
-  loadView(viewStack.pop());
-});
+
 
 function selectObj(obj){
   if(!obj || !obj.zoneData) return;
