@@ -1329,29 +1329,57 @@ function updateBackButton(){
   btn.style.display = viewStack.length > 0 ? "inline-block" : "none";
 }
 
+function openVideoView(src){
+  const stage = $("stage");
 
+  stage.innerHTML = `
+    <video
+      src="${src}"
+      controls
+      playsinline
+      webkit-playsinline
+      style="
+        width:100%;
+        height:100%;
+        background:#000;
+        object-fit:contain;
+      ">
+    </video>
+  `;
+
+  currentViewId = "video";
+}
 
 function loadView(viewId){
   if(currentViewId && currentViewId !== viewId){
-    viewStack.push(currentViewId); // 🧭 mémorise d’où on vient
+    viewStack.push(currentViewId);
   }
 
   const meta = VIEWS_CATALOG.find(v => v.id === viewId);
   if(!meta) return;
 
-  const img = $("imgLayer");
+  // 🔴 CAS VIDÉO
+  if(meta.type === "video"){
+    openVideoView(meta.src);
+    updateBackButton();
+    updateBreadcrumb();
+    return;
+  }
 
+  // 🟢 CAS IMAGE (inchangé)
+  const img = $("imgLayer");
   img.onload = () => {
-    currentViewId = viewId;   // ✅ ID LOGIQUE
+    currentViewId = viewId;
     ensureView(viewId);
     bootZones();
     updateBreadcrumb();
-    updateBackButton();   // ✅ AJOUT CRITIQUE
+    updateBackButton();
     scheduleRelayout(300);
   };
-
-  img.src = meta.src;         // ✅ SRC UNIQUEMENT ICI
+  img.src = meta.src;
 }
+
+
 
 function openViewMenu(){
   viewList.innerHTML = "";
