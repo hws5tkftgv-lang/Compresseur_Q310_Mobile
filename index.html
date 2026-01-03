@@ -121,26 +121,7 @@
       position:absolute;
       inset:0;
     }
-<div class="stage" id="stage">
-  <div class="media-layer" id="mediaLayer">
-    <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
-  </div>
 
-  <div class="canvas-wrap" id="canvasWrap">
-    <canvas id="c"></canvas>
-  </div>
-
-  <!-- 🎥 couche vidéo dédiée -->
-  <div id="videoLayer"
-    style="
-      position:absolute;
-      inset:0;
-      display:none;
-      background:#000;
-      z-index:20;
-    ">
-  </div>
-</div>
     #imgLayer{
       position:absolute;
       left:0;
@@ -296,13 +277,7 @@
 <body>
 
 
-<div id="videoLayer" style="
-  position:absolute;
-  inset:0;
-  display:none;
-  background:#000;
-  z-index:20;
-"></div>
+
 
 
 
@@ -354,6 +329,17 @@
 </div>
 <div class="canvas-wrap" id="canvasWrap">
   <canvas id="c"></canvas>
+</div>
+
+<!-- 🎥 COUCHE VIDÉO (unique, dédiée) -->
+<div id="videoLayer"
+  style="
+    position:absolute;
+    inset:0;
+    display:none;
+    background:#000;
+    z-index:20;
+  ">
 </div>
     </div>
   </div>
@@ -538,7 +524,7 @@ let currentViewId = "reference"; // 🔒 vue logique de départ
 let viewStack = []; // 🧭 historique de navigation
 let VIEWS = {};  // { [viewId]: { id, type, src, zones, linkedFromZone } }
 let zonesData = []; // alias = zones de la vue courante
-
+let isBackNavigation = false; // 🔙 indique un retour arrière volontaire
 let PARTS = {};
 let PARTS_LIST = [];
 
@@ -1367,12 +1353,19 @@ function openVideoView(src){
     </video>
   `;
 
-  currentViewId = "video";
+ 
 }
 
 function loadView(viewId){
-  if(currentViewId && currentViewId !== viewId){
+  if(
+    !isBackNavigation &&
+    currentViewId &&
+    currentViewId !== viewId
+  ){
     viewStack.push(currentViewId);
+  }
+
+  isBackNavigation = false; // 🔒 reset systématique après usage
   }
 // 🔙 si on sort d’une vidéo
   $("videoLayer").style.display = "none";
@@ -1437,6 +1430,8 @@ function closeViewMenu(){
 
 $("btnBackView").addEventListener("click", ()=>{
   if(viewStack.length === 0) return;
+
+  isBackNavigation = true;   // 🔙 on marque un retour volontaire
   const prev = viewStack.pop();
   loadView(prev);
   updateBackButton();
