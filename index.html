@@ -1357,6 +1357,7 @@ function openVideoView(src){
 }
 
 function loadView(viewId){
+
   if(
     !isBackNavigation &&
     currentViewId &&
@@ -1366,13 +1367,14 @@ function loadView(viewId){
   }
 
   isBackNavigation = false; // 🔒 reset systématique après usage
-  
-// 🔙 si on sort d’une vidéo
+
+  // 🔙 si on sort d’une vidéo
   $("videoLayer").style.display = "none";
   $("videoLayer").innerHTML = "";
 
   $("mediaLayer").style.display = "block";
   $("canvasWrap").style.display = "block";
+
   const meta = VIEWS_CATALOG.find(v => v.id === viewId);
   if(!meta) return;
 
@@ -1384,7 +1386,7 @@ function loadView(viewId){
     return;
   }
 
-  // 🟢 CAS IMAGE (inchangé)
+  // 🟢 CAS IMAGE
   const img = $("imgLayer");
   img.onload = () => {
     currentViewId = viewId;
@@ -1396,8 +1398,6 @@ function loadView(viewId){
   };
   img.src = meta.src;
 }
-
-
 
 function openViewMenu(){
   viewList.innerHTML = "";
