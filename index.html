@@ -137,7 +137,13 @@
     .canvas-container, canvas{
       touch-action:none !important;
     }
-
+<div id="videoLayer" style="
+  position:absolute;
+  inset:0;
+  display:none;
+  background:#000;
+  z-index:20;
+"></div>
     /* ===== Quickbar ===== */
     #quickbar{
       position:fixed;
@@ -1330,19 +1336,25 @@ function updateBackButton(){
 }
 
 function openVideoView(src){
-  const stage = $("stage");
+  // cacher image + canvas
+  $("mediaLayer").style.display = "none";
+  $("canvasWrap").style.display = "none";
 
-  stage.innerHTML = `
+  const videoLayer = $("videoLayer");
+  videoLayer.style.display = "block";
+
+  videoLayer.innerHTML = `
     <video
       src="${src}"
       controls
       playsinline
       webkit-playsinline
+      preload="metadata"
       style="
         width:100%;
         height:100%;
-        background:#000;
         object-fit:contain;
+        background:#000;
       ">
     </video>
   `;
@@ -1354,7 +1366,12 @@ function loadView(viewId){
   if(currentViewId && currentViewId !== viewId){
     viewStack.push(currentViewId);
   }
+// 🔙 si on sort d’une vidéo
+  $("videoLayer").style.display = "none";
+  $("videoLayer").innerHTML = "";
 
+  $("mediaLayer").style.display = "block";
+  $("canvasWrap").style.display = "block";
   const meta = VIEWS_CATALOG.find(v => v.id === viewId);
   if(!meta) return;
 
