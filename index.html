@@ -298,6 +298,25 @@
 </button>
       
       
+      <div class="mediaBlock">
+  <video src="${src}"
+    playsinline
+    preload="metadata"
+    style="width:100%; border-radius:12px;"
+  ></video>
+
+  <button class="videoToggle btn"
+    style="
+      margin-top:8px;
+      width:100%;
+      font-size:16px;
+      font-weight:900;
+    ">
+    ▶️ Lire la vidéo
+  </button>
+</div>
+      
+      
         <button id="btnOpenLinkedView"
     style="
       display:none;
@@ -1056,22 +1075,22 @@ $("btnShowMedia").addEventListener("click", ()=>{
   `;
 
   const video = d.querySelector("video");
-  const btn = d.querySelector(".videoToggle");
+const btn = d.querySelector(".videoToggle");
 
-  btn.addEventListener("click", ()=>{
-    if(video.paused){
-      video.play();
-      btn.textContent = "⏸️";
-    }else{
-      video.pause();
-      btn.textContent = "▶️";
-    }
-  });
+btn.addEventListener("click", ()=>{
+  if(video.paused){
+    stopAllVideos?.(); // optionnel
+    video.play();
+    btn.textContent = "⏸️ Pause";
+  }else{
+    video.pause();
+    btn.textContent = "▶️ Lire la vidéo";
+  }
+});
 
-  video.addEventListener("ended", ()=>{
-    btn.textContent = "▶️";
-  });
-
+video.addEventListener("ended", ()=>{
+  btn.textContent = "▶️ Lire la vidéo";
+});
   box.appendChild(d);
 });
 
