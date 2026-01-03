@@ -121,7 +121,26 @@
       position:absolute;
       inset:0;
     }
+<div class="stage" id="stage">
+  <div class="media-layer" id="mediaLayer">
+    <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
+  </div>
 
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="c"></canvas>
+  </div>
+
+  <!-- 🎥 couche vidéo dédiée -->
+  <div id="videoLayer"
+    style="
+      position:absolute;
+      inset:0;
+      display:none;
+      background:#000;
+      z-index:20;
+    ">
+  </div>
+</div>
     #imgLayer{
       position:absolute;
       left:0;
@@ -137,13 +156,7 @@
     .canvas-container, canvas{
       touch-action:none !important;
     }
-<div id="videoLayer" style="
-  position:absolute;
-  inset:0;
-  display:none;
-  background:#000;
-  z-index:20;
-"></div>
+
     /* ===== Quickbar ===== */
     #quickbar{
       position:fixed;
@@ -282,6 +295,17 @@
 
 <body>
 
+
+<div id="videoLayer" style="
+  position:absolute;
+  inset:0;
+  display:none;
+  background:#000;
+  z-index:20;
+"></div>
+
+
+
   <div id="app">
     <div id="infoPanel">
       <div id="infoTitle">Sélectionne une zone</div>
@@ -304,23 +328,7 @@
 </button>
       
       
-      <div class="mediaBlock">
-  <video src="${src}"
-    playsinline
-    preload="metadata"
-    style="width:100%; border-radius:12px;"
-  ></video>
-
-  <button class="videoToggle btn"
-    style="
-      margin-top:8px;
-      width:100%;
-      font-size:16px;
-      font-weight:900;
-    ">
-    ▶️ Lire la vidéo
-  </button>
-</div>
+   
       
       
         <button id="btnOpenLinkedView"
