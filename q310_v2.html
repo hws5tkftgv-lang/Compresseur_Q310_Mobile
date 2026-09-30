@@ -168,6 +168,41 @@ function moveDrag(e){if(!drag||e.pointerId!==drag.pointer)return;const z=view().
 }
 function onDragUp(){endDrag(false);}function onDragCancel(){endDrag(true);}
 function endDrag(cancel){if(!drag)return;const d=drag;d.target.removeEventListener('pointermove',moveDrag);d.target.removeEventListener('pointerup',onDragUp);d.target.removeEventListener('pointercancel',onDragCancel);if(d.target.hasPointerCapture(d.pointer))d.target.releasePointerCapture(d.pointer);drag=null;if(cancel)project=d.before;else if(d.moved){undo.push(d.before);if(undo.length>20)undo.shift();save();}selectZone(d.id);}
+// Pages imprimées du manuel 50214-106, février 2008. PDF = page imprimée + 1.
+const MANUAL_REFS = {
+  filtre_air:[15,'Cylindre et culasse — version L','Repère 14 : filtre 110377F075; élément 110377E075.'],
+  silencieux_admission:[15,'Cylindre et culasse — version L','Repère 14 : option filtre/silencieux 110377S075. Présence à vérifier sur la machine.'],
+  cylindre_lp:[15,'Cylindre et culasse — version L','Repère 1 : bloc-cylindres 1999 commun aux deux étages.'],
+  cylindre_hp:[15,'Cylindre et culasse — version L','Repère 1 : bloc-cylindres 1999 commun aux deux étages. La variante haute pression utilise une autre référence.'],
+  intercooler:[15,'Cylindre et culasse — version L','Repère 9 : refroidisseur intermédiaire 15652.'],
+  soupape_admission_lp:[17,'Culasse — version L','Repère 3 : soupape d’admission 4610X2; ensemble de remplacement avec joints 4610X3. Le plan regroupe les deux étages.'],
+  soupape_admission_hp:[17,'Culasse — version L','Repère 3 : soupape d’admission 4610X2; ensemble de remplacement avec joints 4610X3. Le plan regroupe les deux étages.'],
+  soupape_refoulement_lp:[17,'Culasse — version L','Repère 4 : soupape de refoulement 1553X10; ensemble de remplacement avec joints 1553X11.'],
+  soupape_decharge_hp:[17,'Culasse — version L','Repère 4 : soupape de refoulement 1553X10; ensemble de remplacement avec joints 1553X11.'],
+  dechargeurs_admission:[17,'Culasse — version L','Repères 7 à 11 : mécanisme de décharge à l’admission; ensemble de remplacement 75483X.'],
+  carter:[5,'Carter','Repère 1 : ensemble 5513X002; carter nu 5513-002. Nomenclature p. 6.'],
+  volant:[3,'Vilebrequin et poulie du compresseur','Repère 3 : ensemble poulie 2917X; variante haute pression 2919X. Nomenclature p. 4.'],
+  pompe_huile:[7,'Pompe à huile — montage avec filtre','Repère 1.6 : gerotor 160003; kit de réparation 160078. Nomenclature p. 8. Montage sans filtre : p. 9–10.'],
+  filtre_huile:[7,'Pompe à huile — montage avec filtre','Repère 6 : référence 110814-001, lot de six filtres. Nomenclature p. 8.'],
+  regulateur_debit_huile:[7,'Régulation d’huile','Repères 1.11 à 1.15 : vis, ressort et pointeau de régulation. Nomenclature p. 8; montage sans filtre p. 9–10.'],
+  manometre_huile:[7,'Pompe à huile et manomètre','Repère 4 : manomètre de pression d’huile 110822. Nomenclature p. 8.'],
+  dechargeur_hydraulique:[19,'Commande — version L','Repère 1 : déchargeur hydraulique 110827-001 (0–200 PSI) ou 110827-002 (201–500 PSI), selon configuration.'],
+  anti_retour_sortie:[25,'Clapet antiretour','Ensembles 6194X2 / 6194X3 selon lubrifiant. Correspondance avec le clapet installé à confirmer.'],
+  valve_pilote:[24,'Valves pilotes — autres configurations','Référence documentaire : commande LS/LVD. La présence de cette valve n’est pas confirmée sur ta version L.'],
+  soupape_securite:[17,'Soupape de sûreté de la culasse','Repère 12 : 2961-100 sur la culasse standard. Pour la soupape du réservoir, consulter p. 28–29 : la référence dépend de l’installation.'],
+};
+for(const id of ['pressostat','manometre_hp','poulie_moteur','courroies','reservoir','purge_condensats']) MANUAL_REFS[id]=[28,'Accessoires d’une unité type','Nomenclatures p. 28–29, selon réservoir et motorisation. Référence exacte à confirmer sur l’installation; ces listes ne sont pas une vue éclatée.'];
+function appendManualReference(box,p){
+  const section=el('section','manual-reference');section.style.cssText='margin-top:18px;padding:14px;border:1px solid #b8d3e2;border-radius:10px;background:#f1f8fc';
+  section.append(el('h3','','Référence au plan'));
+  const ref=MANUAL_REFS[p.id];
+  if(ref){
+    section.append(el('p','',ref[1]),el('p','',ref[2]),el('p','muted',`Manuel 50214-106 · février 2008 · p. ${ref[0]} (page ${ref[0]+1} du PDF).`));
+    const a=el('a','button',`Ouvrir le manuel à la page ${ref[0]}`);a.href=`CompresseurManuel.pdf#page=${ref[0]+1}`;a.target='_blank';a.rel='noopener noreferrer';a.style.cssText='display:inline-block;padding:10px;border:1px solid #167da5;border-radius:8px';section.append(a);
+    section.append(el('p','muted','Si le lecteur ne rejoint pas la page automatiquement, utilise le numéro de page PDF indiqué ci-dessus.'));
+  }else section.append(el('p','muted','Aucune correspondance précise confirmée dans ce manuel pour cette fiche.'));
+  box.append(section);
+}
 function renderSide(){
   $('pieceCount').textContent=project.parts.length+' fiches';$('tabFiche').setAttribute('aria-pressed',String(tabName==='fiche'));$('tabPieces').setAttribute('aria-pressed',String(tabName==='pieces'));$('detail').hidden=tabName!=='fiche';$('catalogue').hidden=tabName!=='pieces';const box=$('detail');box.replaceChildren();const p=part(),z=zone();
   if(p||z){box.className='detail';const data=p||z;box.append(el('span','pill',GROUPS[data.circuit]||'Composant'),el('h2','',data.nom||'Zone à identifier'));if(data.role)box.append(el('p','',data.role));if(data.desc)box.append(el('p','muted',data.desc));const actions=el('div','actions');
@@ -175,6 +210,7 @@ function renderSide(){
     if(z?.linkedViewId)actions.append(btn('Voir la vue associée',()=>go(z.linkedViewId),'primary'));
     if(p&&!z){const match=project.views.flatMap(v=>v.zones.map(z=>({v,z}))).find(x=>x.z.partId===p.id);if(match)actions.append(btn('Repérer sur la photo',()=>{go(match.v.id);selectZone(match.z.id);}));else box.append(el('p','muted','Cette fiche n’a pas encore de repère sur une photo.'));}box.append(actions);
   }else{box.className='';box.append(el('h2','','Choisis un composant'),el('p','muted','Clique sur une pièce de la photo pour ouvrir sa fiche. Les zones interactives sont invisibles en mode élève. La liste « Toutes les pièces » donne aussi accès aux composants sans zone associée.'));}
+  if(p)appendManualReference(box,p);
   renderParts();renderTeacher();
 }
 function renderParts(){const query=$('searchParts').value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),group=$('groupFilter').value;const list=$('partsList');list.replaceChildren();const parts=project.parts.filter(p=>(!group||p.circuit===group)&&[p.nom,p.role,p.desc].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query));for(const p of parts){const b=btn(p.nom,()=>{selectedPartId=p.id;selectedZoneId='';tabName='fiche';renderSide();renderZones();},'part-row'+(p.id===selectedPartId?' active':''));b.append(el('small','',GROUPS[p.circuit]||'Autre'));list.append(b);}if(!parts.length)list.append(el('p','empty','Aucune pièce trouvée.'));}
