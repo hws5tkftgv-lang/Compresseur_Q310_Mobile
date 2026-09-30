@@ -1,1451 +1,288 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Q310 – iPhone Éditeur (FINAL STABLE iOS Safari)</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
-
-  <style>
-    :root{
-      --quickbar-h: 70px;
-      --header-h: 86px;      /* sera recalculé en JS */
-      --vvh: 100vh;          /* visualViewport height */
-      --safari-ui: 0px;      /* overlay bas Safari */
-    }
-
-    html, body{
-      margin:0;
-      padding:0;
-      width:100%;
-      height:100%;
-      overflow:hidden;
-      overscroll-behavior:none;
-      background:#0b1436;
-      color:#eaf1ff;
-      font-family:Arial,Segoe UI,sans-serif;
-      -webkit-text-size-adjust:100%;
-      touch-action:none;
-    }
-    body{ position:fixed; inset:0; }
-
-    #app{
-      position:fixed;
-      inset:0;
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-      background:#0b1436;
-
-      padding-bottom: calc(
-        var(--quickbar-h)
-        + env(safe-area-inset-bottom)
-        + var(--safari-ui)
-      );
-    }
-
-    /* ===== Bande info ===== */
-    #infoPanel{
-      padding:10px 12px;
-      background:#0f1a44;
-      border-bottom:1px solid rgba(255,255,255,.15);
-      flex:0 0 auto;
-      position:relative;
-      z-index:5;
-
-      width:100%;
-      box-sizing:border-box;
-      overflow:hidden;
-    }
-
-    #infoTitle{
-      font-size:16px;
-      font-weight:800;
-      line-height:1.25;
-      white-space:normal;
-      word-break:break-word;
-      padding-right:44px; /* place pour ✏️ */
-    }
-
-    #infoText{
-      font-size:13px;
-      opacity:.9;
-      margin-top:4px;
-      line-height:1.3;
-      white-space:normal;
-      word-break:break-word;
-    }
-#breadcrumb{
-  pointer-events: none;
-}
-
-
-    /* ✏️ badge */
-    #editorState{
-      position:absolute;
-      top:8px;
-      right:8px;
-      width:32px;
-      height:32px;
-      border-radius:50%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:#ff9800;
-      color:#000;
-      font-size:16px;
-      font-weight:900;
-      z-index:20;
-      pointer-events:auto;
-      cursor:pointer;
-    }
-
-    /* ===== Stage ===== */
-    .stage{
-      position:relative;
-      width:100%;
-      height: calc(
-        var(--vvh)
-        - var(--header-h)
-        - var(--quickbar-h)
-        - env(safe-area-inset-bottom)
-        - var(--safari-ui)
-      );
-      overflow:hidden;
-      background:#000;
-      touch-action:none;
-    }
-
-    .media-layer,
-    .canvas-wrap{
-      position:absolute;
-      inset:0;
-    }
-
-    #imgLayer{
-      position:absolute;
-      left:0;
-      top:0;
-      width:0;
-      height:0;
-      object-fit:contain;
-      pointer-events:none;
-      user-select:none;
-      -webkit-user-drag:none;
-    }
-
-    .canvas-container, canvas{
-      touch-action:none !important;
-    }
-
-    /* ===== Quickbar ===== */
-    #quickbar{
-      position:fixed;
-      left:0;
-      right:0;
-      bottom: var(--safari-ui);
-
-      height: calc(var(--quickbar-h) + env(safe-area-inset-bottom));
-      padding: 10px 10px calc(10px + env(safe-area-inset-bottom)) 10px;
-
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      gap:10px;
-
-      background:rgba(15,26,68,.95);
-      backdrop-filter:blur(10px);
-      border-top:1px solid rgba(255,255,255,.15);
-      z-index:10000;
-      touch-action:none;
-    }
-
-    .qbtn{
-      width:46px;
-      height:46px;
-      border-radius:10px;
-      background:#1b2553;
-      color:#fff;
-      border:1px solid rgba(255,255,255,.25);
-      font-size:18px;
-      font-weight:900;
-    }
-    .qbtn.active{ background:#ff9800; color:#000; }
-
-    /* ===== Inputs / buttons ===== */
-    .btn{
-      width:100%;
-      min-height:44px;
-      margin-top:8px;
-      background:#1b2553;
-      color:#fff;
-      border:1px solid rgba(255,255,255,.2);
-      border-radius:10px;
-      font-size:15px;
-      font-weight:800;
-    }
-    .input{
-      width:100%;
-      min-height:44px;
-      margin-top:8px;
-      background:#101a40;
-      color:#fff;
-      border:1px solid rgba(255,255,255,.2);
-      border-radius:10px;
-      font-size:15px;
-      padding:10px;
-      box-sizing:border-box;
-    }
-    .sectionTitle{
-      margin-top:12px;
-      font-size:12px;
-      opacity:.7;
-      font-weight:700;
-      text-transform:uppercase;
-    }
-
-    /* ===== Panneau Pièce & médias ===== */
-    #piecePanel{
-      position:fixed;
-      inset:0;
-      background:#0f1a44;
-      z-index:20000;
-      display:none;
-      flex-direction:column;
-      touch-action:none;
-    }
-    #piecePanel.open{ display:flex; }
-
-    .panelHeader{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:12px 16px;
-      font-weight:900;
-      border-bottom:1px solid rgba(255,255,255,.15);
-      flex:0 0 auto;
-    }
-    .panelHeader button{
-      background:none;
-      border:none;
-      color:#fff;
-      font-size:22px;
-      font-weight:900;
-    }
-    .panelContent{
-      padding:16px;
-      overflow:auto;
-      -webkit-overflow-scrolling:touch;
-      flex:1 1 auto;
-      touch-action:pan-y;
-    }
-    .panelLabel{
-      font-size:12px;
-      opacity:.7;
-      margin-bottom:6px;
-      display:block;
-    }
-
-    /* ===== Viewer médias ===== */
-    #mediaViewer{
-      position:fixed;
-      inset:0;
-      background:#050b24;
-      z-index:30000;
-      overflow:auto;
-      -webkit-overflow-scrolling:touch;
-      padding:16px 16px calc(16px + env(safe-area-inset-bottom)) 16px;
-      display:none;
-      pointer-events:none;
-      touch-action:pan-y;
-    }
-    #mediaViewer.open{
-      display:block;
-      pointer-events:auto;
-    }
-    .mediaBlock{ margin-bottom:20px; }
-    .mediaBlock img,
-    .mediaBlock iframe,
-    .mediaBlock video{
-      width:100%;
-      border-radius:12px;
-      background:#000;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#132d46">
+<title>Quincy Q310 — Atelier interactif</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#18334a;background:#eef3f7;font-size:16px;--blue:#116f9a;--ink:#132d46;--line:#d8e1e9}
+*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button,select,input,textarea,a{touch-action:manipulation}button,.button{cursor:pointer;min-height:44px;border:1px solid var(--line);border-radius:9px;background:white;color:var(--ink);padding:9px 13px;font-weight:700;text-decoration:none}button:hover,.button:hover{background:#e7f2f8}button:disabled{opacity:.45;cursor:default}button.primary{background:var(--blue);color:white;border-color:var(--blue)}button.danger{color:#aa2935}button[aria-pressed=true]{background:#d8f0fa;border-color:#1479a2}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #e6a82b;outline-offset:2px}input,select,textarea{max-width:100%;width:100%;border:1px solid #adbfcd;border-radius:7px;padding:10px;min-height:44px;background:white;color:var(--ink)}label{display:block;font-size:.88rem;font-weight:700;margin:12px 0 5px}h1,h2,h3,p{margin:0}h1{font-size:1.2rem}h2{font-size:1.18rem;margin-bottom:8px}h3{font-size:1rem;margin-bottom:8px}p{line-height:1.5;margin-bottom:10px}small,.muted{color:#526b7e;font-size:.86rem;line-height:1.5}.top{background:var(--ink);color:white;padding:15px 22px;display:flex;gap:15px;align-items:center;justify-content:space-between}.brand{display:flex;gap:12px;align-items:center}.monogram{background:#287798;border:1px solid #72c0dc;border-radius:10px;padding:12px 8px;font-size:.86rem;font-weight:800}.top p{font-size:.85rem;color:#bdd7e6;margin:3px 0 0}.top button{background:#213e55;color:#fff;border-color:#507089;font-size:.87rem}.badge{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:#afe3ee}.tools{padding:10px 20px;background:white;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}.tools select{width:auto;max-width:310px}.tools .spacer{flex:1}.counter{font-size:.85rem;color:#526b7e}.layout{display:grid;grid-template-columns:minmax(0,1fr) 350px;max-width:1700px;margin:auto}.work{padding:20px;min-width:0}.viewbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.viewbar .title{flex:1;min-width:160px}.viewbar h2{font-size:1.03rem;margin:0}.viewport{height:calc(100dvh - 240px);min-height:350px;max-height:1100px;overflow:auto;background:#dce5ec;border:1px solid #c7d3dd;border-radius:14px;position:relative;overscroll-behavior:contain}.photo-box{position:relative;margin:auto;background:white;flex-shrink:0;line-height:0}.photo-box>img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none}.zone-layer{position:absolute;inset:0}.zone{position:absolute;min-height:0;min-width:0;padding:0;background:rgba(24,136,183,.04);border:2px solid #0076a8;border-radius:6px;text-align:left}.zone:hover,.zone.selected{background:rgba(238,173,42,.14);border-color:#b56c00;z-index:2}.zone span{position:absolute;left:-2px;top:-2px;display:flex;align-items:center;justify-content:center;min-width:25px;height:25px;padding:2px 5px;border-radius:5px;background:#006d98;color:white;font-size:12px;line-height:1;font-weight:800;pointer-events:none}.zone.selected span{background:#a96600}.zone.editor-zone{touch-action:none;cursor:move}.resize-handle{position:absolute;right:-7px;bottom:-7px;width:22px;height:22px;background:#e9ad2e;border:2px solid white;border-radius:50%;cursor:nwse-resize;touch-action:none}.caption{display:flex;gap:10px;justify-content:space-between;margin-top:9px;font-size:.8rem;color:#526b7e;line-height:1.4}.side{background:#fff;border-left:1px solid var(--line);padding:20px;min-width:0;max-height:calc(100dvh - 132px);overflow:auto;overscroll-behavior:contain}.tabbar{display:flex;gap:5px;margin-bottom:17px}.tabbar button{flex:1;padding:8px}.part-row{display:block;text-align:left;width:100%;margin:6px 0;padding:10px;border-color:#e3e9ee;font-size:.9rem}.part-row small{display:block;font-size:.74rem;font-weight:400;margin-top:3px}.part-row.active{border-color:#0c77a1;background:#e6f4fb}.pill{display:inline-block;padding:4px 8px;background:#e4f0f7;color:#176082;border-radius:5px;font-size:.73rem;line-height:1.3;margin-bottom:10px;font-weight:700}.detail{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:16px}.detail p{font-size:.92rem}.detail .actions,.actions{display:flex;gap:8px;flex-wrap:wrap}.empty{padding:14px;background:#f2f6f9;border-radius:10px;font-size:.91rem;line-height:1.5}.note{background:#fff4d4;border-left:4px solid #dfaa26;padding:11px 12px;font-size:.86rem;line-height:1.45;margin:12px 0}.notice{max-width:1660px;margin:12px auto 0;background:#e5f3fb;border:1px solid #b6d6e8;padding:12px 16px;border-radius:10px;display:flex;gap:12px;align-items:center;justify-content:space-between}.notice p{margin:0;font-size:.9rem}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid2 label{margin-top:6px}.teacher-section{border-top:1px solid var(--line);margin-top:15px;padding-top:15px}.teacher-section button.full{width:100%;margin-top:8px}.teacher-section textarea{min-height:76px;resize:vertical}.filelist{padding-left:20px;font-size:.83rem;line-height:1.6}.filelist li{margin:7px 0;word-break:break-word}.link{color:#126f98}.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#183c50;color:#fff;border-radius:10px;box-shadow:0 4px 30px #0003;padding:13px 18px;z-index:99;max-width:min(92vw,700px);font-size:.9rem;line-height:1.4}.toast.error{background:#8d2631}.hidden,[hidden]{display:none!important}dialog{width:min(850px,94vw);max-height:90dvh;border:none;border-radius:15px;padding:22px;color:var(--ink);background:#fff;box-shadow:0 10px 70px #0005}dialog::backdrop{background:#071d32b3}.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.dialog-head h2{margin:0}dialog img,dialog video{display:block;max-width:100%;max-height:65dvh;margin:10px auto;object-fit:contain}dialog video{width:100%}.media-item{border-top:1px solid var(--line);padding-top:12px;margin-top:15px}.media-error{color:#a52e2e;font-size:.9rem}.stage-video{width:100%;height:100%;min-height:350px;background:#051322;object-fit:contain}.calibration{margin-bottom:22px;padding:12px;background:#f4f7f9;border-radius:10px}.cal-image{position:relative;width:min(100%,320px);margin:12px auto}.cal-image img{width:100%;height:auto;max-height:none;margin:0}.cal-overlay{position:absolute;inset:0}.cal-zone{position:absolute;border:2px solid #c16b00;background:#f6b42d2b}.cal-zone span{background:#994f00;color:white;font-size:11px}.dirty-status{font-size:.8rem;line-height:1.4;margin-top:9px}.help-list{padding-left:22px;line-height:1.6}.help-list li{margin-bottom:9px}footer{padding:9px 20px;color:#526b7e;font-size:.74rem;border-top:1px solid var(--line);background:#f8fafc}.error-screen{max-width:700px;margin:40px auto;padding:25px;background:white}
+/* En consultation, les zones gardent leur surface cliquable sans repère visible. */
+.top .button{background:#213e55;color:#fff;border-color:#507089;font-size:.87rem;display:inline-flex;align-items:center}
+.zone:not(.editor-zone),.zone:not(.editor-zone):hover,.zone:not(.editor-zone).selected{background:transparent;border-color:transparent;box-shadow:none}
+.zone:not(.editor-zone)>span{display:none}
+@media(min-width:1800px){.viewport{height:calc(100dvh - 245px)}}
+@media(max-width:900px){.layout{grid-template-columns:minmax(0,1fr) 300px}.top{padding:12px}.tools{padding:9px 12px}.work,.side{padding:12px}.viewport{height:calc(100dvh - 255px)}.top p{display:none}}
+@media(max-width:650px){.layout{display:block}.top h1{font-size:1.02rem}.top{gap:8px}.monogram{display:none}.tools{gap:6px}.tools select{flex:1;max-width:none;width:100%;font-size:.9rem}.tools .spacer,.tools .counter{display:none}.tools button{font-size:.85rem}.work{padding:12px}.viewport{height:54dvh;min-height:310px}.side{border-left:0;border-top:1px solid var(--line);max-height:none;padding:16px}.caption{font-size:.74rem}.notice{margin:10px 12px 0;flex-direction:column;align-items:stretch}.viewbar button{padding:8px 11px}.top button{padding:8px}.grid2{gap:7px}dialog{padding:16px}.badge{font-size:.68rem}}
+@media(max-width:650px){.top{flex-wrap:wrap}.top .actions{width:100%}.top .actions>*{flex:1;justify-content:center;white-space:nowrap}}
+@media(prefers-reduced-motion:no-preference){button{transition:background .12s,border-color .12s}}
+</style>
 </head>
-
 <body>
-
-
-
-
-
-
-  <div id="app">
-    <div id="infoPanel">
-      <div id="infoTitle">Sélectionne une zone</div>
-      <div id="infoText"></div>
-      <div id="breadcrumb" style="font-size:12px; opacity:.75; margin-top:4px;"></div>
-      
-      
-      <button id="btnBackView"
-  style="
-    display:none;
-    margin-top:8px;
-    background:#1b2553;
-    color:#fff;
-    border:none;
-    border-radius:10px;
-    padding:8px 12px;
-    font-weight:900;
-  ">
-  🔙 Retour
-</button>
-      
-      
-   
-      
-      
-        <button id="btnOpenLinkedView"
-    style="
-      display:none;
-      margin-top:8px;
-      background:#ff9800;
-      color:#000;
-      border:none;
-      border-radius:10px;
-      padding:8px 12px;
-      font-weight:900;
-    ">
-    ▶️ Voir la vue associée
-  </button>
-      
-      <div id="editorState">✏️</div>
-    </div>
-
-    <div class="stage" id="stage">
-  <div class="media-layer" id="mediaLayer">
-  <img id="imgLayer" src="actif/compresseur_bg.png" alt="">
-</div>
-<div class="canvas-wrap" id="canvasWrap">
-  <canvas id="c"></canvas>
-</div>
-
-<!-- 🎥 COUCHE VIDÉO (unique, dédiée) -->
-<div id="videoLayer"
-  style="
-    position:absolute;
-    inset:0;
-    display:none;
-    background:#000;
-    z-index:20;
-  ">
-</div>
-    </div>
-  </div>
-
-  <!-- Quickbar -->
-  <div id="quickbar">
-    <button id="btnMove" class="qbtn active" title="Déplacer">✋</button>
-    <button id="btnDraw" class="qbtn" title="Dessiner">＋</button>
-    <button id="btnResize" class="qbtn" title="Redimensionner">↕</button>
-    <button id="btnDelete" class="qbtn" title="Supprimer">🗑️</button>
-    <button id="btnIO" class="qbtn" title="Import/Export">⇄</button>
-    <button id="btnPiece" class="qbtn" title="Pièce/Médias">📦</button>
-    <button id="btnViewMenu" class="qbtn" title="Vue active">🖼️</button>
-    <input type="file" id="fileInput" accept="application/json" hidden>
-  </div>
-
-  <!-- Panneau pièce & médias -->
-  <div id="piecePanel">
-    <div class="panelHeader">
-      <span>📦 Pièce & médias</span>
-      <button id="btnClosePiecePanel">✕</button>
-    </div>
-
-    <div class="panelContent">
-      <label class="panelLabel">Associer une pièce</label>
-      <select id="partSelect" class="input">
-        <option value="">— Choisir une pièce —</option>
-        <option value="__new__">➕ Nouvelle pièce…</option>
-      </select>
-
-      <button id="btnShowMedia" class="btn">🖼️🎥 Voir les médias</button>
-      <div class="sectionTitle">Ajouter depuis actif/</div>
-<div class="sectionTitle">Changer de vue</div>
-<label class="panelLabel">Lier cette zone à une vue</label>
-<select id="linkViewSelect" class="input">
-  <option value="">— Aucune —</option>
-</select>
-      <button id="btnAddImage" class="btn">➕ Ajouter une image</button>
-      <button id="btnAddVideo" class="btn">➕ Ajouter une vidéo</button>
-    </div>
-  </div>
-
-  <!-- Viewer médias -->
-  <div id="mediaViewer">
-    <button id="btnCloseMedia" class="btn" style="margin-bottom:12px;">❌ Fermer</button>
-    <div id="mediaContent"></div>
-  </div>
-
-
-<!-- MENU DES VUES -->
-<div id="viewMenu" style="
-  position:fixed;
-  inset:0;
-  background:#0f1a44;
-  z-index:25000;
-  display:none;
-  flex-direction:column;
-">
-  <div class="panelHeader">
-    <span>🖼️ Choisir une vue</span>
-    <button onclick="closeViewMenu()">✕</button>
-  </div>
-
-  <div class="panelContent" id="viewList"></div>
-</div>
-
-
-
-
-<script>
-/* =========================================================
-   HELPERS
-   ========================================================= */
-const $ = id => document.getElementById(id);
-
-/* ✅ Autoriser scroll uniquement dans panneaux */
-function allowScrollTarget(el){
-  return !!(el && (el.closest(".panelContent") || el.closest("#mediaViewer")));
-}
-
-function remplirMenuVuesLiees(){
-  const select = $("linkViewSelect");
-  if(!select) return;
-
-  select.innerHTML = `<option value="">— Aucune —</option>`;
-
-  VIEWS_CATALOG.forEach(v=>{
-    if(v.type !== "image" && v.type !== "video") return;
-
-    const opt = document.createElement("option");
-    opt.value = v.id;
-    opt.textContent = v.label;
-    select.appendChild(opt);
-  });
-}
-
-document.addEventListener("touchmove", (e)=>{
-  if(!allowScrollTarget(e.target)) e.preventDefault();
-}, { passive:false });
-
-/* =========================================================
-   VIEWPORT VARS (source unique)
-   ========================================================= */
-function updateViewportVars(){
-  const vv = window.visualViewport;
-  const vvh = vv ? vv.height : window.innerHeight;
-  const safariUI = vv
-    ? Math.max(0, window.innerHeight - (vv.height + vv.offsetTop))
-    : 0;
-
-  document.documentElement.style.setProperty("--vvh", Math.round(vvh) + "px");
-  document.documentElement.style.setProperty("--safari-ui", Math.round(safariUI) + "px");
-
-  // Header dynamique: on mesure vraiment la hauteur du bandeau
-  const header = $("infoPanel");
-  if(header){
-    const h = header.getBoundingClientRect().height;
-    document.documentElement.style.setProperty("--header-h", Math.round(h) + "px");
+<div id="app"></div>
+<script id="projectData" type="application/json">{"format": "q310-project", "schemaVersion": 2, "id": "q310-atelier", "title": "Quincy Q310 — Atelier interactif", "assetBase": "https://hws5tkftgv-lang.github.io/Compresseur_Q310_Mobile/", "updatedAt": "2026-09-28", "parts": [{"id": "filtre_air", "nom": "Filtre à air", "role": "Filtrer l’air entrant", "desc": "Retient les poussières et impuretés avant l’admission.", "circuit": "LP", "medias": {"images": ["actif/FILTRE _AIR_COUVERCLE.jpeg"], "videos": [], "documents": []}}, {"id": "silencieux_admission", "nom": "Silencieux d’admission", "role": "Réduire le bruit d’aspiration", "desc": "Lisse le flux d’air et atténue le bruit à l’entrée.", "circuit": "LP", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "cylindre_lp", "nom": "Cylindre basse pression (LP)", "role": "Compression initiale", "desc": "Première étape de compression volumétrique.", "circuit": "LP", "medias": {"images": [], "videos": ["actif/compresseur_2_stages.mp4"], "documents": []}}, {"id": "soupape_admission_lp", "nom": "Soupape d’admission LP", "role": "Entrée d’air", "desc": "S’ouvre lorsque la différence de pression permet à l’air d’entrer dans le cylindre.", "circuit": "LP", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "soupape_refoulement_lp", "nom": "Soupape de refoulement LP", "role": "Sortie vers l’intercooler", "desc": "S’ouvre lorsque la pression du cylindre dépasse suffisamment celle du circuit intermédiaire pour permettre le refoulement.", "circuit": "LP", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "intercooler", "nom": "Refroidisseur intermédiaire", "role": "Refroidir l’air entre étages", "desc": "Refroidit l’air entre le refoulement BP et l’admission HP.", "circuit": "INTER", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "cylindre_hp", "nom": "Cylindre haute pression (HP)", "role": "Compression finale", "desc": "Porte l’air à la pression de service.", "circuit": "HP", "medias": {"images": [], "videos": ["actif/compresseur_2_stages.mp4"], "documents": []}}, {"id": "soupape_admission_hp", "nom": "Soupape d’admission HP", "role": "Entrée vers l’étage HP", "desc": "Admet l’air refroidi en provenance de l’intercooler.", "circuit": "HP", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "soupape_decharge_hp", "nom": "Soupape de refoulement HP", "role": "Refouler l’air comprimé", "desc": "Laisse passer l’air de l’étage haute pression vers la sortie. À distinguer du mécanisme de marche à vide.", "circuit": "HP", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "anti_retour_sortie", "nom": "Clapet anti-retour sortie", "role": "Empêcher le retour d’air", "desc": "Isole le réservoir lors de l’arrêt.", "circuit": "HP", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "aftercooler", "nom": "Refroidisseur final (si présent)", "role": "Refroidir après compression", "desc": "Refroidit l’air après le dernier étage. Une partie de la vapeur d’eau peut se condenser; les condensats doivent ensuite être évacués.", "circuit": "HP", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "carter", "nom": "Carter", "role": "Réservoir d’huile", "desc": "Contient la réserve d’huile et le mécanisme vilebrequin-bielles. La pompe fait circuler l’huile dans le circuit de lubrification.", "circuit": "LUB", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "pompe_huile", "nom": "Pompe à huile", "role": "Distribuer l’huile", "desc": "Alimente paliers et bielles sous pression.", "circuit": "LUB", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "filtre_huile", "nom": "Filtre à huile", "role": "Filtrer l’huile", "desc": "Retient particules et boues, protège les paliers.", "circuit": "LUB", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "regulateur_debit_huile", "nom": "Réglage de pression d’huile", "role": "Régler la pression de lubrification", "desc": "Le dispositif exact et les valeurs de réglage doivent être identifiés dans le manuel correspondant au compresseur de l’atelier.", "circuit": "LUB", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "pressostat", "nom": "Pressostat", "role": "Commande moteur", "desc": "Arrêt/démarrage selon pressions cut-in / cut-out.", "circuit": "CTRL", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "valve_pilote", "nom": "Valve pilote", "role": "Décharger à vide", "desc": "Selon la version de commande, pilote les déchargeurs pour maintenir la pression en marche continue. Ne pas la confondre avec le déchargeur hydraulique.", "circuit": "CTRL", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "soupape_securite", "nom": "Soupape de sûreté", "role": "Protection surpression", "desc": "S’ouvre si la pression dépasse le tarage.", "circuit": "CTRL", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "manometre_hp", "nom": "Manomètre HP", "role": "Indiquer la pression", "desc": "Lecture de la pression de service en sortie.", "circuit": "CTRL", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "volant", "nom": "Volant", "role": "Inertie et ventilation", "desc": "Stabilise la rotation et ventile les cylindres.", "circuit": "TR", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "poulie_moteur", "nom": "Poulie moteur", "role": "Adapter la vitesse", "desc": "Détermine le rapport de transmission.", "circuit": "TR", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "courroies", "nom": "Courroies", "role": "Transmettre la puissance", "desc": "Relient moteur et vilebrequin du compresseur.", "circuit": "TR", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "tendeur_courroies", "nom": "Réglage de tension des courroies", "role": "Maintenir la tension", "desc": "La tension est réglée par le dispositif présent sur la machine, souvent en déplaçant le moteur sur son support.", "circuit": "TR", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "reservoir", "nom": "Réservoir d’air", "role": "Stocker l’air comprimé", "desc": "Stabilise la pression et amortit les pulsations.", "circuit": "HP", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "purge_condensats", "nom": "Purge de condensats", "role": "Évacuer l’eau", "desc": "Retire l’humidité accumulée dans le réservoir.", "circuit": "CTRL", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "manometre_huile", "nom": "Manomètre de pression d’huile", "role": "Indiquer la pression de lubrification", "desc": "Mesure la pression dans le circuit d’huile. Sa lecture est différente de la pression d’air du réservoir.", "circuit": "LUB", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "dechargeur_hydraulique", "nom": "Déchargeur hydraulique", "role": "Commander la marche à vide selon la pression d’huile", "desc": "Sur les versions équipées, empêche la mise en charge avant l’établissement de la pression d’huile et protège le compresseur si celle-ci chute.", "circuit": "CTRL", "medias": {"images": [], "videos": [], "documents": []}}, {"id": "dechargeurs_admission", "nom": "Déchargeurs des soupapes d’admission", "role": "Permettre la marche à vide", "desc": "Agissent sur les soupapes d’admission pour empêcher la compression en charge. Leur commande dépend de la version du compresseur.", "circuit": "CTRL", "medias": {"images": [], "videos": [], "documents": []}}], "views": [{"id": "reference", "label": "Vue en coupe", "type": "image", "src": "actif/compresseur_bg.png", "zones": [{"id": "repere_cylindre_lp", "partId": "cylindre_lp", "x": 0.352, "y": 0.365, "w": 0.173, "h": 0.168, "linkedViewId": "video_global", "nom": "", "role": "", "desc": ""}, {"id": "repere_cylindre_hp", "partId": "cylindre_hp", "x": 0.575, "y": 0.335, "w": 0.11, "h": 0.082, "linkedViewId": "video_global", "nom": "", "role": "", "desc": ""}, {"id": "repere_intercooler", "partId": "intercooler", "x": 0.145, "y": 0.431, "w": 0.089, "h": 0.275, "linkedViewId": "", "nom": "", "role": "", "desc": ""}, {"id": "repere_volant", "partId": "volant", "x": 0.015, "y": 0.42, "w": 0.115, "h": 0.267, "linkedViewId": "vue_poulie", "nom": "", "role": "", "desc": ""}, {"id": "repere_carter", "partId": "carter", "x": 0.32, "y": 0.62, "w": 0.31, "h": 0.095, "linkedViewId": "", "nom": "", "role": "", "desc": ""}, {"id": "repere_manometre_huile", "partId": "manometre_huile", "x": 0.627, "y": 0.701, "w": 0.12, "h": 0.083, "linkedViewId": "", "nom": "", "role": "", "desc": ""}, {"id": "repere_filtre_huile", "partId": "filtre_huile", "x": 0.811, "y": 0.723, "w": 0.173, "h": 0.116, "linkedViewId": "", "nom": "", "role": "", "desc": ""}]}, {"id": "vue_generale", "label": "Compresseur complet", "type": "image", "src": "actif/VUE GENERAL.jpeg", "zones": []}, {"id": "vue_generale_2", "label": "Compresseur complet — autre angle", "type": "image", "src": "actif/VUE_GENARAL_2.jpeg", "zones": []}, {"id": "vue_1", "label": "Vue de l’atelier", "type": "image", "src": "actif/VUE_1.jpeg", "zones": []}, {"id": "vue_pompe", "label": "Vue pompe", "type": "image", "src": "actif/VUE_POMPE.jpeg", "zones": []}, {"id": "vue_tete", "label": "Tête", "type": "image", "src": "actif/TETE.jpeg", "zones": []}, {"id": "vue_tete_2", "label": "Tête — détail", "type": "image", "src": "actif/TETE_2.jpeg", "zones": []}, {"id": "vue_poulie", "label": "Poulie", "type": "image", "src": "actif/POULIE.jpeg", "zones": []}, {"id": "vue_filtre", "label": "Couvercle du filtre à air", "type": "image", "src": "actif/FILTRE _AIR_COUVERCLE.jpeg", "zones": []}, {"id": "vue_side", "label": "Côté charge", "type": "image", "src": "actif/LOAD_SIDE.jpeg", "zones": []}, {"id": "vue_unloader", "label": "Déchargeur — vue rapprochée", "type": "image", "src": "actif/SOUPAPE_UNLOADER.jpeg", "zones": []}, {"id": "vue_top", "label": "Vue du dessus", "type": "image", "src": "actif/TOP.jpeg", "zones": []}, {"id": "vue_reservoir", "label": "Vers le réservoir", "type": "image", "src": "actif/VERS_RESERVOIR.jpeg", "zones": []}, {"id": "video_global", "label": "Vidéo — compression à deux étages", "type": "video", "src": "actif/compresseur_2_stages.mp4", "zones": []}]}</script>
+<script id="appConfig" type="application/json">{"readonly":false,"useLocal":true,"build":"2026-09-29"}</script>
+<script id="q310-core">
+const Q310Core=(()=>{
+  const clone=x=>JSON.parse(JSON.stringify(x));
+  const uid=()=> 'z_'+(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2));
+  const text=(x,max=4000)=>typeof x==='string'?x.slice(0,max):'';
+  const aliases={'actif/VUE_GENERAL.jpeg':'actif/VUE GENERAL.jpeg','actif/VUE_GENERAL_2.jpeg':'actif/VUE_GENARAL_2.jpeg','actif/FILTRE_AIR_COUVERCLE.jpeg':'actif/FILTRE _AIR_COUVERCLE.jpeg'};
+  function source(value){
+    let s=text(value,3000).trim();s=aliases[s]||s;
+    if(!s||/[\u0000-\u001f]/.test(s))throw Error('Adresse de média vide ou invalide.');
+    if(/^https:\/\//i.test(s)){const u=new URL(s);if(u.username||u.password)throw Error('Adresse de média invalide.');return s;}
+    if(/^actif\/[\w .%()\-À-ÿ/]+$/u.test(s)&&!s.includes('..'))return s;
+    throw Error('Média non autorisé : utiliser actif/… ou une adresse https://.');
   }
-}
-
-/* =========================================================
-   ORCHESTRATEUR STABLE (anti-drift iOS)
-   ========================================================= */
-let relayoutTimer = null;
-function scheduleRelayout(delay = 250){
-  if(relayoutTimer) clearTimeout(relayoutTimer);
-  relayoutTimer = setTimeout(() => {
-    updateViewportVars();
-    fitCanvasToImage();
-  }, delay);
-}
-
-/* =========================================================
-   ASSETS / STORAGE
-   ========================================================= */
-const ASSETS = {
-  images: [
-    "actif/VUE_GENERAL.jpeg",
-    "actif/VUE_GENERAL_2.jpeg",
-    "actif/VUE_1.jpeg",
-    "actif/VUE_POMPE.jpeg",
-    "actif/TETE.jpeg",
-    "actif/TETE_2.jpeg",
-    "actif/POULIE.jpeg",
-    "actif/FILTRE_AIR_COUVERCLE.jpeg",
-    "actif/LOAD_SIDE.jpeg",
-    "actif/SOUPAPE_UNLOADER.jpeg",
-    "actif/TOP.jpeg",
-    "actif/VERS_RESERVOIR.jpeg",
-    "actif/Piston_rod.docx",
-  ],
-  videos: [
-    "actif/compresseur_2_stages.mp4"
-  ]
-};
-
-
-const VIEWS_CATALOG = [
-  { id:"reference", label:"🔰 Vue compresseur (référence)", src:"actif/compresseur_bg.png", type:"image" },
-  
-  { id:"vue_pompe", label:"Vue pompe", src:"actif/VUE_POMPE.jpeg", type:"image" },
-  { id:"vue_tete", label:"Tête", src:"actif/TETE.jpeg", type:"image" },
-  { id:"vue_tete_2", label:"Tête (détail)", src:"actif/TETE_2.jpeg", type:"image" },
-  { id:"vue_poulie", label:"Poulie", src:"actif/POULIE.jpeg", type:"image" },
-  
-  { id:"vue_side", label:"Côté charge", src:"actif/LOAD_SIDE.jpeg", type:"image" },
-  { id:"vue_unloader", label:"Soupape unloader", src:"actif/SOUPAPE_UNLOADER.jpeg", type:"image" },
-  { id:"vue_top", label:"Vue du dessus", src:"actif/TOP.jpeg", type:"image" },
-  { id:"vue_reservoir", label:"Vers réservoir", src:"actif/VERS_RESERVOIR.jpeg", type:"image" },
-
-  { id:"video_global", label:"Vidéo – compresseur", src:"actif/compresseur_2_stages.mp4", type:"video" }
-];
-
-
-
-const STORAGE_KEY = "q310_views_v1"; // ✅ nouveau storage
-const PARTS_STORAGE_KEY = "q310_parts_v1";
-
-
-
-let currentViewId = "reference"; // 🔒 vue logique de départ
-let viewStack = []; // 🧭 historique de navigation
-let VIEWS = {};  // { [viewId]: { id, type, src, zones, linkedFromZone } }
-let zonesData = []; // alias = zones de la vue courante
-let isBackNavigation = false; // 🔙 indique un retour arrière volontaire
-let PARTS = {};
-let PARTS_LIST = [];
-
-/* =========================================================
-   PARTS load/save
-   ========================================================= */
-function savePartsToLocal(){
-  try{ localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(PARTS_LIST)); }
-  catch(e){ console.error("savePartsToLocal error", e); }
-}
-
-function loadPartsFromLocal(){
-  try{
-    const raw = localStorage.getItem(PARTS_STORAGE_KEY);
-    if(!raw) return false;
-    const arr = JSON.parse(raw);
-    if(!Array.isArray(arr)) return false;
-
-    PARTS_LIST = arr;
-    PARTS = {};
-    PARTS_LIST.forEach(p => { if(p && p.id) PARTS[p.id] = p; });
-    return true;
-  }catch(e){
-    return false;
+  function media(m={}){
+    const out={images:[],videos:[],documents:[]};
+    for(const kind of Object.keys(out)){
+      if(m[kind]!==undefined&&!Array.isArray(m[kind]))throw Error('Liste de médias invalide.');
+      for(const item of (m[kind]||[]).slice(0,150)){
+        const s=source(item);const dest=/\.(docx?|pdf)(?:[?#]|$)/i.test(s)?'documents':kind;
+        if(!out[dest].includes(s))out[dest].push(s);
+      }
+    }return out;
   }
-}
-
-function remplirMenuPieces(){
-  const select = $("partSelect");
-  if(!select) return;
-
-  select.innerHTML = `
-    <option value="">— Choisir une pièce —</option>
-    <option value="__new__">➕ Nouvelle pièce…</option>
-  `;
-
-  PARTS_LIST.forEach(p => {
-    if(!p || !p.id) return;
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.nom || p.id} (${p.circuit || "?"})`;
-    select.appendChild(opt);
-  });
-}
-
-(function initParts(){
-  if(loadPartsFromLocal()){
-    remplirMenuPieces();
-    return;
+  function validate(input){
+    if(!input||input.format!=='q310-project'||input.schemaVersion!==2)throw Error('Ce fichier n’est pas un projet Q310 version 2.');
+    if(!Array.isArray(input.views)||!input.views.length||input.views.length>100||!Array.isArray(input.parts)||input.parts.length>500)throw Error('Liste de vues ou de pièces invalide.');
+    const p={format:'q310-project',schemaVersion:2,id:text(input.id,120)||'q310-atelier',title:text(input.title,150)||'Quincy Q310',assetBase:source(input.assetBase),parts:[],views:[],updatedAt:text(input.updatedAt,80)};
+    if(!p.assetBase.startsWith('https://'))throw Error('Adresse de base des médias invalide.');
+    const ids=new Set();
+    for(const raw of input.parts){
+      if(!raw||typeof raw.id!=='string'||!raw.id.trim()||ids.has(raw.id)||raw.id.length>150)throw Error('Identifiant de pièce manquant ou en double.');
+      ids.add(raw.id);p.parts.push({id:raw.id,nom:text(raw.nom,200)||raw.id,role:text(raw.role,1000),desc:text(raw.desc),circuit:text(raw.circuit,50),medias:media(raw.medias)});
+    }
+    ids.clear();
+    for(const raw of input.views){
+      if(!raw||typeof raw.id!=='string'||!raw.id||ids.has(raw.id)||raw.id.length>150||!['image','video'].includes(raw.type))throw Error('Vue invalide ou identifiant en double.');
+      ids.add(raw.id);
+      const v={id:raw.id,label:text(raw.label,200)||raw.id,type:raw.type,src:source(raw.src),zones:[]};
+      if(!Array.isArray(raw.zones)||raw.zones.length>1000)throw Error('Zones invalides.');
+      const zoneIds=new Set();
+      for(const z of raw.zones){
+        if(!z||typeof z.id!=='string'||!z.id||zoneIds.has(z.id))throw Error('Identifiant de zone invalide ou en double.');zoneIds.add(z.id);
+        if(!['x','y','w','h'].every(k=>typeof z[k]==='number'&&Number.isFinite(z[k]))||z.x<0||z.y<0||z.w<=0||z.h<=0||z.x+z.w>1.000001||z.y+z.h>1.000001)throw Error('Une zone dépasse l’image ou contient des coordonnées invalides.');
+        v.zones.push({id:z.id,x:z.x,y:z.y,w:z.w,h:z.h,partId:text(z.partId,150),linkedViewId:text(z.linkedViewId,150),nom:text(z.nom,200),role:text(z.role,1000),desc:text(z.desc)});
+      }p.views.push(v);
+    }
+    for(const v of p.views)for(const z of v.zones){if(z.linkedViewId&&!ids.has(z.linkedViewId))throw Error('Une zone pointe vers une vue absente.');}
+    if(input.legacyArchive!==undefined)p.legacyArchive=clone(input.legacyArchive);
+    return p;
   }
-  fetch("quincy_310L_parts.json")
-    .then(res => res.json())
-    .then(data => {
-      PARTS_LIST = Array.isArray(data) ? data : [];
-      PARTS = {};
-      PARTS_LIST.forEach(p => { if(p && p.id) PARTS[p.id] = p; });
-      savePartsToLocal();
-      remplirMenuPieces();
-    })
-    .catch(err => console.error("Erreur chargement quincy_310L_parts.json", err));
+  function normalizeLegacyZone(z,width,height){
+    const values=['x','y','w','h'].map(k=>Number(z[k]));
+    if(!values.every(Number.isFinite)||width<=0||height<=0||values[2]<=0||values[3]<=0)throw Error('Ancienne zone invalide.');
+    const [x,y,w,h]=values;
+    if(x<0||y<0||x+w>width+.01||y+h>height+.01)throw Error('La largeur choisie est trop petite pour contenir toutes les anciennes zones.');
+    return {id:uid(),x:x/width,y:y/height,w:w/width,h:h/height,partId:text(z.partId,150),linkedViewId:text(z.linkedViewId,150),nom:text(z.nom,200),role:text(z.role,1000),desc:text(z.desc)};
+  }
+  return {clone,uid,text,source,media,validate,normalizeLegacyZone};
 })();
-
-/* =========================================================
-   FABRIC init
-   ========================================================= */
-let isEditor = true;
-let tool = "move";
-let selected = null;
-
-let drawing = false;
-let startPt = null;
-let tempRect = null;
-
-const canvas = new fabric.Canvas("c", {
-  selection:false,
-  preserveObjectStacking:true,
-  allowTouchScrolling:false
-});
-canvas.selection = false;
-
-canvas.upperCanvasEl.style.touchAction = "none";
-canvas.upperCanvasEl.style.webkitUserSelect = "none";
-canvas.upperCanvasEl.style.webkitTouchCallout = "none";
-
-fabric.Object.prototype.cornerSize = 36;
-fabric.Object.prototype.cornerStyle = "circle";
-fabric.Object.prototype.transparentCorners = false;
-fabric.Object.prototype.padding = 10;
-fabric.Object.prototype.perPixelTargetFind = false;
-fabric.Object.prototype.targetFindTolerance = 45;
-
-/* =========================================================
-   FIT CANVAS TO IMAGE (centrage stable)
-   ========================================================= */
-function fitCanvasToImage(){
-  const img   = $("imgLayer");
-  const stage = $("stage");
-  if(!img || !stage || !img.naturalWidth) return;
-
-  const r = stage.getBoundingClientRect();
-  const stageW = Math.max(1, Math.round(r.width));
-  const stageH = Math.max(1, Math.round(r.height));
-
-  const imgW = img.naturalWidth;
-  const imgH = img.naturalHeight;
-
-  const scale = Math.min(stageW / imgW, stageH / imgH);
-  const w = Math.round(imgW * scale);
-  const h = Math.round(imgH * scale);
-
-  const left = Math.round((stageW - w) / 2);
-  const top  = Math.round((stageH - h) / 2);
-
-  // Image
-  img.style.left   = left + "px";
-  img.style.top    = top  + "px";
-  img.style.width  = w + "px";
-  img.style.height = h + "px";
-
-  // Canvas
-  canvas.setWidth(w);
-  canvas.setHeight(h);
-
-  const wrap = canvas.wrapperEl;
-  if(wrap){
-    wrap.style.position = "absolute";
-    wrap.style.left   = left + "px";
-    wrap.style.top    = top  + "px";
-    wrap.style.width  = w + "px";
-    wrap.style.height = h + "px";
-  }
-
-  canvas.calcOffset();
-  canvas.requestRenderAll();
-}
-
-/* =========================================================
-   ZONES load/save
-   ========================================================= */
-function saveToLocal(){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(VIEWS));
-  }catch(e){
-    console.error("Save error", e);
-  }
-}
-
-function loadFromLocal(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return false;
-
-    const obj = JSON.parse(raw);
-    if(!obj || typeof obj !== "object") return false;
-
-    VIEWS = obj;
-    return true;
-  }catch(e){
-    return false;
-  }
-}
-
-function ensureView(viewId){
-  if(!VIEWS[viewId]){
-    const meta = VIEWS_CATALOG.find(v => v.id === viewId);
-    if(!meta) return;
-
-    VIEWS[viewId] = {
-      id: meta.id,
-      type: meta.type,
-      src: meta.src,
-      zones: [],
-      linkedFromZone: null
-    };
-  }
-  zonesData = VIEWS[viewId].zones;
-}
-
-
-
-function makeRectFromZone(z){
-  const r = new fabric.Rect({
-    left: z.x,
-    top: z.y,
-    width: z.w,
-    height: z.h,
-    fill: "rgba(255,255,255,0.08)",
-    stroke: "white",
-    strokeWidth: 3,
-    lockRotation: true
-  });
-  r.zoneId = z.id;
-  r.zoneData = z;
-  return r;
-}
-
-function bootZones(){
-  canvas.clear();
-
-  // 1) charger views depuis local si existe
-  const hasLocal = loadFromLocal();
-
-  ensureView(currentViewId);
-
-  // 4) si aucune donnée locale, créer une zone démo dans la vue courante
-  if(!hasLocal && zonesData.length === 0){
-    zonesData.push({
-      id:"cylindre_lp",
-      x:140, y:120, w:120, h:220,
-      nom:"Cylindre LP",
-      role:"Compression initiale",
-      desc:"Première étape de compression.",
-      partId:""
-    });
-    saveToLocal();
-  }
-
-  // 5) dessiner zones de la vue courante
-  zonesData.forEach(z => canvas.add(makeRectFromZone(z)));
-
-  clearSelection();
-  applyMode();
-  fitCanvasToImage();
-  remplirMenuVuesLiees();
-
-}
-/* =========================================================
-   UI / Modes / Selection
-   ========================================================= */
-function updateQuickbar(){
-  ["btnMove","btnDraw","btnResize"].forEach(id => $(id).classList.remove("active"));
-  if(tool === "move")   $("btnMove").classList.add("active");
-  if(tool === "draw")   $("btnDraw").classList.add("active");
-  if(tool === "resize") $("btnResize").classList.add("active");
-}
-
-function showAllResizeHandles(obj, on){
-  obj.setControlsVisibility({
-    tl:on, tr:on, bl:on, br:on,
-    ml:on, mt:on, mr:on, mb:on,
-    mtr:false
-  });
-}
-
-function applyMode(){
-  canvas.forEachObject(o => {
-    o.stroke = (o === selected) ? "orange" : "white";
-    o.strokeWidth = (o === selected) ? 5 : 3;
-
-    if(!isEditor){
-      o.evented = true;
-      o.selectable = false;
-      o.hasControls = false;
-      o.hasBorders = false;
-
-      o.lockMovementX = true;
-      o.lockMovementY = true;
-      o.lockScalingX  = true;
-      o.lockScalingY  = true;
-      o.lockRotation  = true;
-
-      showAllResizeHandles(o,false);
-      return;
-    }
-
-    o.evented = true;
-    o.lockRotation = true;
-
-    if(tool === "draw"){
-      o.selectable = false;
-      o.hasControls = false;
-      o.hasBorders = false;
-      showAllResizeHandles(o,false);
-      return;
-    }
-
-    if(tool === "move"){
-      o.selectable = true;
-      o.hasControls = false;
-      o.hasBorders = true;
-
-      o.lockMovementX = false;
-      o.lockMovementY = false;
-      o.lockScalingX  = true;
-      o.lockScalingY  = true;
-
-      showAllResizeHandles(o,false);
-      return;
-    }
-
-    if(tool === "resize"){
-      o.selectable = true;
-      o.hasControls = true;
-      o.hasBorders = true;
-
-      o.lockMovementX = false;
-      o.lockMovementY = false;
-      o.lockScalingX  = false;
-      o.lockScalingY  = false;
-
-      showAllResizeHandles(o,true);
-      return;
-    }
-  });
-
-  canvas.requestRenderAll();
-}
-
-function setUI(){
-$("editorState").style.opacity = isEditor ? "1" : "0.35";
-
-  ["btnMove","btnDraw","btnResize"].forEach(id=>{
-    $(id).disabled = !isEditor;
-  });
-
-  updateQuickbar();
-  applyMode();
-}
-// =========================================================
-// TOGGLE MODE ÉDITEUR / LECTURE
-// =========================================================
-$("editorState").addEventListener("click", ()=>{
-  isEditor = !isEditor;
-  setUI();
-  clearSelection();
-});
-
-
-function setTool(newTool){
-  if(!isEditor) return;
-  tool = newTool;
-  setUI();
-}
-
-function showInfo(z){
-  if(!z){
-    $("infoTitle").textContent = "Sélectionne une zone";
-    $("infoText").textContent = "";
-    return;
-  }
-
-  if(z.partId && PARTS[z.partId]){
-    const p = PARTS[z.partId];
-    $("infoTitle").textContent = p.nom || z.partId;
-    $("infoText").textContent = (p.role || "") + (p.desc ? " — " + p.desc : "");
-    return;
-  }
-
-  $("infoTitle").textContent = z.nom || "Zone";
-  $("infoText").textContent = (z.role || "") + (z.desc ? " — " + z.desc : "");
-}
-
-function updateBreadcrumb(){
-  const bc = $("breadcrumb");
-  if(!bc) return;
-
-  if(viewStack.length === 0){
-    bc.textContent = "";
-    return;
-  }
-
-  const labels = viewStack.map(id=>{
-    const v = VIEWS_CATALOG.find(x=>x.id === id);
-    return v ? v.label.replace(/^🔰 /,"") : id;
-  });
-
-  const current = VIEWS_CATALOG.find(v=>v.id === currentViewId);
-  if(current) labels.push(current.label.replace(/^🔰 /,""));
-
-  bc.textContent = "🔙 " + labels.join(" › ");
-}
-
-
-
-function selectObj(obj){
-  if(!obj || !obj.zoneData) return;
-
-  selected = obj;
-  canvas.setActiveObject(obj);
-
-  $("partSelect").value = selected.zoneData.partId || "";
-  $("linkViewSelect").value = selected.zoneData.linkedViewId || "";
-
-  showInfo(obj.zoneData);
-  if(!isEditor && obj.zoneData.linkedViewId){
-  $("infoText").innerHTML +=
-    `<div style="margin-top:6px; font-weight:700; opacity:.85;">
-      👉 Vue détaillée disponible
-    </div>`;
-}
-  applyMode();
-
-  const btn = $("btnOpenLinkedView");
-  if(!isEditor && selected.zoneData.linkedViewId){
-    btn.style.display = "inline-block";
-  } else {
-    btn.style.display = "none";
-  }
-}
-
-function clearSelection(){
-  selected = null;
-  canvas.discardActiveObject();
-  showInfo(null);
-  applyMode();
-  $("btnOpenLinkedView").style.display = "none";
-}
-
-/* =========================================================
-   PANELS
-   ========================================================= */
-function openPiecePanel(){
-  if(!selected) return;
-  $("partSelect").value = selected.zoneData.partId || "";
-  $("piecePanel").classList.add("open");
-}
-function closePiecePanel(){ $("piecePanel").classList.remove("open"); }
-function openMediaViewer(){ $("mediaViewer").classList.add("open"); }
-function closeMediaViewer(){ $("mediaViewer").classList.remove("open"); }
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-$("linkViewSelect").addEventListener("change", ()=>{
-  if(!selected || !selected.zoneData) return;
-
-  selected.zoneData.linkedViewId = $("linkViewSelect").value || "";
-  saveToLocal();
-});
-
-
-$("btnMove").addEventListener("click", ()=> setTool("move"));
-$("btnDraw").addEventListener("click", ()=> setTool("draw"));
-$("btnResize").addEventListener("click", ()=> setTool("resize"));
-
-$("btnPiece").addEventListener("click", openPiecePanel);
-$("btnClosePiecePanel").addEventListener("click", closePiecePanel);
-
-$("btnDelete").addEventListener("click", ()=>{
-  if(!isEditor || !selected) return;
-  if(!confirm("Supprimer cette zone ?")) return;
-
-  canvas.remove(selected);
-  zonesData = zonesData.filter(z => z !== selected.zoneData);
-
-  VIEWS[currentViewId].zones = zonesData;
-  clearSelection();
-  saveToLocal();
-});
-
-$("btnIO").addEventListener("click", ()=>{
-  const action = prompt("Tape 1 pour EXPORT, 2 pour IMPORT");
-  if(action === "1") exportZonesJSON();
-  if(action === "2") $("fileInput").click();
-});
-
-
-$("btnViewMenu").addEventListener("click", openViewMenu);
-
-/* =========================================================
-   PART SELECT
-   ========================================================= */
-$("partSelect").addEventListener("change", ()=>{
-  if(!selected || !selected.zoneData) return;
-
-  const v = $("partSelect").value;
-
-  if(v === "__new__"){
-    const nom = prompt("Nom de la nouvelle pièce ?");
-    if(!nom){
-      $("partSelect").value = selected.zoneData.partId || "";
-      return;
-    }
-
-    const baseId = nom.toLowerCase().trim()
-      .replace(/\s+/g,"_")
-      .replace(/[^a-z0-9_]/g,"");
-
-    const id = baseId ? baseId : ("piece_" + Date.now());
-    const newPart = { id, nom, circuit:"", role:"", desc:"", medias:{ images:[], videos:[] } };
-
-    PARTS_LIST.push(newPart);
-    PARTS[id] = newPart;
-
-    savePartsToLocal();
-    remplirMenuPieces();
-
-    selected.zoneData.partId = id;
-    $("partSelect").value = id;
-    saveToLocal();
-    showInfo(selected.zoneData);
-    return;
-  }
-
-  selected.zoneData.partId = v || "";
-  saveToLocal();
-  showInfo(selected.zoneData);
-});
-
-/* =========================================================
-   MEDIA VIEWER
-   ========================================================= */
-$("btnShowMedia").addEventListener("click", ()=>{
-  if(!selected || !selected.zoneData || !selected.zoneData.partId) return;
-
-  const part = PARTS[selected.zoneData.partId];
-  if(!part || !part.medias){
-    alert("Aucun média pour cette pièce.");
-    return;
-  }
-
-  const box = $("mediaContent");
-  box.innerHTML = "";
-
-  (part.medias.images || []).forEach(src=>{
-    const d = document.createElement("div");
-    d.className = "mediaBlock";
-    d.innerHTML = `<img src="${src}" loading="lazy" alt="">`;
-    box.appendChild(d);
-  });
-
-(part.medias.videos || []).forEach(src=>{
-  const d = document.createElement("div");
-  d.className = "mediaBlock";
-
-  d.innerHTML = `
-    <div style="position:relative;">
-      <video src="${src}" playsinline preload="metadata" style="width:100%; border-radius:12px;"></video>
-      <button class="videoToggle"
-        style="
-          position:absolute;
-          bottom:12px;
-          right:12px;
-          padding:8px 12px;
-          font-size:18px;
-          font-weight:900;
-          border-radius:10px;
-          border:none;
-          background:#ff9800;
-          color:#000;
-        ">
-        ▶️
-      </button>
-    </div>
-  `;
-
-  const video = d.querySelector("video");
-const btn = d.querySelector(".videoToggle");
-
-btn.addEventListener("click", ()=>{
-  if(video.paused){
-    stopAllVideos?.(); // optionnel
-    video.play();
-    btn.textContent = "⏸️ Pause";
-  }else{
-    video.pause();
-    btn.textContent = "▶️ Lire la vidéo";
-  }
-});
-
-video.addEventListener("ended", ()=>{
-  btn.textContent = "▶️ Lire la vidéo";
-});
-  box.appendChild(d);
-});
-
-  openMediaViewer();
-});
-
-$("btnCloseMedia").addEventListener("click", closeMediaViewer);
-
-$("btnAddImage").addEventListener("click", ()=>{
-  if(!selected) return alert("Sélectionne une zone d’abord.");
-  if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
-
-  const part = PARTS[selected.zoneData.partId];
-  if(!part.medias) part.medias = { images:[], videos:[] };
-
-  const choix = prompt("Choisis une image :\n\n" + ASSETS.images.map((p,i)=>`${i+1}. ${p}`).join("\n"));
-  const idx = parseInt(choix,10) - 1;
-  if(isNaN(idx) || !ASSETS.images[idx]) return;
-
-  part.medias.images.push(ASSETS.images[idx]);
-  savePartsToLocal();
-  saveToLocal();
-
-  alert("Image ajoutée à la pièce");
-});
-
-$("btnAddVideo").addEventListener("click", ()=>{
-  if(!selected) return alert("Sélectionne une zone d’abord.");
-  if(!selected.zoneData?.partId) return alert("Associe une pièce à la zone avant d’ajouter des médias.");
-
-  const part = PARTS[selected.zoneData.partId];
-  if(!part.medias) part.medias = { images:[], videos:[] };
-
-  const choix = prompt("Choisis une vidéo :\n\n" + ASSETS.videos.map((p,i)=>`${i+1}. ${p}`).join("\n"));
-  const idx = parseInt(choix,10) - 1;
-  if(isNaN(idx) || !ASSETS.videos[idx]) return;
-
-  part.medias.videos.push(ASSETS.videos[idx]);
-  savePartsToLocal();
-  saveToLocal();
-
-  alert("Vidéo ajoutée à la pièce");
-});
-
-/* =========================================================
-   IMPORT / EXPORT
-   ========================================================= */
-$("fileInput").addEventListener("change", e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-
-  const reader = new FileReader();
-  reader.onload = ev=>{
-    try{
-      const data = JSON.parse(ev.target.result);
-      if(!Array.isArray(data)) throw new Error("format invalide");
-
-      zonesData = data.map(z=>({
-  id: ("zone_" + Date.now() + "_" + Math.floor(Math.random()*100000)),
-  x: Number(z.x)||0,
-  y: Number(z.y)||0,
-  w: Number(z.w)||20,
-  h: Number(z.h)||20,
-  nom:"",
-  role:"",
-  desc:"",
-  partId: z.partId || "",
-  linkedViewId: z.linkedViewId || ""
-}));
-
-      VIEWS[currentViewId].zones = zonesData;
-
-      canvas.clear();
-      zonesData.forEach(z=>canvas.add(makeRectFromZone(z)));
-
-      clearSelection();
-      saveToLocal();
-      scheduleRelayout(150);
-
-      alert("Import réussi");
-    }catch(err){
-      alert("JSON invalide");
-      console.error(err);
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = "";
-});
-
-function exportZonesJSON(){
-  const data = zonesData.map(z => ({
-    partId: z.partId || z.id,
-    x: z.x, y: z.y, w: z.w, h: z.h
-  }));
-
-  const json = JSON.stringify(data, null, 2);
-
-  try{
-    const blob = new Blob([json], { type:"application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "zones_mobile.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    setTimeout(()=>URL.revokeObjectURL(url), 250);
-  }catch(e){
-    prompt("Copie-colle ce JSON :", json);
-  }
-}
-
-/* =========================================================
-   FABRIC EVENTS (draw/select/resize sync)
-   ========================================================= */
-canvas.on("mouse:down", opt => {
-  const obj = opt.target;
-
-  if(isEditor && tool === "draw"){
-    drawing = true;
-    startPt = canvas.getPointer(opt.e);
-
-    tempRect = new fabric.Rect({
-      left: startPt.x,
-      top: startPt.y,
-      width: 2,
-      height: 2,
-      fill: "rgba(255,255,255,0.10)",
-      stroke: "#00a2ff",
-      strokeWidth: 3,
-      selectable:false,
-      evented:false
-    });
-
-    canvas.add(tempRect);
-    canvas.requestRenderAll();
-    return;
-  }
-
-  if(obj){
-    selectObj(obj);   // ✅ toujours afficher l’info
-  } else {
-    clearSelection();
-  }
-});
-canvas.on("mouse:move", opt => {
-  if(!(drawing && tempRect)) return;
-  const p = canvas.getPointer(opt.e);
-
-  const left = Math.min(startPt.x, p.x);
-  const top  = Math.min(startPt.y, p.y);
-  const w = Math.abs(p.x - startPt.x);
-  const h = Math.abs(p.y - startPt.y);
-
-  tempRect.set({ left, top, width:Math.max(2,w), height:Math.max(2,h) });
-  tempRect.setCoords();
-  canvas.requestRenderAll();
-});
-
-canvas.on("mouse:up", () => {
-  if(!(drawing && tempRect)) return;
-  drawing = false;
-
-  const r = tempRect;
-  canvas.remove(tempRect);
-  tempRect = null;
-
-  const w = r.width || 0;
-  const h = r.height || 0;
-  if(w < 12 || h < 12) return;
-
-  const id = "zone_" + Date.now();
-  const z = {
-  id,
-  x: Math.round(r.left),
-  y: Math.round(r.top),
-  w: Math.round(w),
-  h: Math.round(h),
-  nom:"",
-  role:"",
-  desc:"",
-  partId:"",
-  linkedViewId: ""   // 🔗 NOUVEAU
-};
-
-  zonesData.push(z);
-  VIEWS[currentViewId].zones = zonesData;
-saveToLocal();
-  
-
-  const rect = makeRectFromZone(z);
-  canvas.add(rect);
-
-  selectObj(rect);
-  setTool("move");
-
-  saveToLocal();
-});
-
-canvas.on("object:modified", e => {
-  if(!isEditor) return;
-  const o = e.target;
-  if(!o || !o.zoneData) return;
-
-  const z = o.zoneData;
-
-  const newW = Math.round(o.getScaledWidth());
-  const newH = Math.round(o.getScaledHeight());
-
-  z.x = Math.round(o.left);
-  z.y = Math.round(o.top);
-  z.w = newW;
-  z.h = newH;
-
-  o.set({ scaleX:1, scaleY:1, width:z.w, height:z.h, left:z.x, top:z.y });
-  o.setCoords();
-VIEWS[currentViewId].zones = zonesData;
-  saveToLocal();
-});
-
-/* =========================================================
-   STABLE LAYOUT EVENTS (UNIFIÉS)
-   ========================================================= */
-window.addEventListener("resize", () => scheduleRelayout(300));
-window.addEventListener("orientationchange", () => scheduleRelayout(450));
-if(window.visualViewport){
-  window.visualViewport.addEventListener("resize", () => scheduleRelayout(300));
-  window.visualViewport.addEventListener("scroll", () => scheduleRelayout(300));
-}
-
-function updateBackButton(){
-  const btn = $("btnBackView");
-  if(!btn) return;
-  btn.style.display = viewStack.length > 0 ? "inline-block" : "none";
-}
-
-function openVideoView(src){
-  // cacher image + canvas
-  $("mediaLayer").style.display = "none";
-  $("canvasWrap").style.display = "none";
-
-  const videoLayer = $("videoLayer");
-  videoLayer.style.display = "block";
-
-  videoLayer.innerHTML = `
-    <video
-      src="${src}"
-      controls
-      playsinline
-      webkit-playsinline
-      preload="metadata"
-      style="
-        width:100%;
-        height:100%;
-        object-fit:contain;
-        background:#000;
-      ">
-    </video>
-  `;
-
- 
-}
-
-function loadView(viewId){
-
-  if(
-    !isBackNavigation &&
-    currentViewId &&
-    currentViewId !== viewId
-  ){
-    viewStack.push(currentViewId);
-  }
-
-  isBackNavigation = false; // 🔒 reset systématique après usage
-
-  // 🔙 si on sort d’une vidéo
-  $("videoLayer").style.display = "none";
-  $("videoLayer").innerHTML = "";
-
-  $("mediaLayer").style.display = "block";
-  $("canvasWrap").style.display = "block";
-
-  const meta = VIEWS_CATALOG.find(v => v.id === viewId);
-  if(!meta) return;
-
-  // 🔴 CAS VIDÉO
-  if(meta.type === "video"){
-    openVideoView(meta.src);
-    updateBackButton();
-    updateBreadcrumb();
-    return;
-  }
-
-  // 🟢 CAS IMAGE
-  const img = $("imgLayer");
-  img.onload = () => {
-    currentViewId = viewId;
-    ensureView(viewId);
-    bootZones();
-    updateBreadcrumb();
-    updateBackButton();
-    scheduleRelayout(300);
-  };
-  img.src = meta.src;
-}
-
-function openViewMenu(){
-  viewList.innerHTML = "";
-
-  VIEWS_CATALOG.forEach(v=>{
-    const b = document.createElement("button");
-    b.className = "btn";
-    b.textContent = (currentViewId === v.id ? "✅ " : "") + v.label;
-    b.onclick = () => {
-      closeViewMenu();
-      loadView(v.id);
-    };
-    viewList.appendChild(b);
-  });
-
-  viewMenu.style.display = "flex";
-}
-
-function closeViewMenu(){
-  viewMenu.style.display = "none";
-}
-
-
-
-  $("btnOpenLinkedView").addEventListener("click", ()=>{
-  if(!selected || !selected.zoneData?.linkedViewId) return;
-
-  loadView(selected.zoneData.linkedViewId);
-});
-
-$("btnBackView").addEventListener("click", ()=>{
-  if(viewStack.length === 0) return;
-
-  isBackNavigation = true;   // 🔙 on marque un retour volontaire
-  const prev = viewStack.pop();
-  loadView(prev);
-  updateBackButton();
-});
-
-/* =========================================================
-   BOOT
-   ========================================================= */
-tool = "move";
-setUI();
-loadView("reference");
 </script>
-
-
-
+<script>
+(()=>{'use strict';
+const C=Q310Core,$=id=>document.getElementById(id),WORK_KEY='q310_project_v2',PREVIOUS_KEY='q310_project_v2_previous';
+let config,seed,project;
+try{config=JSON.parse($('appConfig').textContent);seed=C.validate(JSON.parse($('projectData').textContent));project=C.clone(seed);}catch(e){$('app').textContent='Le projet ne peut pas être ouvert : '+e.message;return;}
+let initialWarning='';
+if(config.useLocal&&!config.readonly){try{const raw=localStorage.getItem(WORK_KEY);if(raw)project=C.validate(JSON.parse(raw));}catch(e){initialWarning='Le brouillon local n’a pas pu être chargé. La version intégrée est affichée. Le brouillon existant est conservé.';}}
+let editor=false,currentId=project.views[0].id,selectedZoneId='',selectedPartId='',tabName='fiche',zoom=1,history=[],undo=[],busy=false,importCandidate=null,drag=null;
+const GROUPS={LP:'Basse pression (BP / LP)',INTER:'Entre les deux étages',HP:'Haute pression (HP)',LUB:'Lubrification',CTRL:'Commande et protection',TR:'Transmission'};
+const view=()=>project.views.find(v=>v.id===currentId)||project.views[0];
+const zone=()=>view().zones.find(z=>z.id===selectedZoneId);
+const part=()=>project.parts.find(p=>p.id===selectedPartId);
+const asset=s=>new URL(C.source(s),project.assetBase).href;
+const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e;};
+const btn=(txt,fn,cls='')=>{const b=el('button',cls,txt);b.type='button';b.onclick=fn;return b;};
+const option=(value,label)=>{const o=el('option','',label);o.value=value;return o;};
+let toastTimer;
+function toast(message,error=false){$('toast').textContent=message;$('toast').className='toast'+(error?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,error?10000:5500);$('toast').hidden=false;}
+function requireEditor(){if(!editor||config.readonly)throw Error('Cette action est réservée au mode enseignant.');}
+function save(){
+  project.updatedAt=new Date().toISOString();
+  try{localStorage.setItem(WORK_KEY,JSON.stringify(project));$('saveState').textContent='Brouillon enregistré sur cet appareil.';return true;}
+  catch(e){$('saveState').textContent='Enregistrement local impossible. Utilise « Sauvegarder le projet » pour conserver ton travail.';toast('Le travail reste dans cet onglet. Exporte le projet avant de fermer.',true);return false;}
+}
+function checkpoint(){requireEditor();undo.push(C.clone(project));if(undo.length>20)undo.shift();}
+function change(fn){requireEditor();checkpoint();fn();const saved=save();renderSide();renderZones();return saved;}
+function download(name,body,type){const a=document.createElement('a');const u=URL.createObjectURL(new Blob([body],{type}));a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);}
+function exportProject(){requireEditor();download('projet_q310_complet.json',JSON.stringify(project,null,2),'application/json');toast('Projet complet exporté : vues, repères, fiches et liens vers les médias.');}
+function exportPage(){
+  requireEditor();const copy=document.documentElement.cloneNode(true);
+  copy.querySelector('#app').innerHTML='';const published=C.clone(project);delete published.legacyArchive;copy.querySelector('#projectData').textContent=JSON.stringify(published).replace(/</g,'\\u003c');
+  copy.querySelector('#appConfig').textContent=JSON.stringify({readonly:true,useLocal:false,build:config.build});
+  download('index.html','<!doctype html>\n'+copy.outerHTML,'text/html;charset=utf-8');toast('Page élèves créée. Elle contient les fiches et repères de ce projet.');
+}
+function stopVideos(container=document){container.querySelectorAll('video').forEach(v=>v.pause());}
+function setMode(value){editor=!!value&&!config.readonly;if(!editor&&drag)endDrag(true);$('modeBtn').textContent=editor?'Terminer la préparation':'Mode enseignant';$('modeBadge').textContent=editor?'Préparation':'Consultation';$('teacherBar').hidden=!editor;renderSide();renderZones();renderRecovery();updateImageHint();}
+function go(id,push=true){if(drag)endDrag(true);if(!project.views.some(v=>v.id===id))return;stopVideos();if(push&&id!==currentId)history.push(currentId);currentId=id;selectedZoneId='';selectedPartId='';zoom=1;renderStage();renderSide();}
+function goBack(){if(history.length)go(history.pop(),false);}
+function showDialog(id){stopVideos();$(id).showModal();}
+function closeDialog(id){stopVideos($(id));$(id).close();}
+function build(){
+$('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram">Q310</div><div><div class="badge" id="modeBadge">Consultation</div><h1>Atelier du compresseur</h1><p>Observer les composants. Comprendre leur rôle.</p></div></div><div class="actions"><a id="manualBtn" class="button" href="CompresseurManuel.pdf" target="_blank" rel="noopener noreferrer">Manuel PDF</a><button id="helpBtn">Aide</button><button id="modeBtn">Mode enseignant</button></div></header>
+<nav class="tools" aria-label="Navigation"><button id="homeBtn">Vue générale</button><select id="viewSelect" aria-label="Choisir une vue"></select><button id="backBtn">Retour</button><span class="spacer"></span><span class="counter" id="pieceCount"></span></nav>
+<div id="recoveryNotice" class="notice" hidden></div>
+<main class="layout"><section class="work" aria-label="Image interactive"><div class="viewbar"><div class="title"><h2 id="viewTitle"></h2></div><button id="zoomOut" aria-label="Réduire l’image">−</button><span id="zoomLabel" class="counter">100 %</span><button id="zoomIn" aria-label="Agrandir l’image">+</button><button id="zoomFit">Ajuster</button></div><div class="viewport" id="viewport"></div><div class="caption"><span id="imageHint">Clique directement sur une pièce de la photo pour ouvrir sa fiche.</span><span id="zoneCount"></span></div><div id="teacherBar" class="note" hidden>Préparation : sélectionne une zone pour la déplacer ou utilise sa poignée pour la redimensionner. Les numéros suivent l’ordre des zones.</div></section>
+<aside class="side" aria-label="Fiches et préparation"><div class="tabbar"><button id="tabFiche" aria-pressed="true">Fiche</button><button id="tabPieces" aria-pressed="false">Toutes les pièces</button></div><div id="detail"></div><div id="catalogue" hidden><label for="searchParts">Rechercher une pièce</label><input id="searchParts" type="search" placeholder="Ex. : huile, soupape…"><label for="groupFilter">Famille</label><select id="groupFilter"></select><div id="partsList"></div></div><div id="teacherTools" hidden></div><div id="saveState" class="dirty-status" aria-live="polite"></div></aside></main>
+<footer>Quincy Q310 · Version 2 · Photos de référence et composants selon équipement · <span id="footerBuild"></span></footer>
+<div id="toast" class="toast" role="status" hidden></div><input id="importFile" type="file" accept=".json,application/json" hidden>
+<dialog id="mediaDialog"><div class="dialog-head"><h2 id="mediaTitle">Médias</h2><button id="closeMedia">Fermer</button></div><div id="mediaContent"></div></dialog>
+<dialog id="helpDialog"><div class="dialog-head"><h2>Comprendre le compresseur</h2><button id="closeHelp">Fermer</button></div><div id="helpContent"></div></dialog>
+<dialog id="importDialog"><div class="dialog-head"><h2>Importer un projet</h2><button id="cancelImport">Annuler</button></div><p id="importSummary"></p><p>Le brouillon actuel sera remplacé. Une copie de retour sera conservée sur cet appareil si l’espace disponible le permet.</p><div class="actions"><button id="backupBeforeImport">Sauvegarder le projet actuel</button><button id="confirmImport" class="primary">Importer ce projet</button></div></dialog>
+<dialog id="legacyDialog"><div class="dialog-head"><h2>Récupérer les anciennes annotations</h2><button id="cancelLegacy">Annuler</button></div><p>Les anciennes zones sont mesurées en pixels d’écran. Ajuste la largeur d’origine pour que leurs cadres retrouvent la bonne position sur chaque photo.</p><div class="note">Les données d’origine restent intactes. Les vues récupérées remplacent les zones correspondantes dans le brouillon V2. Tu pourras ensuite déplacer chaque repère.</div><div id="legacyViews"></div><div class="actions"><button id="legacyBackup">Sauvegarder les données d’origine</button><button id="legacyApply" class="primary">Récupérer ces annotations</button></div><p id="legacyError" class="media-error" role="alert"></p></dialog>`;
+  $('modeBtn').hidden=!!config.readonly;$('modeBtn').onclick=()=>setMode(!editor);$('homeBtn').onclick=()=>go(project.views[0].id);$('backBtn').onclick=goBack;$('viewSelect').onchange=e=>go(e.target.value);
+  $('zoomIn').onclick=()=>setZoom(Math.min(4,zoom+.25));$('zoomOut').onclick=()=>setZoom(Math.max(1,zoom-.25));$('zoomFit').onclick=()=>setZoom(1);
+  $('tabFiche').onclick=()=>{tabName='fiche';renderSide();};$('tabPieces').onclick=()=>{tabName='pieces';renderSide();};$('searchParts').oninput=renderParts;$('groupFilter').onchange=renderParts;
+  $('helpBtn').onclick=openHelp;$('closeHelp').onclick=()=>closeDialog('helpDialog');$('closeMedia').onclick=()=>closeDialog('mediaDialog');$('mediaDialog').addEventListener('close',()=>{stopVideos($('mediaDialog'));$('mediaContent').replaceChildren();});
+  $('cancelImport').onclick=()=>{$('importDialog').close();importCandidate=null;};$('backupBeforeImport').onclick=exportProject;$('confirmImport').onclick=applyImport;
+  $('cancelLegacy').onclick=()=>closeDialog('legacyDialog');$('importFile').onchange=onImport;
+  $('groupFilter').append(option('','Toutes les familles'));Object.entries(GROUPS).forEach(([k,v])=>$('groupFilter').append(option(k,v)));
+  $('footerBuild').textContent=config.build;
+  new ResizeObserver(()=>fitImage()).observe($('viewport'));
+  window.addEventListener('resize',fitImage);
+}
+function setZoom(value){zoom=value;fitImage();if(zoom===1){$('viewport').scrollTop=0;$('viewport').scrollLeft=0;}}
+function fitImage(){const box=$('photoBox'),img=$('mainImage'),vp=$('viewport');if(!box||!img||!img.naturalWidth)return;const base=Math.min(Math.max(1,vp.clientWidth-2)/img.naturalWidth,Math.max(1,vp.clientHeight-2)/img.naturalHeight);box.style.width=(img.naturalWidth*base*zoom)+'px';box.style.height=(img.naturalHeight*base*zoom)+'px';$('zoomLabel').textContent=Math.round(zoom*100)+' %';$('zoomOut').disabled=zoom<=1;$('zoomIn').disabled=zoom>=4;}
+function updateImageHint(){if(view().type==='video'){$('imageHint').textContent='Vidéo de fonctionnement — utilise les commandes de lecture.';}else{$('imageHint').textContent=editor?'Sélectionne un repère numéroté pour modifier sa fiche ou sa position.':'Clique directement sur une pièce de la photo pour ouvrir sa fiche.';}}
+function renderStage(){
+  const v=view();$('viewSelect').replaceChildren(...project.views.map(x=>option(x.id,x.label)));$('viewSelect').value=v.id;$('backBtn').disabled=!history.length;$('viewTitle').textContent=v.label;$('viewport').replaceChildren();
+  ['zoomIn','zoomOut','zoomFit','zoomLabel'].forEach(id=>$(id).hidden=v.type==='video');
+  if(v.type==='video'){const video=el('video','stage-video');video.src=asset(v.src);video.controls=true;video.playsInline=true;video.preload='metadata';video.onerror=()=>toast('La vidéo ne peut pas être chargée. Vérifie la connexion et son adresse.',true);$('viewport').append(video);$('imageHint').textContent='Vidéo de fonctionnement — utilise les commandes de lecture.';}
+  else{const box=el('div','photo-box');box.id='photoBox';const img=el('img');img.id='mainImage';img.alt=v.label;img.draggable=false;img.onload=fitImage;img.onerror=()=>{$('viewport').replaceChildren(el('p','note','Cette image est indisponible. Vérifie la connexion ou choisis une autre vue.'));};const layer=el('div','zone-layer');layer.id='zoneLayer';box.append(img,layer);$('viewport').append(box);img.src=asset(v.src);$('imageHint').textContent='Clique directement sur une pièce de la photo pour ouvrir sa fiche.';renderZones();}
+  $('zoneCount').textContent=v.type==='image'?v.zones.length+(editor?(v.zones.length===1?' repère':' repères'):(v.zones.length===1?' zone active':' zones actives')):'';updateImageHint();
+}
+function selectZone(id){const z=view().zones.find(x=>x.id===id);if(!z)return;selectedZoneId=id;selectedPartId=z.partId;tabName='fiche';renderZones();renderSide();}
+function renderZones(){const layer=$('zoneLayer');if(!layer)return;layer.replaceChildren();view().zones.forEach((z,i)=>{
+  const p=project.parts.find(p=>p.id===z.partId);const b=btn('',()=>{if(!drag)selectZone(z.id);},'zone'+(z.id===selectedZoneId?' selected':'')+(editor?' editor-zone':''));b.dataset.zoneId=z.id;b.setAttribute('aria-label',(i+1)+'. '+(p?.nom||z.nom||'Zone à identifier'));if(editor)b.title=p?.nom||z.nom||'Zone à identifier';Object.assign(b.style,{left:z.x*100+'%',top:z.y*100+'%',width:z.w*100+'%',height:z.h*100+'%'});b.append(el('span','',String(i+1)));
+  if(editor){b.onpointerdown=e=>startDrag(e,z,false,b);b.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();change(()=>{const d=e.shiftKey ? .01 : .002;z.x=Math.max(0,Math.min(1-z.w,z.x+(e.key==='ArrowRight'?d:e.key==='ArrowLeft'?-d:0)));z.y=Math.max(0,Math.min(1-z.h,z.y+(e.key==='ArrowDown'?d:e.key==='ArrowUp'?-d:0)));});};if(z.id===selectedZoneId){const h=el('i','resize-handle');h.setAttribute('aria-hidden','true');h.onpointerdown=e=>startDrag(e,z,true,b);b.append(h);}}
+  layer.append(b);
+});$('zoneCount').textContent=view().zones.length+(editor?(view().zones.length===1?' repère':' repères'):(view().zones.length===1?' zone active':' zones actives'));}
+function startDrag(e,z,resize,target){if(drag||!editor||e.button!==0)return;e.preventDefault();e.stopPropagation();const r=$('photoBox').getBoundingClientRect();drag={id:z.id,x:e.clientX,y:e.clientY,original:C.clone(z),before:C.clone(project),rect:r,resize,target,moved:false,pointer:e.pointerId};target.setPointerCapture(e.pointerId);target.addEventListener('pointermove',moveDrag);target.addEventListener('pointerup',onDragUp);target.addEventListener('pointercancel',onDragCancel);}
+function moveDrag(e){if(!drag||e.pointerId!==drag.pointer)return;const z=view().zones.find(x=>x.id===drag.id),dx=(e.clientX-drag.x)/drag.rect.width,dy=(e.clientY-drag.y)/drag.rect.height;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)<3&&!drag.moved)return;drag.moved=true;
+  if(drag.resize){z.w=Math.max(.015,Math.min(1-z.x,drag.original.w+dx));z.h=Math.max(.015,Math.min(1-z.y,drag.original.h+dy));}else{z.x=Math.max(0,Math.min(1-z.w,drag.original.x+dx));z.y=Math.max(0,Math.min(1-z.h,drag.original.y+dy));}Object.assign(drag.target.style,{left:z.x*100+'%',top:z.y*100+'%',width:z.w*100+'%',height:z.h*100+'%'});
+}
+function onDragUp(){endDrag(false);}function onDragCancel(){endDrag(true);}
+function endDrag(cancel){if(!drag)return;const d=drag;d.target.removeEventListener('pointermove',moveDrag);d.target.removeEventListener('pointerup',onDragUp);d.target.removeEventListener('pointercancel',onDragCancel);if(d.target.hasPointerCapture(d.pointer))d.target.releasePointerCapture(d.pointer);drag=null;if(cancel)project=d.before;else if(d.moved){undo.push(d.before);if(undo.length>20)undo.shift();save();}selectZone(d.id);}
+// Pages imprimées du manuel 50214-106, février 2008. PDF = page imprimée + 1.
+const MANUAL_REFS = {
+  filtre_air:[15,'Cylindre et culasse — version L','Repère 14 : filtre 110377F075; élément 110377E075.'],
+  silencieux_admission:[15,'Cylindre et culasse — version L','Repère 14 : option filtre/silencieux 110377S075. Présence à vérifier sur la machine.'],
+  cylindre_lp:[15,'Cylindre et culasse — version L','Repère 1 : bloc-cylindres 1999 commun aux deux étages.'],
+  cylindre_hp:[15,'Cylindre et culasse — version L','Repère 1 : bloc-cylindres 1999 commun aux deux étages. La variante haute pression utilise une autre référence.'],
+  intercooler:[15,'Cylindre et culasse — version L','Repère 9 : refroidisseur intermédiaire 15652.'],
+  soupape_admission_lp:[17,'Culasse — version L','Repère 3 : soupape d’admission 4610X2; ensemble de remplacement avec joints 4610X3. Le plan regroupe les deux étages.'],
+  soupape_admission_hp:[17,'Culasse — version L','Repère 3 : soupape d’admission 4610X2; ensemble de remplacement avec joints 4610X3. Le plan regroupe les deux étages.'],
+  soupape_refoulement_lp:[17,'Culasse — version L','Repère 4 : soupape de refoulement 1553X10; ensemble de remplacement avec joints 1553X11.'],
+  soupape_decharge_hp:[17,'Culasse — version L','Repère 4 : soupape de refoulement 1553X10; ensemble de remplacement avec joints 1553X11.'],
+  dechargeurs_admission:[17,'Culasse — version L','Repères 7 à 11 : mécanisme de décharge à l’admission; ensemble de remplacement 75483X.'],
+  carter:[5,'Carter','Repère 1 : ensemble 5513X002; carter nu 5513-002. Nomenclature p. 6.'],
+  volant:[3,'Vilebrequin et poulie du compresseur','Repère 3 : ensemble poulie 2917X; variante haute pression 2919X. Nomenclature p. 4.'],
+  pompe_huile:[7,'Pompe à huile — montage avec filtre','Repère 1.6 : gerotor 160003; kit de réparation 160078. Nomenclature p. 8. Montage sans filtre : p. 9–10.'],
+  filtre_huile:[7,'Pompe à huile — montage avec filtre','Repère 6 : référence 110814-001, lot de six filtres. Nomenclature p. 8.'],
+  regulateur_debit_huile:[7,'Régulation d’huile','Repères 1.11 à 1.15 : vis, ressort et pointeau de régulation. Nomenclature p. 8; montage sans filtre p. 9–10.'],
+  manometre_huile:[7,'Pompe à huile et manomètre','Repère 4 : manomètre de pression d’huile 110822. Nomenclature p. 8.'],
+  dechargeur_hydraulique:[19,'Commande — version L','Repère 1 : déchargeur hydraulique 110827-001 (0–200 PSI) ou 110827-002 (201–500 PSI), selon configuration.'],
+  anti_retour_sortie:[25,'Clapet antiretour','Ensembles 6194X2 / 6194X3 selon lubrifiant. Correspondance avec le clapet installé à confirmer.'],
+  valve_pilote:[24,'Valves pilotes — autres configurations','Référence documentaire : commande LS/LVD. La présence de cette valve n’est pas confirmée sur ta version L.'],
+  soupape_securite:[17,'Soupape de sûreté de la culasse','Repère 12 : 2961-100 sur la culasse standard. Pour la soupape du réservoir, consulter p. 28–29 : la référence dépend de l’installation.'],
+};
+for(const id of ['pressostat','manometre_hp','poulie_moteur','courroies','reservoir','purge_condensats']) MANUAL_REFS[id]=[28,'Accessoires d’une unité type','Nomenclatures p. 28–29, selon réservoir et motorisation. Référence exacte à confirmer sur l’installation; ces listes ne sont pas une vue éclatée.'];
+function appendManualReference(box,p){
+  const section=el('section','manual-reference');section.style.cssText='margin-top:18px;padding:14px;border:1px solid #b8d3e2;border-radius:10px;background:#f1f8fc';
+  section.append(el('h3','','Référence au plan'));
+  const ref=MANUAL_REFS[p.id];
+  if(ref){
+    section.append(el('p','',ref[1]),el('p','',ref[2]),el('p','muted',`Manuel 50214-106 · février 2008 · p. ${ref[0]} (page ${ref[0]+1} du PDF).`));
+    const a=el('a','button',`Ouvrir le manuel à la page ${ref[0]}`);a.href=`CompresseurManuel.pdf#page=${ref[0]+1}`;a.target='_blank';a.rel='noopener noreferrer';a.style.cssText='display:inline-block;padding:10px;border:1px solid #167da5;border-radius:8px';section.append(a);
+    section.append(el('p','muted','Si le lecteur ne rejoint pas la page automatiquement, utilise le numéro de page PDF indiqué ci-dessus.'));
+  }else section.append(el('p','muted','Aucune correspondance précise confirmée dans ce manuel pour cette fiche.'));
+  box.append(section);
+}
+function renderSide(){
+  $('pieceCount').textContent=project.parts.length+' fiches';$('tabFiche').setAttribute('aria-pressed',String(tabName==='fiche'));$('tabPieces').setAttribute('aria-pressed',String(tabName==='pieces'));$('detail').hidden=tabName!=='fiche';$('catalogue').hidden=tabName!=='pieces';const box=$('detail');box.replaceChildren();const p=part(),z=zone();
+  if(p||z){box.className='detail';const data=p||z;box.append(el('span','pill',GROUPS[data.circuit]||'Composant'),el('h2','',data.nom||'Zone à identifier'));if(data.role)box.append(el('p','',data.role));if(data.desc)box.append(el('p','muted',data.desc));const actions=el('div','actions');
+    if(p&&Object.values(p.medias).some(a=>a.length))actions.append(btn('Photos et documents',()=>showMedia(p)));
+    if(z?.linkedViewId)actions.append(btn('Voir la vue associée',()=>go(z.linkedViewId),'primary'));
+    if(p&&!z){const match=project.views.flatMap(v=>v.zones.map(z=>({v,z}))).find(x=>x.z.partId===p.id);if(match)actions.append(btn('Repérer sur la photo',()=>{go(match.v.id);selectZone(match.z.id);}));else box.append(el('p','muted','Cette fiche n’a pas encore de repère sur une photo.'));}box.append(actions);
+  }else{box.className='';box.append(el('h2','','Choisis un composant'),el('p','muted','Clique sur une pièce de la photo pour ouvrir sa fiche. Les zones interactives sont invisibles en mode élève. La liste « Toutes les pièces » donne aussi accès aux composants sans zone associée.'));}
+  if(p)appendManualReference(box,p);
+  renderParts();renderTeacher();
+}
+function renderParts(){const query=$('searchParts').value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),group=$('groupFilter').value;const list=$('partsList');list.replaceChildren();const parts=project.parts.filter(p=>(!group||p.circuit===group)&&[p.nom,p.role,p.desc].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query));for(const p of parts){const b=btn(p.nom,()=>{selectedPartId=p.id;selectedZoneId='';tabName='fiche';renderSide();renderZones();},'part-row'+(p.id===selectedPartId?' active':''));b.append(el('small','',GROUPS[p.circuit]||'Autre'));list.append(b);}if(!parts.length)list.append(el('p','empty','Aucune pièce trouvée.'));}
+function field(parent,label,value,type='text'){const l=el('label','',label),input=el(type==='textarea'?'textarea':'input');if(type!=='textarea')input.type=type;input.value=value??'';const id=C.uid();input.id=id;l.htmlFor=id;parent.append(l,input);return input;}
+function renderTeacher(){const box=$('teacherTools');box.hidden=!editor;box.replaceChildren();if(!editor)return;
+  const main=el('section','teacher-section');main.append(el('h3','','Préparer le cours'),el('p','muted','Le brouillon reste sur cet appareil. Crée la page élèves pour partager ton contenu.'));
+  main.append(btn('Sauvegarder le projet complet',exportProject,'full primary'),btn('Importer un projet',()=>{$('importFile').value='';$('importFile').click();},'full'),btn('Créer la page élèves',exportPage,'full'),btn('Récupérer les anciennes annotations',recoverLocal,'full'));
+  try{if(localStorage.getItem(PREVIOUS_KEY))main.append(btn('Reprendre le brouillon précédent',()=>{try{importCandidate=C.validate(JSON.parse(localStorage.getItem(PREVIOUS_KEY)));$('importSummary').textContent='Reprendre le brouillon conservé avant le dernier import.';showDialog('importDialog');}catch(e){toast('Brouillon précédent indisponible : '+e.message,true);}},'full'));}catch(e){}
+  const undoBtn=btn('Annuler la dernière modification',()=>{requireEditor();if(!undo.length)return;project=undo.pop();if(!project.views.some(v=>v.id===currentId))currentId=project.views[0].id;selectedZoneId='';selectedPartId='';save();renderStage();renderSide();},'full');undoBtn.disabled=!undo.length;main.append(undoBtn);box.append(main);
+  if(view().type==='image')main.append(btn('Ajouter un repère sur cette vue',()=>change(()=>{const z={id:C.uid(),x:.4,y:.4,w:.16,h:.15,partId:selectedPartId,linkedViewId:'',nom:'',role:'',desc:''};view().zones.push(z);selectedZoneId=z.id;tabName='fiche';}),'full'));
+  const z=zone();if(z){const section=el('section','teacher-section');section.append(el('h3','','Repère sélectionné'));const label=el('label','','Pièce associée'),select=el('select');select.setAttribute('aria-label','Pièce associée au repère');select.append(option('','Aucune pièce'));project.parts.forEach(p=>select.append(option(p.id,p.nom)));select.value=z.partId;select.onchange=()=>change(()=>{z.partId=select.value;selectedPartId=z.partId;});section.append(label,select);
+    const link=el('select');link.setAttribute('aria-label','Vue associée au repère');link.append(option('','Aucune vue'));project.views.filter(v=>v.id!==currentId).forEach(v=>link.append(option(v.id,v.label)));link.value=z.linkedViewId;link.onchange=()=>change(()=>z.linkedViewId=link.value);section.append(el('label','','Vue associée'),link);
+    const numbers=el('div','grid2'),inputs={};for(const [key,label] of [['x','Gauche (%)'],['y','Haut (%)'],['w','Largeur (%)'],['h','Hauteur (%)']]){const sub=el('div');inputs[key]=field(sub,label,+(z[key]*100).toFixed(2),'number');inputs[key].step='.1';inputs[key].min='0';inputs[key].max='100';numbers.append(sub);}section.append(numbers,btn('Appliquer les dimensions',()=>{const next=Object.fromEntries(Object.entries(inputs).map(([k,v])=>[k,Number(v.value)/100]));if(!Object.values(next).every(Number.isFinite)||next.x<0||next.y<0||next.w<=0||next.h<=0||next.x+next.w>1.000001||next.y+next.h>1.000001){toast('Le repère doit rester à l’intérieur de l’image.',true);return;}change(()=>Object.assign(z,next));},'full'));
+    section.append(btn('Supprimer ce repère',()=>{if(confirm('Supprimer ce repère du brouillon ? La commande Annuler permettra de le rétablir.'))change(()=>{view().zones=view().zones.filter(x=>x.id!==z.id);selectedZoneId='';});},'full danger'));box.append(section);
+  }
+  const p=part();if(p){const section=el('section','teacher-section');section.append(el('h3','','Modifier la fiche'));const name=field(section,'Nom',p.nom),role=field(section,'Rôle',p.role),desc=field(section,'Explication',p.desc,'textarea');const group=el('select');group.setAttribute('aria-label','Famille de la pièce');group.append(option('','Autre'));Object.entries(GROUPS).forEach(([k,v])=>group.append(option(k,v)));if(p.circuit&&!GROUPS[p.circuit])group.append(option(p.circuit,p.circuit));group.value=p.circuit;section.append(el('label','','Famille'),group,btn('Enregistrer la fiche',()=>{if(!name.value.trim())return toast('Donne un nom à cette pièce.',true);if(change(()=>Object.assign(p,{nom:name.value.trim(),role:role.value.trim(),desc:desc.value.trim(),circuit:group.value})))toast('Fiche enregistrée.');},'full'));
+    const mediaSelect=el('select');mediaSelect.setAttribute('aria-label','Choisir un média à associer');mediaSelect.append(option('','Choisir une photo, vidéo ou document'));for(const v of project.views)mediaSelect.append(option(v.src,v.label));mediaSelect.append(option('actif/Piston_rod.docx','Document — Piston et bielle'));section.append(el('label','','Médias de la fiche'),mediaSelect,btn('Associer ce média',()=>{if(!mediaSelect.value)return;const src=mediaSelect.value,kind=/\.mp4$/i.test(src)?'videos':/\.docx$/i.test(src)?'documents':'images';if(p.medias[kind].includes(src))return toast('Ce média est déjà associé.');change(()=>p.medias[kind].push(src));},'full'));
+    const mediaList=el('ul','filelist');for(const kind of Object.keys(p.medias))for(const src of p.medias[kind]){const li=el('li','',src.split('/').pop()+' ');li.append(btn('Retirer',()=>change(()=>p.medias[kind]=p.medias[kind].filter(x=>x!==src))));mediaList.append(li);}section.append(mediaList);box.append(section);
+  }
+  box.append(btn('Créer une nouvelle fiche',()=>{const nom=prompt('Nom du composant :');if(!nom?.trim())return;change(()=>{const p={id:'piece_'+C.uid(),nom:nom.trim(),role:'',desc:'',circuit:'',medias:{images:[],videos:[],documents:[]}};project.parts.push(p);selectedPartId=p.id;if(zone())zone().partId=p.id;tabName='fiche';});},'full'));
+}
+function showMedia(p){$('mediaTitle').textContent=p.nom;const box=$('mediaContent');box.replaceChildren();let count=0;for(const kind of ['images','videos','documents'])for(const src of p.medias[kind]){count++;const block=el('div','media-item');block.append(el('p','muted',src.split('/').pop()));if(kind==='documents'){const a=el('a','button','Ouvrir le document');a.href=asset(src);a.target='_blank';a.rel='noopener noreferrer';block.append(a);}else{const item=el(kind==='images'?'img':'video');item.src=asset(src);if(kind==='images'){item.alt=p.nom;item.loading='lazy';}else{item.controls=true;item.playsInline=true;item.preload='metadata';item.onplay=()=>{box.querySelectorAll('video').forEach(v=>{if(v!==item)v.pause();});};}item.onerror=()=>{item.hidden=true;block.append(el('p','media-error','Média indisponible. Vérifie son adresse et la connexion.'));};block.append(item);}box.append(block);}if(!count)box.append(el('p','empty','Aucun média associé.'));showDialog('mediaDialog');}
+function appendAirGuide(box){
+  const guide=el('section','air-guide');guide.append(el('h2','','Cheminement de l’air — Quincy 310 L'),el('p','','Le même air est comprimé deux fois : dans le gros cylindre basse pression (BP), puis dans le petit cylindre haute pression (HP). Les étapes ci-dessous suivent son trajet; les deux pistons travaillent pendant la rotation du vilebrequin.'));
+  const steps=[
+    ['1. Entrée de l’air : filtre et silencieux','Le filtre à air retient les poussières avant leur entrée dans le compresseur. Le silencieux, si installé, atténue le bruit d’aspiration. L’air est encore à une pression voisine de celle de l’atmosphère.'],
+    ['2. Admission dans le cylindre BP','En descendant, le piston augmente le volume du cylindre. Lorsque la pression intérieure devient inférieure à celle de l’admission, la soupape d’admission BP s’ouvre et l’air entre. La soupape de refoulement reste fermée.'],
+    ['3. Première compression et refoulement BP','En remontant, le piston réduit le volume de l’air. La soupape d’admission se ferme; la pression et la température augmentent. Lorsque la pression du cylindre dépasse celle du circuit intermédiaire, la soupape de refoulement BP s’ouvre. L’air quitte le premier étage.'],
+    ['4. Refroidissement entre les deux étages','L’air traverse le refroidisseur intermédiaire (intercooler). Le tube et ses ailettes évacuent une partie de la chaleur vers l’air ambiant. Refroidir l’air réduit son volume pour une même masse à pression comparable et diminue le travail nécessaire au deuxième étage. Ce composant refroidit : il ne réalise pas une deuxième compression.'],
+    ['5. Admission puis compression HP','Le piston HP aspire l’air du refroidisseur à travers sa soupape d’admission. À la remontée, cette soupape se ferme et l’air est comprimé davantage. Le cylindre HP est plus petit parce que l’air, déjà comprimé, occupe moins de volume.'],
+    ['6. Refoulement HP vers le réservoir','Lorsque la pression du cylindre HP dépasse celle de la conduite de sortie, sa soupape de refoulement s’ouvre. L’air passe dans la conduite, puis vers le réservoir par le clapet antiretour. Ce clapet empêche le réservoir de se vider à rebours dans le compresseur. Un refroidisseur final (aftercooler), s’il est installé sur la conduite, retire encore de la chaleur après le deuxième étage.'],
+    ['7. Stockage et utilisation','Le réservoir accumule l’air comprimé et atténue les pulsations. Son manomètre indique la pression disponible. En refroidissant, une partie de la vapeur d’eau contenue dans l’air se condense : la purge au bas du réservoir permet d’évacuer ce liquide. La vanne de sortie alimente le réseau; le régulateur de pression, s’il est installé, adapte la pression à l’utilisation.']
+  ];
+  for(const [title,body] of steps){guide.append(el('h3','',title),el('p','',body));}
+  guide.append(el('h3','','Ce qui fait bouger les pistons'),el('p','','Le moteur entraîne sa poulie, les courroies et la poulie-volant du compresseur. Le vilebrequin et les bielles transforment la rotation en mouvement alternatif des pistons. Les segments limitent les fuites entre piston et cylindre; les joints assurent l’étanchéité des assemblages. Les ailettes des cylindres et la ventilation contribuent au refroidissement. La tension des courroies se règle par le montage du moteur ou le dispositif prévu, selon l’installation.'));
+  guide.append(el('h3','','Le circuit d’huile travaille en parallèle'),el('p','','Le carter contient l’huile. La pompe aspire l’huile à travers une crépine, puis l’envoie sous pression vers les passages de lubrification; un filtre retient les impuretés si le montage en possède un. La régulation d’huile contrôle la pression du circuit, lue au manomètre d’huile. L’huile réduit le frottement et l’usure des organes mobiles. Ce circuit n’est pas une étape du trajet de l’air vers le réservoir.'));
+  guide.append(el('h3','','Démarrage, arrêt et décharge — version L'),el('p','','Le pressostat surveille la pression du réservoir : au seuil bas, il commande le démarrage du moteur; au seuil haut, il commande son arrêt. Les seuils dépendent du réglage de l’installation.'),el('p','','Le déchargeur hydraulique permet un démarrage à vide, avant l’établissement de la pression d’huile. Les déchargeurs d’admission maintiennent alors les soupapes d’admission ouvertes : les pistons se déplacent, mais ne produisent pas normalement d’air comprimé vers le réservoir. Une fois la pression d’huile établie, la compression peut commencer. Une perte de pression d’huile provoque également la décharge; cela ne signifie pas nécessairement que le moteur s’arrête.'),el('p','','La valve pilote concerne les configurations qui en sont équipées, notamment LS/LVD : elle commande la mise en charge et à vide selon la pression du réservoir. Elle n’est pas à supposer présente sur la version L standard.'));
+  guide.append(el('h3','','Soupapes : trois rôles à distinguer'),el('p','','Les soupapes d’admission et de refoulement orientent l’air à chaque course du piston, grâce aux différences de pression. Les déchargeurs empêchent temporairement la compression. Les soupapes de sûreté protègent contre une surpression anormale dans la partie du circuit qu’elles protègent : elles ne servent pas à réguler le fonctionnement normal.'),el('p','note','À retenir : l’air suit BP → refroidisseur intermédiaire → HP → clapet antiretour → réservoir. La transmission fournit le mouvement, l’huile protège les pièces mobiles et la commande adapte la production à la demande.'));
+  guide.append(el('p','muted','Repères documentaires : manuel de pièces 50214-106 (février 2008), p. 15 et 17 pour le bloc et les soupapes, p. 19 pour la commande L; manuel d’instructions QR-25 52201-107, section « System dynamics ». Les accessoires dépendent de l’installation.'));
+  box.append(guide);
+}
+function openHelp(){const box=$('helpContent');box.replaceChildren();appendAirGuide(box);const usage=el('details','');usage.append(el('summary','','Comment utiliser l’application'));const list=el('ol','help-list');for(const txt of ['Choisis une vue dans le menu, puis clique directement sur une pièce de la photo. En mode élève, les cadres et numéros sont invisibles, mais les zones restent cliquables.','Ouvre « Toutes les pièces » pour rechercher un composant ou filtrer une famille.','Utilise + et − pour agrandir la photo. Fais défiler l’image agrandie; « Ajuster » rétablit la vue complète.','Le bouton « Photos et documents » apparaît lorsqu’une fiche possède des médias.','Le bouton « Manuel PDF » ouvre le manuel de pièces Quincy QR-25 modèle 310, révision 106, dans un nouvel onglet.'])list.append(el('li','',txt));usage.append(list);box.append(usage);
+  if(!config.readonly){box.append(el('h3','','Pour l’enseignant'),el('p','','Le mode enseignant prépare un brouillon sur cet appareil. « Sauvegarder le projet complet » crée un fichier JSON réutilisable. « Créer la page élèves » crée un fichier index.html qui contient le contenu préparé, en consultation seulement.'),el('p','note','La page élèves et la sauvegarde contiennent les liens des photos, vidéos et documents. Les médias restent hébergés sur ton site GitHub : une connexion Internet est nécessaire.'));}
+  box.append(el('p','muted','Les fiches générales doivent être adaptées aux composants présents sur la machine de l’atelier. Référence technique intégrée : manuel Quincy QR-25 modèle 310, Record of Change 106, édition février 2008.'));showDialog('helpDialog');}
+function renderRecovery(){const box=$('recoveryNotice');box.replaceChildren();box.hidden=true;if(config.readonly||!editor)return;try{if(localStorage.getItem('q310_views_v1')){box.hidden=false;box.append(el('p','','Des annotations de l’ancienne application sont présentes sur cet appareil.'),btn('Récupérer mes annotations',recoverLocal));}}catch(e){}}
+async function onImport(e){requireEditor();const f=e.target.files[0];if(!f)return;try{if(f.size>10*1024*1024)throw Error('Ce fichier dépasse 10 Mo.');const raw=JSON.parse(await f.text());if(Array.isArray(raw)){await prepareLegacy({views:{[currentId]:{...C.clone(view()),zones:raw}},parts:[]});return;}if(raw.format==='q310-legacy-backup'){await prepareLegacy(raw);return;}const next=C.validate(raw);importCandidate=next;$('importSummary').textContent=`Ce fichier contient ${next.views.length} vues, ${next.parts.length} fiches et ${next.views.reduce((s,v)=>s+v.zones.length,0)} repères.`;showDialog('importDialog');}catch(e){toast('Import refusé : '+e.message,true);}}
+function replaceProject(next){requireEditor();const checked=C.validate(next);checked.updatedAt=new Date().toISOString();try{localStorage.setItem(PREVIOUS_KEY,JSON.stringify(project));localStorage.setItem(WORK_KEY,JSON.stringify(checked));}catch(e){throw Error('Import non appliqué : espace local insuffisant ou stockage indisponible. Le brouillon actuel est conservé. Sauvegarde-le avant de libérer de l’espace.');}checkpoint();project=checked;currentId=project.views[0].id;history=[];selectedZoneId='';selectedPartId='';$('saveState').textContent='Brouillon enregistré sur cet appareil.';renderStage();renderSide();}
+function applyImport(){if(!importCandidate)return;try{replaceProject(importCandidate);importCandidate=null;closeDialog('importDialog');toast('Projet importé. Les médias sont conservés sous forme de liens.');}catch(e){toast(e.message,true);}}
+function recoverLocal(){requireEditor();try{const raw=localStorage.getItem('q310_views_v1');if(!raw)return toast('Aucune ancienne annotation dans ce navigateur. Ouvre cette V2 sur le même site et le même appareil que l’ancienne application, ou importe un ancien JSON.',true);const parts=JSON.parse(localStorage.getItem('q310_parts_v1')||'[]');prepareLegacy({format:'q310-legacy-backup',views:JSON.parse(raw),parts});}catch(e){toast('Récupération impossible : '+e.message,true);}}
+let legacySession=null;
+async function prepareLegacy(raw){
+  requireEditor();if(busy)return;busy=true;try{
+    if(!raw.views||typeof raw.views!=='object'||Array.isArray(raw.views)||!Array.isArray(raw.parts))throw Error('Anciennes données invalides.');
+    const entries=Object.entries(raw.views);if(entries.length>100)throw Error('Trop de vues.');const session={raw:C.clone(raw),rows:[]};const box=$('legacyViews');box.replaceChildren();$('legacyError').textContent='';showDialog('legacyDialog');$('legacyApply').disabled=true;
+    for(const [id,v] of entries){if(!v||!Array.isArray(v.zones)||v.zones.length>1000)throw Error('Une ancienne vue est invalide.');const known=project.views.find(x=>x.id===id)||seed.views.find(x=>x.id===id);if(!v.zones.length)continue;if(v.type==='video')continue;const src=C.source(v.src||known?.src||'');const section=el('section','calibration');section.append(el('h3','',known?.label||id));const input=field(section,'Largeur de l’image lors du dessin (pixels)',390,'number');input.min='1';input.max='10000';input.step='1';const wrap=el('div','cal-image'),img=el('img'),overlay=el('div','cal-overlay');img.alt='Aperçu des anciens repères';wrap.append(img,overlay);section.append(wrap);box.append(section);
+      const ratio=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Image trop lente à charger : '+src)),20000);img.onload=()=>{clearTimeout(timer);resolve(img.naturalHeight/img.naturalWidth);};img.onerror=()=>{clearTimeout(timer);reject(Error('Image introuvable : '+src));};img.src=asset(src);});
+      let minWidth=1;for(const z of v.zones){const vals=['x','y','w','h'].map(k=>Number(z[k]));if(!vals.every(Number.isFinite)||vals[0]<0||vals[1]<0||vals[2]<=0||vals[3]<=0)throw Error('Une ancienne zone a des dimensions invalides; les données originales restent intactes.');minWidth=Math.max(minWidth,vals[0]+vals[2],(vals[1]+vals[3])/ratio);}input.value=String(Math.ceil(Math.max(390,minWidth)));const row={id,label:known?.label||id,src,zones:v.zones,input,ratio};session.rows.push(row);
+      const preview=()=>{overlay.replaceChildren();const w=Number(input.value),h=w*ratio;if(!(w>0))return;v.zones.forEach((z,i)=>{const r=el('div','cal-zone');Object.assign(r.style,{left:100*z.x/w+'%',top:100*z.y/h+'%',width:100*z.w/w+'%',height:100*z.h/h+'%'});r.append(el('span','',String(i+1)));overlay.append(r);});};input.oninput=preview;preview();
+    }
+    if(!session.rows.length&&raw.parts.length===0)throw Error('Aucune annotation ou fiche à récupérer.');legacySession=session;$('legacyApply').disabled=false;
+    $('legacyBackup').onclick=()=>download('q310_anciennes_annotations.json',JSON.stringify(raw,null,2),'application/json');$('legacyApply').onclick=applyLegacy;
+  }catch(e){$('legacyError').textContent=e.message;toast(e.message,true);}finally{busy=false;}
+}
+function applyLegacy(){try{requireEditor();if(!legacySession)return;const s=legacySession,next=C.clone(project);next.legacyArchive=s.raw;
+  for(const p of s.raw.parts){if(!p||!p.id)continue;const idx=next.parts.findIndex(x=>x.id===p.id);const fixed={...p,medias:C.media(p.medias)};if(idx>=0)next.parts[idx]=fixed;else next.parts.push(fixed);}
+  for(const row of s.rows){const width=Number(row.input.value),height=width*row.ratio;const zones=row.zones.map(z=>{const n=C.normalizeLegacyZone(z,width,height);if(!n.partId&&next.parts.some(p=>p.id===z.id))n.partId=z.id;return n;});let target=next.views.find(v=>v.id===row.id);if(!target){target={id:row.id,label:row.label,type:'image',src:row.src,zones:[]};next.views.push(target);}target.zones=zones;target.src=row.src;}
+  // Preserve linked views even when they contained no annotations.
+  for(const [id,v] of Object.entries(s.raw.views)){if(next.views.some(x=>x.id===id))continue;const known=seed.views.find(x=>x.id===id);if(v.src||known)next.views.push({id,label:known?.label||id,type:v.type||known?.type||'image',src:C.source(v.src||known.src),zones:[]});}
+  replaceProject(next);closeDialog('legacyDialog');toast('Annotations récupérées. Vérifie leur position sur chaque vue, puis sauvegarde le projet.');
+}catch(e){$('legacyError').textContent=e.message;}}
+build();setMode(false);renderStage();renderSide();if(initialWarning)toast(initialWarning,true);
+})();
+</script>
 </body>
 </html>
