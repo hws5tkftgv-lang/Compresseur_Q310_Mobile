@@ -101,7 +101,7 @@ const btn=(txt,fn,cls='')=>{const b=el('button',cls,txt);b.type='button';b.oncli
 const option=(value,label)=>{const o=el('option','',label);o.value=value;return o;};
 let toastTimer;
 function toast(message,error=false){$('toast').textContent=message;$('toast').className='toast'+(error?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,error?10000:5500);$('toast').hidden=false;}
-function requireEditor(){if(!editor||config.readonly)throw Error('Cette action est réservée au mode enseignant.');}
+function requireEditor(){if(!editor)throw Error('Cette action est réservée au mode enseignant.');}
 function save(){
   project.updatedAt=new Date().toISOString();
   try{localStorage.setItem(WORK_KEY,JSON.stringify(project));$('saveState').textContent='Brouillon enregistré sur cet appareil.';return true;}
@@ -118,7 +118,8 @@ function exportPage(){
   download('index.html','<!doctype html>\n'+copy.outerHTML,'text/html;charset=utf-8');toast('Page élèves créée. Elle contient les fiches et repères de ce projet.');
 }
 function stopVideos(container=document){container.querySelectorAll('video').forEach(v=>v.pause());}
-function setMode(value){editor=!!value&&!config.readonly;if(!editor&&drag)endDrag(true);$('modeBtn').textContent=editor?'Terminer la préparation':'Mode enseignant';$('modeBadge').textContent=editor?'Préparation':'Consultation';$('teacherBar').hidden=!editor;renderSide();renderZones();renderRecovery();updateImageHint();}
+function setMode(value){if(value&&!editor){$('teacherPassword').value='';$('teacherLoginError').textContent='';showDialog('teacherLogin');$('teacherPassword').focus();return;}applyMode(false);}
+function applyMode(value){editor=!!value;if(!editor&&drag)endDrag(true);$('modeBtn').textContent=editor?'Terminer la préparation':'Mode enseignant';$('modeBadge').textContent=editor?'Préparation':'Consultation';$('teacherBar').hidden=!editor;renderSide();renderZones();renderRecovery();updateImageHint();}
 function go(id,push=true){if(drag)endDrag(true);if(!project.views.some(v=>v.id===id))return;stopVideos();if(push&&id!==currentId)history.push(currentId);currentId=id;selectedZoneId='';selectedPartId='';zoom=1;renderStage();renderSide();}
 function goBack(){if(history.length)go(history.pop(),false);}
 function showDialog(id){stopVideos();$(id).showModal();}
@@ -133,9 +134,12 @@ $('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram"
 <div id="toast" class="toast" role="status" hidden></div><input id="importFile" type="file" accept=".json,application/json" hidden>
 <dialog id="mediaDialog"><div class="dialog-head"><h2 id="mediaTitle">Médias</h2><button id="closeMedia">Fermer</button></div><div id="mediaContent"></div></dialog>
 <dialog id="helpDialog"><div class="dialog-head"><h2>Comprendre le compresseur</h2><button id="closeHelp">Fermer</button></div><div id="helpContent"></div></dialog>
+<dialog id="teacherLogin"><form id="teacherLoginForm"><h2>Mode enseignant</h2><label for="teacherPassword">Code d’accès</label><input id="teacherPassword" type="password" autocomplete="off" autocapitalize="none" required style="display:block;width:100%;margin:12px 0"><p id="teacherLoginError" role="alert"></p><div class="actions"><button type="submit">Déverrouiller</button><button type="button" id="cancelTeacherLogin">Annuler</button></div></form></dialog>
 <dialog id="importDialog"><div class="dialog-head"><h2>Importer un projet</h2><button id="cancelImport">Annuler</button></div><p id="importSummary"></p><p>Le brouillon actuel sera remplacé. Une copie de retour sera conservée sur cet appareil si l’espace disponible le permet.</p><div class="actions"><button id="backupBeforeImport">Sauvegarder le projet actuel</button><button id="confirmImport" class="primary">Importer ce projet</button></div></dialog>
 <dialog id="legacyDialog"><div class="dialog-head"><h2>Récupérer les anciennes annotations</h2><button id="cancelLegacy">Annuler</button></div><p>Les anciennes zones sont mesurées en pixels d’écran. Ajuste la largeur d’origine pour que leurs cadres retrouvent la bonne position sur chaque photo.</p><div class="note">Les données d’origine restent intactes. Les vues récupérées remplacent les zones correspondantes dans le brouillon V2. Tu pourras ensuite déplacer chaque repère.</div><div id="legacyViews"></div><div class="actions"><button id="legacyBackup">Sauvegarder les données d’origine</button><button id="legacyApply" class="primary">Récupérer ces annotations</button></div><p id="legacyError" class="media-error" role="alert"></p></dialog>`;
-  $('modeBtn').hidden=!!config.readonly;$('modeBtn').onclick=()=>setMode(!editor);$('homeBtn').onclick=()=>go(project.views[0].id);$('backBtn').onclick=goBack;$('viewSelect').onchange=e=>go(e.target.value);
+  $('modeBtn').hidden=false;$('modeBtn').onclick=()=>setMode(!editor);$('homeBtn').onclick=()=>go(project.views[0].id);$('backBtn').onclick=goBack;$('viewSelect').onchange=e=>go(e.target.value);
+  $('cancelTeacherLogin').onclick=()=>closeDialog('teacherLogin');
+  $('teacherLoginForm').onsubmit=e=>{e.preventDefault();if($('teacherPassword').value!=='PROF'){$('teacherLoginError').textContent='Code incorrect.';$('teacherPassword').value='';$('teacherPassword').focus();return;}$('teacherPassword').value='';closeDialog('teacherLogin');applyMode(true);};
   $('zoomIn').onclick=()=>setZoom(Math.min(4,zoom+.25));$('zoomOut').onclick=()=>setZoom(Math.max(1,zoom-.25));$('zoomFit').onclick=()=>setZoom(1);
   $('tabFiche').onclick=()=>{tabName='fiche';renderSide();};$('tabPieces').onclick=()=>{tabName='pieces';renderSide();};$('searchParts').oninput=renderParts;$('groupFilter').onchange=renderParts;
   $('helpBtn').onclick=openHelp;$('closeHelp').onclick=()=>closeDialog('helpDialog');$('closeMedia').onclick=()=>closeDialog('mediaDialog');$('mediaDialog').addEventListener('close',()=>{stopVideos($('mediaDialog'));$('mediaContent').replaceChildren();});
