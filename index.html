@@ -45,7 +45,7 @@
 <body>
 <div id="app"></div>
 <script id="projectData" type="application/json">{"format":"q310-project","schemaVersion":2,"id":"q310-atelier","title":"Quincy Q310 — Atelier interactif","assetBase":"https://hws5tkftgv-lang.github.io/Compresseur_Q310_Mobile/","parts":[{"id":"filtre_air","nom":"Filtre à air","role":"Filtrer l’air entrant","desc":"Retient les poussières et impuretés avant l’admission.","circuit":"LP","medias":{"images":["actif/FILTRE _AIR_COUVERCLE.jpeg"],"videos":[],"documents":[]}},{"id":"silencieux_admission","nom":"Silencieux d’admission","role":"Réduire le bruit d’aspiration","desc":"Lisse le flux d’air et atténue le bruit à l’entrée.","circuit":"LP","medias":{"images":[],"videos":[],"documents":[]}},{"id":"cylindre_lp","nom":"Cylindre basse pression (LP)","role":"Compression initiale","desc":"Première étape de compression volumétrique.","circuit":"LP","medias":{"images":[],"videos":["actif/compresseur_2_stages.mp4"],"documents":[]}},{"id":"soupape_admission_lp","nom":"Soupape d’admission LP","role":"Entrée d’air","desc":"S’ouvre lorsque la différence de pression permet à l’air d’entrer dans le cylindre.","circuit":"LP","medias":{"images":[],"videos":[],"documents":[]}},{"id":"soupape_refoulement_lp","nom":"Soupape de refoulement LP","role":"Sortie vers l’intercooler","desc":"S’ouvre lorsque la pression du cylindre dépasse suffisamment celle du circuit intermédiaire pour permettre le refoulement.","circuit":"LP","medias":{"images":[],"videos":[],"documents":[]}},{"id":"intercooler","nom":"Refroidisseur intermédiaire","role":"Refroidir l’air entre étages","desc":"Refroidit l’air entre le refoulement BP et l’admission HP.","circuit":"INTER","medias":{"images":[],"videos":[],"documents":[]}},{"id":"cylindre_hp","nom":"Cylindre haute pression (HP)","role":"Compression finale","desc":"Porte l’air à la pression de service.","circuit":"HP","medias":{"images":[],"videos":["actif/compresseur_2_stages.mp4"],"documents":[]}},{"id":"soupape_admission_hp","nom":"Soupape d’admission HP","role":"Entrée vers l’étage HP","desc":"Admet l’air refroidi en provenance de l’intercooler.","circuit":"HP","medias":{"images":[],"videos":[],"documents":[]}},{"id":"soupape_decharge_hp","nom":"Soupape de refoulement HP","role":"Refouler l’air comprimé","desc":"Laisse passer l’air de l’étage haute pression vers la sortie. À distinguer du mécanisme de marche à vide.","circuit":"HP","medias":{"images":[],"videos":[],"documents":[]}},{"id":"anti_retour_sortie","nom":"Clapet anti-retour sortie","role":"Empêcher le retour d’air","desc":"Isole le réservoir lors de l’arrêt.","circuit":"HP","medias":{"images":[],"videos":[],"documents":[]}},{"id":"aftercooler","nom":"Refroidisseur final (si présent)","role":"Refroidir après compression","desc":"Refroidit l’air après le dernier étage. Une partie de la vapeur d’eau peut se condenser; les condensats doivent ensuite être évacués.","circuit":"HP","medias":{"images":[],"videos":[],"documents":[]}},{"id":"carter","nom":"Carter","role":"Réservoir d’huile","desc":"Contient la réserve d’huile et le mécanisme vilebrequin-bielles. La pompe fait circuler l’huile dans le circuit de lubrification.","circuit":"LUB","medias":{"images":[],"videos":[],"documents":[]}},{"id":"pompe_huile","nom":"Pompe à huile","role":"Distribuer l’huile","desc":"Alimente paliers et bielles sous pression.","circuit":"LUB","medias":{"images":[],"videos":[],"documents":[]}},{"id":"filtre_huile","nom":"Filtre à huile","role":"Filtrer l’huile","desc":"Retient particules et boues, protège les paliers.","circuit":"LUB","medias":{"images":[],"videos":[],"documents":[]}},{"id":"regulateur_debit_huile","nom":"Réglage de pression d’huile","role":"Régler la pression de lubrification","desc":"Le dispositif exact et les valeurs de réglage doivent être identifiés dans le manuel correspondant au compresseur de l’atelier.","circuit":"LUB","medias":{"images":[],"videos":[],"documents":[]}},{"id":"pressostat","nom":"Pressostat","role":"Commande moteur","desc":"Arrêt/démarrage selon pressions cut-in / cut-out.","circuit":"CTRL","medias":{"images":[],"videos":[],"documents":[]}},{"id":"valve_pilote","nom":"Valve pilote","role":"Décharger à vide","desc":"Selon la version de commande, pilote les déchargeurs pour maintenir la pression en marche continue. Ne pas la confondre avec le déchargeur hydraulique.","circuit":"CTRL","medias":{"images":[],"videos":[],"documents":[]}},{"id":"soupape_securite","nom":"Soupape de sûreté","role":"Protection surpression","desc":"S’ouvre si la pression dépasse le tarage.","circuit":"CTRL","medias":{"images":[],"videos":[],"documents":[]}},{"id":"manometre_hp","nom":"Manomètre HP","role":"Indiquer la pression","desc":"Lecture de la pression de service en sortie.","circuit":"CTRL","medias":{"images":[],"videos":[],"documents":[]}},{"id":"volant","nom":"Volant","role":"Inertie et ventilation","desc":"Stabilise la rotation et ventile les cylindres.","circuit":"TR","medias":{"images":[],"videos":[],"documents":[]}},{"id":"poulie_moteur","nom":"Poulie moteur","role":"Adapter la vitesse","desc":"Détermine le rapport de transmission.","circuit":"TR","medias":{"images":[],"videos":[],"documents":[]}},{"id":"courroies","nom":"Courroies","role":"Transmettre la puissance","desc":"Relient moteur et vilebrequin du compresseur.","circuit":"TR","medias":{"images":[],"videos":[],"documents":[]}},{"id":"tendeur_courroies","nom":"Réglage de tension des courroies","role":"Maintenir la tension","desc":"La tension est réglée par le dispositif présent sur la machine, souvent en déplaçant le moteur sur son support.","circuit":"TR","medias":{"images":[],"videos":[],"documents":[]}},{"id":"reservoir","nom":"Réservoir d’air","role":"Stocker l’air comprimé","desc":"Stabilise la pression et amortit les pulsations.","circuit":"HP","medias":{"images":[],"videos":[],"documents":[]}},{"id":"purge_condensats","nom":"Purge de condensats","role":"Évacuer l’eau","desc":"Retire l’humidité accumulée dans le réservoir.","circuit":"CTRL","medias":{"images":[],"videos":[],"documents":[]}},{"id":"manometre_huile","nom":"Manomètre de pression d’huile","role":"Indiquer la pression de lubrification","desc":"Mesure la pression dans le circuit d’huile. Sa lecture est différente de la pression d’air du réservoir.","circuit":"LUB","medias":{"images":[],"videos":[],"documents":[]}},{"id":"dechargeur_hydraulique","nom":"Déchargeur hydraulique","role":"Commander la marche à vide selon la pression d’huile","desc":"Sur les versions équipées, empêche la mise en charge avant l’établissement de la pression d’huile et protège le compresseur si celle-ci chute.","circuit":"CTRL","medias":{"images":[],"videos":[],"documents":[]}},{"id":"dechargeurs_admission","nom":"Déchargeurs des soupapes d’admission","role":"Permettre la marche à vide","desc":"Agissent sur les soupapes d’admission pour empêcher la compression en charge. Leur commande dépend de la version du compresseur.","circuit":"CTRL","medias":{"images":[],"videos":[],"documents":[]}}],"views":[{"id":"reference","label":"Vue en coupe","type":"image","src":"actif/compresseur_bg.png","zones":[{"id":"repere_cylindre_lp","x":0.352,"y":0.365,"w":0.173,"h":0.168,"partId":"cylindre_lp","linkedViewId":"video_global","nom":"","role":"","desc":""},{"id":"repere_cylindre_hp","x":0.575,"y":0.335,"w":0.11,"h":0.082,"partId":"cylindre_hp","linkedViewId":"video_global","nom":"","role":"","desc":""},{"id":"repere_intercooler","x":0.145,"y":0.431,"w":0.089,"h":0.275,"partId":"intercooler","linkedViewId":"","nom":"","role":"","desc":""},{"id":"repere_volant","x":0.015,"y":0.42,"w":0.115,"h":0.267,"partId":"volant","linkedViewId":"vue_poulie","nom":"","role":"","desc":""},{"id":"repere_carter","x":0.32,"y":0.62,"w":0.31,"h":0.095,"partId":"carter","linkedViewId":"","nom":"","role":"","desc":""},{"id":"repere_manometre_huile","x":0.627,"y":0.701,"w":0.12,"h":0.083,"partId":"manometre_huile","linkedViewId":"","nom":"","role":"","desc":""},{"id":"repere_filtre_huile","x":0.811,"y":0.723,"w":0.173,"h":0.116,"partId":"filtre_huile","linkedViewId":"","nom":"","role":"","desc":""},{"id":"z_8d44f7c4-a75c-427b-9fc5-148dd975a3ec","x":0.2841340782122904,"y":0.04059590316573558,"w":0.16,"h":0.15,"partId":"dechargeurs_admission","linkedViewId":"","nom":"","role":"","desc":""},{"id":"z_8f9221e3-f08b-41e8-aa58-434a248c75fa","x":0.7143,"y":0.5508,"w":0.16,"h":0.15,"partId":"dechargeur_hydraulique","linkedViewId":"","nom":"","role":"","desc":""},{"id":"z_4e756c2d-dff0-43b9-8c36-1e83f7b09c83","x":0.7687,"y":0.1542,"w":0.16,"h":0.15,"partId":"silencieux_admission","linkedViewId":"vue_filtre","nom":"","role":"","desc":""}]},{"id":"vue_generale","label":"Compresseur complet","type":"image","src":"actif/VUE GENERAL.jpeg","zones":[{"id":"z_bbfe90e8-6490-4a2b-b04e-6ffa28868e6b","x":0.8157,"y":0.44049999999999995,"w":0.16,"h":0.15,"partId":"pressostat","linkedViewId":"","nom":"","role":"","desc":""},{"id":"z_6d70bd3e-406c-40b9-9655-57a1cbc7d97c","x":0.1675819309123118,"y":0.5936936936936937,"w":0.16,"h":0.15,"partId":"pompe_huile","linkedViewId":"","nom":"","role":"","desc":""},{"id":"z_b6ad02f4-dbdf-4a0c-bc1b-f003f1d52283","x":0.11656333038086802,"y":0.2648648648648649,"w":0.09008562149394744,"h":0.11846846846846847,"partId":"soupape_admission_lp","linkedViewId":"","nom":"","role":"","desc":""},{"id":"z_0a1759d9-1c94-4fa8-8ea4-26ffe93dc471","x":0.20915264245645115,"y":0.2738738738738739,"w":0.0768585769117213,"h":0.09594594594594594,"partId":"soupape_refoulement_lp","linkedViewId":"","nom":"","role":"","desc":""},{"id":"z_d7ac311a-2c97-4225-af0c-b95381559b60","x":0.15624446412754653,"y":0.1657657657657658,"w":0.07118984351933864,"h":0.09594594594594594,"partId":"soupape_admission_hp","linkedViewId":"","nom":"","role":"","desc":""},{"id":"z_f80f0892-d054-468e-a17d-0f9ec32e0608","x":0.2261588426335991,"y":0.15675675675675677,"w":0.07307942131679954,"h":0.10495495495495495,"partId":"soupape_decharge_hp","linkedViewId":"","nom":"","role":"","desc":""}]},{"id":"vue_generale_2","label":"Compresseur complet — autre angle","type":"image","src":"actif/VUE_GENARAL_2.jpeg","zones":[]},{"id":"vue_1","label":"Vue de l’atelier","type":"image","src":"actif/VUE_1.jpeg","zones":[]},{"id":"vue_pompe","label":"Vue pompe","type":"image","src":"actif/VUE_POMPE.jpeg","zones":[]},{"id":"vue_tete","label":"Tête","type":"image","src":"actif/TETE.jpeg","zones":[]},{"id":"vue_tete_2","label":"Tête — détail","type":"image","src":"actif/TETE_2.jpeg","zones":[]},{"id":"vue_poulie","label":"Poulie","type":"image","src":"actif/POULIE.jpeg","zones":[]},{"id":"vue_filtre","label":"Couvercle du filtre à air","type":"image","src":"actif/FILTRE _AIR_COUVERCLE.jpeg","zones":[]},{"id":"vue_side","label":"Côté charge","type":"image","src":"actif/LOAD_SIDE.jpeg","zones":[]},{"id":"vue_unloader","label":"Déchargeur — vue rapprochée","type":"image","src":"actif/SOUPAPE_UNLOADER.jpeg","zones":[]},{"id":"vue_top","label":"Vue du dessus","type":"image","src":"actif/TOP.jpeg","zones":[]},{"id":"vue_reservoir","label":"Vers le réservoir","type":"image","src":"actif/VERS_RESERVOIR.jpeg","zones":[]},{"id":"video_global","label":"Vidéo — compression à deux étages","type":"video","src":"actif/compresseur_2_stages.mp4","zones":[]}],"updatedAt":"2026-10-08T00:23:50.138Z"}</script>
-<script id="appConfig" type="application/json">{"readonly":true,"useLocal":false,"build":"2026-10-07 · QR"}</script>
+<script id="appConfig" type="application/json">{"readonly":true,"useLocal":false,"build":"2026-10-07 · Fichiers joints"}</script>
 <script id="q310-qr-library">
 /*
 MIT License
@@ -2371,13 +2371,61 @@ var qrcode = function() {
 </script>
 <script id="q310-core">
 const Q310Core=(()=>{
-  const clone=x=>JSON.parse(JSON.stringify(x));
+  const clone=x=>{if(x?.format==='q310-project'&&x.attachments){const {attachments,...rest}=x;return {...JSON.parse(JSON.stringify(rest)),attachments:{...attachments}};}return JSON.parse(JSON.stringify(x));};
   const uid=()=> 'z_'+(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2));
   const text=(x,max=4000)=>typeof x==='string'?x.slice(0,max):'';
   const aliases={'actif/VUE_GENERAL.jpeg':'actif/VUE GENERAL.jpeg','actif/VUE_GENERAL_2.jpeg':'actif/VUE_GENARAL_2.jpeg','actif/FILTRE_AIR_COUVERCLE.jpeg':'actif/FILTRE _AIR_COUVERCLE.jpeg'};
+  const FILE_LIMIT=10*1024*1024,TOTAL_FILE_LIMIT=16*1024*1024;
+  const FILE_TYPES={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',pdf:'application/pdf',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'};
+  const fileId=src=>typeof src==='string'&&/^q310-file:f_[a-zA-Z0-9_-]{1,100}$/.test(src)?src.slice(10):'';
+  const attachmentBytes=p=>Object.values(p.attachments||{}).reduce((sum,f)=>sum+f.size,0);
+  function attachment(raw){
+    if(!raw||typeof raw!=='object')throw Error('Fichier joint invalide.');
+    const name=text(raw.name,180).replace(/[\u0000-\u001f\\/]/g,'_').trim();
+    const ext=name.split('.').pop().toLowerCase(),mime=FILE_TYPES[ext];
+    if(!name||!mime||raw.mime!==mime)throw Error('Formats acceptés : JPG, PNG, PDF, DOC et DOCX.');
+    const base64=raw.base64;
+    if(typeof base64!=='string'||!base64.length||base64.length>Math.ceil(FILE_LIMIT/3)*4||base64.length%4!==0||/[^A-Za-z0-9+/=]/.test(base64)||!/^[^=]*(?:==|=)?$/.test(base64))throw Error('Contenu du fichier joint invalide ou supérieur à 10 Mo.');
+    const size=base64.length/4*3-(base64.endsWith('==')?2:base64.endsWith('=')?1:0);
+    if(size<=0||size>FILE_LIMIT||raw.size!==size)throw Error('Taille du fichier joint invalide.');
+    const bytes=atob(base64.slice(0,Math.min(24,base64.length)));
+    const signature=mime==='image/jpeg'?bytes.startsWith('\xff\xd8\xff'):mime==='image/png'?bytes.startsWith('\x89PNG\r\n\x1a\n'):mime==='application/pdf'?bytes.startsWith('%PDF-'):ext==='doc'?bytes.startsWith('\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'):bytes.startsWith('PK\x03\x04');
+    if(!signature)throw Error('Le contenu de « '+name+' » ne correspond pas à son format.');
+    return Object.freeze({name,mime,size,base64});
+  }
+  function validateAttachments(input){
+    const files={};if(input===undefined)return files;
+    if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).length>150)throw Error('Liste de fichiers joints invalide.');
+    let total=0;
+    for(const [id,raw] of Object.entries(input)){
+      if(!/^f_[a-zA-Z0-9_-]{1,100}$/.test(id))throw Error('Identifiant de fichier joint invalide.');
+      files[id]=attachment(raw);total+=files[id].size;
+      if(total>TOTAL_FILE_LIMIT)throw Error('Le projet dépasse la limite de 16 Mo de fichiers joints.');
+    }
+    return files;
+  }
+  function validateAttachmentLinks(p){
+    for(const part of p.parts){
+      const medias={images:[],videos:[],documents:[]};
+      for(const [kind,refs] of Object.entries(part.medias))for(const ref of refs){
+        const id=fileId(ref);let destination=kind;
+        if(id){const file=p.attachments[id];if(!file)throw Error('Un fichier joint est absent du projet.');destination=file.mime.startsWith('image/')?'images':'documents';}
+        if(!medias[destination].includes(ref))medias[destination].push(ref);
+      }
+      part.medias=medias;
+    }
+    for(const v of p.views){const id=fileId(v.src);if(id&&(!p.attachments[id]||v.type!=='image'||!p.attachments[id].mime.startsWith('image/')))throw Error('Image jointe à la vue invalide.');}
+  }
+  function pruneAttachments(p){
+    const used=new Set(p.views.map(v=>fileId(v.src)));
+    for(const part of p.parts)for(const refs of Object.values(part.medias))for(const ref of refs)used.add(fileId(ref));
+    for(const id of Object.keys(p.attachments||{}))if(!used.has(id))delete p.attachments[id];
+  }
+
   function source(value){
     let s=text(value,3000).trim();s=aliases[s]||s;
     if(!s||/[\u0000-\u001f]/.test(s))throw Error('Adresse de média vide ou invalide.');
+    if(fileId(s))return s;
     if(/^https:\/\//i.test(s)){const u=new URL(s);if(u.username||u.password)throw Error('Adresse de média invalide.');return s;}
     if(/^actif\/[\w .%()\-À-ÿ/]+$/u.test(s)&&!s.includes('..'))return s;
     throw Error('Média non autorisé : utiliser actif/… ou une adresse https://.');
@@ -2397,6 +2445,7 @@ const Q310Core=(()=>{
     if(!Array.isArray(input.views)||!input.views.length||input.views.length>100||!Array.isArray(input.parts)||input.parts.length>500)throw Error('Liste de vues ou de pièces invalide.');
     const p={format:'q310-project',schemaVersion:2,id:text(input.id,120)||'q310-atelier',title:text(input.title,150)||'Quincy Q310',assetBase:source(input.assetBase),parts:[],views:[],updatedAt:text(input.updatedAt,80)};
     if(!p.assetBase.startsWith('https://'))throw Error('Adresse de base des médias invalide.');
+    p.attachments=validateAttachments(input.attachments);
     const ids=new Set();
     for(const raw of input.parts){
       if(!raw||typeof raw.id!=='string'||!raw.id.trim()||ids.has(raw.id)||raw.id.length>150)throw Error('Identifiant de pièce manquant ou en double.');
@@ -2416,6 +2465,7 @@ const Q310Core=(()=>{
       }p.views.push(v);
     }
     for(const v of p.views)for(const z of v.zones){if(z.linkedViewId&&!ids.has(z.linkedViewId))throw Error('Une zone pointe vers une vue absente.');}
+    validateAttachmentLinks(p);
     if(input.legacyArchive!==undefined)p.legacyArchive=clone(input.legacyArchive);
     return p;
   }
@@ -2426,8 +2476,39 @@ const Q310Core=(()=>{
     if(x<0||y<0||x+w>width+.01||y+h>height+.01)throw Error('La largeur choisie est trop petite pour contenir toutes les anciennes zones.');
     return {id:uid(),x:x/width,y:y/height,w:w/width,h:h/height,partId:text(z.partId,150),linkedViewId:text(z.linkedViewId,150),nom:text(z.nom,200),role:text(z.role,1000),desc:text(z.desc)};
   }
-  return {clone,uid,text,source,media,validate,normalizeLegacyZone};
+  return {clone,uid,text,source,media,validate,normalizeLegacyZone,FILE_LIMIT,TOTAL_FILE_LIMIT,FILE_TYPES,fileId,attachment,attachmentBytes,pruneAttachments};
 })();
+</script>
+<script id="q310-storage">
+const Q310Storage=(()=>{
+  let database;
+  function open(){
+    if(!database)database=new Promise((resolve,reject)=>{
+      if(!globalThis.indexedDB){reject(Error('Stockage indisponible.'));return;}
+      const request=indexedDB.open('q310-projects-with-files',1);
+      request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('projects'))request.result.createObjectStore('projects');};
+      request.onsuccess=()=>{request.result.onversionchange=()=>request.result.close();resolve(request.result);};
+      request.onerror=()=>reject(request.error||Error('Stockage indisponible.'));
+      request.onblocked=()=>reject(Error('Ferme les autres onglets de cette application pour autoriser la sauvegarde.'));
+    });
+    return database;
+  }
+  async function read(key){
+    const db=await open();return new Promise((resolve,reject)=>{
+      const tx=db.transaction('projects','readonly'),request=tx.objectStore('projects').get(key);
+      request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error);
+    });
+  }
+  async function write(entries){
+    const db=await open();return new Promise((resolve,reject)=>{
+      const tx=db.transaction('projects','readwrite'),store=tx.objectStore('projects');
+      for(const [key,value] of entries)store.put(value,key);
+      tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||Error('Sauvegarde impossible.'));tx.onabort=()=>reject(tx.error||Error('Sauvegarde interrompue.'));
+    });
+  }
+  return {read,write};
+})();
+
 </script>
 <script>
 (()=>{'use strict';
@@ -2435,37 +2516,140 @@ const C=Q310Core,$=id=>document.getElementById(id),WORK_KEY='q310_project_v2',PR
 let config,seed,project;
 try{config=JSON.parse($('appConfig').textContent);seed=C.validate(JSON.parse($('projectData').textContent));project=C.clone(seed);}catch(e){$('app').textContent='Le projet ne peut pas être ouvert : '+e.message;return;}
 let initialWarning='';
-if(config.useLocal&&!config.readonly){try{const raw=localStorage.getItem(WORK_KEY);if(raw)project=C.validate(JSON.parse(raw));}catch(e){initialWarning='Le brouillon local n’a pas pu être chargé. La version intégrée est affichée. Le brouillon existant est conservé.';}}
+// En consultation, toujours afficher la version publiée. Le brouillon se reprend après l’accès enseignant.
 let editor=false,currentId=project.views[0].id,selectedZoneId='',selectedPartId='',tabName='fiche',zoom=1,history=[],undo=[],busy=false,importCandidate=null,drag=null;
 const GROUPS={LP:'Basse pression (BP / LP)',INTER:'Entre les deux étages',HP:'Haute pression (HP)',LUB:'Lubrification',CTRL:'Commande et protection',TR:'Transmission'};
 const view=()=>project.views.find(v=>v.id===currentId)||project.views[0];
 const zone=()=>view().zones.find(z=>z.id===selectedZoneId);
 const part=()=>project.parts.find(p=>p.id===selectedPartId);
-const asset=s=>new URL(C.source(s),project.assetBase).href;
+
 const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e;};
 const btn=(txt,fn,cls='')=>{const b=el('button',cls,txt);b.type='button';b.onclick=fn;return b;};
 const option=(value,label)=>{const o=el('option','',label);o.value=value;return o;};
 let toastTimer;
 function toast(message,error=false){$('toast').textContent=message;$('toast').className='toast'+(error?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,error?10000:5500);$('toast').hidden=false;}
 function requireEditor(){if(!editor)throw Error('Cette action est réservée au mode enseignant.');}
-function save(){
-  project.updatedAt=new Date().toISOString();
-  try{localStorage.setItem(WORK_KEY,JSON.stringify(project));$('saveState').textContent='Brouillon enregistré sur cet appareil.';return true;}
-  catch(e){$('saveState').textContent='Enregistrement local impossible. Utilise « Sauvegarder le projet » pour conserver ton travail.';toast('Le travail reste dans cet onglet. Exporte le projet avant de fermer.',true);return false;}
+const draftScope=seed.id+'|'+seed.assetBase;
+let saveQueue=Promise.resolve(),saveRevision=0,previousDraft=null,teacherDraftLoaded=false,loginBusy=false,mediaBusy=false,mediaTargetId='';
+const attachmentUrls=new Map();
+const sizeLabel=bytes=>(bytes/(1024*1024)).toLocaleString('fr-CA',{maximumFractionDigits:1})+' Mo';
+const mediaName=src=>project.attachments[C.fileId(src)]?.name||src.split('/').pop();
+const mediaKind=src=>{const file=project.attachments[C.fileId(src)];return file?(file.mime.startsWith('image/')?'images':'documents'):/\.mp4(?:[?#]|$)/i.test(src)?'videos':/\.(docx?|pdf)(?:[?#]|$)/i.test(src)?'documents':'images';};
+function asset(src){
+  const ref=C.source(src),id=C.fileId(ref);if(!id)return new URL(ref,project.assetBase).href;
+  const file=project.attachments[id];if(!file)throw Error('Fichier joint introuvable.');
+  const cached=attachmentUrls.get(id);if(cached?.file===file)return cached.url;
+  if(cached)URL.revokeObjectURL(cached.url);
+  const binary=atob(file.base64),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  const url=URL.createObjectURL(new Blob([bytes],{type:file.mime}));attachmentUrls.set(id,{file,url});return url;
 }
+function cleanAttachmentUrls(){for(const [id,cached] of attachmentUrls)if(project.attachments[id]!==cached.file){URL.revokeObjectURL(cached.url);attachmentUrls.delete(id);}}
+async function storeSnapshot(snapshot,previous){
+  const entries=[['draft|'+draftScope,snapshot]];if(previous)entries.push(['previous|'+draftScope,previous]);
+  try{await Q310Storage.write(entries);}
+  catch(error){
+    // Repli pour les navigateurs sans IndexedDB; ne jamais effacer un brouillon sur échec.
+    if(previous)localStorage.setItem(PREVIOUS_KEY,JSON.stringify(previous));
+    localStorage.setItem(WORK_KEY,JSON.stringify(snapshot));
+  }
+}
+async function readSavedProject(kind){
+  const candidates=[];
+  try{const raw=await Q310Storage.read(kind+'|'+draftScope);if(raw)candidates.push(C.validate(raw));}catch(e){}
+  try{const raw=localStorage.getItem(kind==='draft'?WORK_KEY:PREVIOUS_KEY);if(raw)candidates.push(C.validate(JSON.parse(raw)));}catch(e){}
+  candidates.sort((a,b)=>(Date.parse(b.updatedAt)||0)-(Date.parse(a.updatedAt)||0));
+  return candidates.find(p=>p.id===seed.id&&p.assetBase===seed.assetBase)||null;
+}
+async function enterTeacherMode(){
+  if(loginBusy)return;loginBusy=true;
+  const submit=$('teacherLoginForm').querySelector('[type="submit"]');submit.disabled=true;
+  try{
+    let restored=false;
+    if(!teacherDraftLoaded){
+      const values=await Promise.all([readSavedProject('draft'),readSavedProject('previous')]);
+      // Une annulation pendant la lecture ne doit pas ouvrir le mode enseignant.
+      if(!$('teacherLogin').open)return;
+      const draft=values[0];previousDraft=values[1];
+      if(draft&&(Date.parse(draft.updatedAt)||0)>(Date.parse(seed.updatedAt)||0)){
+        project=draft;currentId=project.views[0].id;selectedZoneId='';selectedPartId='';history=[];undo=[];cleanAttachmentUrls();restored=true;
+      }
+      teacherDraftLoaded=true;
+    }
+    if(!$('teacherLogin').open)return;
+    closeDialog('teacherLogin');applyMode(true);renderStage();renderSide();
+    if(restored){$('saveState').textContent='Brouillon local repris, avec ses fichiers joints.';toast('Ton brouillon local a été repris. Publie la page élèves pour le partager.');}
+  }finally{loginBusy=false;submit.disabled=false;}
+}
+function save(){
+  project.updatedAt=new Date(Math.max(Date.now(),(Date.parse(project.updatedAt)||0)+1)).toISOString();C.pruneAttachments(project);cleanAttachmentUrls();
+  const snapshot=C.clone(project),revision=++saveRevision;
+  $('saveState').textContent='Enregistrement du brouillon…';
+  const task=saveQueue.then(()=>storeSnapshot(snapshot));saveQueue=task.catch(()=>{});
+  return task.then(()=>{if(revision===saveRevision)$('saveState').textContent='Brouillon enregistré sur cet appareil, fichiers joints inclus.';return true;},()=>{
+    if(revision===saveRevision)$('saveState').textContent='Sauvegarde locale impossible. Exporte le projet avant de fermer.';
+    toast('Le travail reste dans cet onglet. Clique sur « Sauvegarder le projet complet » avant de fermer.',true);return false;
+  });
+}
+function chooseMediaFiles(partId){
+  requireEditor();if(mediaBusy)return;mediaTargetId=partId;$('mediaFileInput').value='';$('mediaFileInput').click();
+}
+function fileAsBase64(file){return new Promise((resolve,reject)=>{
+  const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Lecture impossible : '+file.name));reader.onabort=()=>reject(Error('Lecture annulée.'));reader.readAsDataURL(file);
+});}
+async function importMediaFiles(event){
+  const selected=Array.from(event.target.files||[]),targetId=mediaTargetId;event.target.value='';
+  if(!editor||mediaBusy||!selected.length)return;
+  mediaBusy=true;renderTeacher();
+  try{
+    if(Object.keys(project.attachments).length+selected.length>150)throw Error('Le projet peut contenir au maximum 150 fichiers joints.');
+    let requestedSize=0;
+    for(const file of selected){
+      if(!C.FILE_TYPES[file.name.split('.').pop().toLowerCase()])throw Error('« '+file.name+' » : choisis une photo JPG/PNG ou un document PDF/Word.');
+      if(file.size>C.FILE_LIMIT)throw Error('« '+file.name+' » dépasse 10 Mo.');
+      if(file.size===0)throw Error('« '+file.name+' » est vide.');
+      requestedSize+=file.size;
+    }
+    if(C.attachmentBytes(project)+requestedSize>C.TOTAL_FILE_LIMIT)throw Error('La limite est de 16 Mo de fichiers joints pour le projet. Retire un fichier inutilisé ou choisis une version plus légère.');
+    const additions=[];
+    for(const file of selected){
+      const ext=file.name.split('.').pop().toLowerCase(),mime=C.FILE_TYPES[ext];
+      if(!mime)throw Error('« '+file.name+' » : choisis une photo JPG/PNG ou un document PDF/Word.');
+      if(file.size>C.FILE_LIMIT)throw Error('« '+file.name+' » dépasse 10 Mo.');
+      if(file.size===0)throw Error('« '+file.name+' » est vide.');
+      const raw={name:file.name,mime,size:file.size,base64:await fileAsBase64(file)};
+      additions.push({id:'f_'+C.uid(),file:C.attachment(raw)});
+    }
+    if(!editor)return;
+    const target=project.parts.find(p=>p.id===targetId);if(!target)throw Error('Sélectionne à nouveau la fiche.');
+    if(C.attachmentBytes(project)+additions.reduce((n,x)=>n+x.file.size,0)>C.TOTAL_FILE_LIMIT)throw Error('La limite est de 16 Mo de fichiers joints pour le projet. Retire un fichier inutilisé ou choisis une version plus légère.');
+    for(const kind of ['images','documents'])if(target.medias[kind].length+additions.filter(x=>(x.file.mime.startsWith('image/')?'images':'documents')===kind).length>150)throw Error('Cette fiche contient trop de fichiers.');
+    const saved=await change(()=>{
+      for(const item of additions){project.attachments[item.id]=item.file;target.medias[item.file.mime.startsWith('image/')?'images':'documents'].push('q310-file:'+item.id);}
+    });
+    if(saved)toast((additions.length===1?'Fichier ajouté à « ':'Fichiers ajoutés à « ')+target.nom+' ». Crée ensuite la page élèves pour les publier.');
+  }catch(e){toast('Ajout impossible : '+e.message,true);}
+  finally{mediaBusy=false;renderTeacher();}
+}
+function appendMediaImporter(section,p){
+  const add=btn(mediaBusy?'Ajout en cours…':'Ajouter une photo ou un document',()=>chooseMediaFiles(p.id),'full primary');add.disabled=mediaBusy;section.append(add);
+  section.append(el('p','muted','Photos JPG/PNG et documents PDF/Word. 10 Mo par fichier; 16 Mo de fichiers joints par projet.'));
+  section.append(el('p','muted','Fichiers joints : '+sizeLabel(C.attachmentBytes(project))+' / 16 Mo. Ils sont inclus dans « Créer la page élèves » et « Sauvegarder le projet complet ».'));
+}
+
 function checkpoint(){requireEditor();undo.push(C.clone(project));if(undo.length>20)undo.shift();}
 function change(fn){requireEditor();checkpoint();fn();const saved=save();renderSide();renderZones();return saved;}
 function download(name,body,type){const a=document.createElement('a');const u=URL.createObjectURL(new Blob([body],{type}));a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);}
-function exportProject(){requireEditor();download('projet_q310_complet.json',JSON.stringify(project,null,2),'application/json');toast('Projet complet exporté : vues, repères, fiches et liens vers les médias.');}
+function exportProject(){requireEditor();download('projet_q310_complet.json',JSON.stringify(project,null,2),'application/json');toast('Projet complet exporté : vues, repères, fiches et fichiers joints inclus.');}
 function exportPage(){
   requireEditor();const copy=document.documentElement.cloneNode(true);copy.querySelector('body').classList.remove('qr-printing');
   copy.querySelector('#app').innerHTML='';const published=C.clone(project);delete published.legacyArchive;copy.querySelector('#projectData').textContent=JSON.stringify(published).replace(/</g,'\\u003c');
   copy.querySelector('#appConfig').textContent=JSON.stringify({readonly:true,useLocal:false,build:config.build});
-  download('index.html','<!doctype html>\n'+copy.outerHTML,'text/html;charset=utf-8');toast('Page élèves créée. Elle contient les fiches et repères de ce projet.');
+  const html='<!doctype html>\n'+copy.outerHTML;if(new Blob([html]).size>24*1024*1024){toast('La page dépasse 24 Mo. Retire un fichier joint trop volumineux avant de publier.',true);return;}
+  download('index.html',html,'text/html;charset=utf-8');toast('Page élèves créée, fichiers joints inclus. Remplace index.html sur GitHub pour la partager.');
 }
 function stopVideos(container=document){container.querySelectorAll('video').forEach(v=>v.pause());}
 function setMode(value){if(value&&!editor){$('teacherPassword').value='';$('teacherLoginError').textContent='';showDialog('teacherLogin');$('teacherPassword').focus();return;}applyMode(false);}
-function applyMode(value){editor=!!value;if(!editor&&drag)endDrag(true);$('modeBtn').textContent=editor?'Terminer la préparation':'Mode enseignant';$('modeBadge').textContent=editor?'Préparation':'Consultation';$('teacherBar').hidden=!editor;renderSide();renderZones();renderRecovery();updateImageHint();}
+function applyMode(value){editor=!!value;if(!editor&&drag)endDrag(true);$('modeBtn').textContent=editor?'Terminer la préparation':'Mode enseignant';$('modeBadge').textContent=editor?'Préparation':'Consultation';$('teacherBar').hidden=!editor;$('saveState').hidden=!editor;$('qrCard').hidden=!editor;if(!editor){if($('qrDialog').open)closeDialog('qrDialog');qrShare=null;document.body.classList.remove('qr-printing');}renderSide();renderZones();renderRecovery();updateImageHint();}
 function go(id,push=true){if(drag)endDrag(true);if(!project.views.some(v=>v.id===id))return;stopVideos();if(push&&id!==currentId)history.push(currentId);currentId=id;selectedZoneId='';selectedPartId='';zoom=1;renderStage();renderSide();}
 function goBack(){if(history.length)go(history.pop(),false);}
 function showDialog(id){stopVideos();$(id).showModal();}
@@ -2480,6 +2664,7 @@ function publicAppUrl(){
   return url.href;
 }
 function openQr(){
+  if(!editor)return;
   try{
     const url=publicAppUrl();
     const code=qrcode(0,'M');code.addData(url,'Byte');code.make();
@@ -2493,14 +2678,14 @@ function openQr(){
   }catch(e){toast('Le code QR n’a pas pu être créé. Recharge la page et réessaie.',true);}
 }
 function printQr(){
-  if(!qrShare)return;
+  if(!editor||!qrShare)return;
   // Une fiche dédiée évite les fenêtres bloquées et les copies de canvas vides.
   document.body.classList.add('qr-printing');
   try{window.print();}
   catch(e){document.body.classList.remove('qr-printing');toast('Impression indisponible. Tu peux télécharger le code QR en PNG.',true);}
 }
 function downloadQr(){
-  if(!qrShare)return;
+  if(!editor||!qrShare)return;
   try{
     const code=qrShare.code,modules=code.getModuleCount(),scale=24,quiet=4;
     const canvas=document.createElement('canvas');canvas.width=canvas.height=(modules+2*quiet)*scale;
@@ -2518,14 +2703,14 @@ function bindQr(){
   $('closeQrBtn').onclick=()=>closeDialog('qrDialog');
   $('printQrBtn').onclick=printQr;$('downloadQrBtn').onclick=downloadQr;
   $('qrDialog').addEventListener('close',()=>document.body.classList.remove('qr-printing'));
-  window.addEventListener('beforeprint',()=>{if($('qrDialog').open&&qrShare)document.body.classList.add('qr-printing');});
+  window.addEventListener('beforeprint',()=>{if(editor&&$('qrDialog').open&&qrShare)document.body.classList.add('qr-printing');});
   window.addEventListener('afterprint',()=>document.body.classList.remove('qr-printing'));
 }
 
 function build(){
 $('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram">Q310</div><div><div class="badge" id="modeBadge">Consultation</div><h1>Atelier du compresseur</h1><p>Observer les composants. Comprendre leur rôle.</p></div></div><div class="actions"><a id="manualBtn" class="button" href="CompresseurManuel.pdf" target="_blank" rel="noopener noreferrer">Manuel PDF</a><button id="helpBtn">Aide</button><button id="modeBtn">Mode enseignant</button></div></header>
 <nav class="tools" aria-label="Navigation"><button id="homeBtn">Vue générale</button><select id="viewSelect" aria-label="Choisir une vue"></select><button id="backBtn">Retour</button><span class="spacer"></span><span class="counter" id="pieceCount"></span></nav>
-<section class="qr-card" aria-labelledby="qrCardTitle">
+<section id="qrCard" class="qr-card" aria-labelledby="qrCardTitle" hidden>
   <div class="qr-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 2h7v7H2zM15 2h7v7h-7zM2 15h7v7H2zM15 15h3v3h4v4h-7v-3M22 12v3M12 3v3M3 12h3M12 12h3M12 21v1"/></svg></div>
   <div class="qr-card-copy"><h2 id="qrCardTitle">Créer un code QR</h2><p>Partager l’application avec les élèves. Imprimer le code ou le télécharger.</p></div>
   <button id="openQrBtn" class="primary" aria-haspopup="dialog" aria-controls="qrDialog">Créer le code QR</button>
@@ -2535,7 +2720,7 @@ $('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram"
 <main class="layout"><section class="work" aria-label="Image interactive"><div class="viewbar"><div class="title"><h2 id="viewTitle"></h2></div><button id="zoomOut" aria-label="Réduire l’image">−</button><span id="zoomLabel" class="counter">100 %</span><button id="zoomIn" aria-label="Agrandir l’image">+</button><button id="zoomFit">Ajuster</button></div><div class="viewport" id="viewport"></div><div class="caption"><span id="imageHint">Clique directement sur une pièce de la photo pour ouvrir sa fiche.</span><span id="zoneCount"></span></div><div id="teacherBar" class="note" hidden>Préparation : sélectionne une zone pour la déplacer ou utilise sa poignée pour la redimensionner. Les numéros suivent l’ordre des zones.</div></section>
 <aside class="side" aria-label="Fiches et préparation"><div class="tabbar"><button id="tabFiche" aria-pressed="true">Fiche</button><button id="tabPieces" aria-pressed="false">Toutes les pièces</button></div><div id="detail"></div><div id="catalogue" hidden><label for="searchParts">Rechercher une pièce</label><input id="searchParts" type="search" placeholder="Ex. : huile, soupape…"><label for="groupFilter">Famille</label><select id="groupFilter"></select><div id="partsList"></div></div><div id="teacherTools" hidden></div><div id="saveState" class="dirty-status" aria-live="polite"></div></aside></main>
 <footer>Quincy Q310 · Version 2 · Photos de référence et composants selon équipement · <span id="footerBuild"></span></footer>
-<div id="toast" class="toast" role="status" hidden></div><input id="importFile" type="file" accept=".json,application/json" hidden>
+<div id="toast" class="toast" role="status" hidden></div><input id="importFile" type="file" accept=".json,application/json" hidden><input id="mediaFileInput" type="file" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" multiple hidden>
 <dialog id="qrDialog" class="qr-dialog" aria-labelledby="qrTitle" aria-describedby="qrIntro">
   <div class="dialog-head"><h2 id="qrTitle">Code QR — Quincy Q310</h2><button id="closeQrBtn" type="button">Fermer</button></div>
   <p id="qrIntro">Scanner ce code pour ouvrir l’application du compresseur.</p>
@@ -2561,16 +2746,17 @@ $('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram"
 <dialog id="legacyDialog"><div class="dialog-head"><h2>Récupérer les anciennes annotations</h2><button id="cancelLegacy">Annuler</button></div><p>Les anciennes zones sont mesurées en pixels d’écran. Ajuste la largeur d’origine pour que leurs cadres retrouvent la bonne position sur chaque photo.</p><div class="note">Les données d’origine restent intactes. Les vues récupérées remplacent les zones correspondantes dans le brouillon V2. Tu pourras ensuite déplacer chaque repère.</div><div id="legacyViews"></div><div class="actions"><button id="legacyBackup">Sauvegarder les données d’origine</button><button id="legacyApply" class="primary">Récupérer ces annotations</button></div><p id="legacyError" class="media-error" role="alert"></p></dialog>`;
   $('modeBtn').hidden=false;$('modeBtn').onclick=()=>setMode(!editor);$('homeBtn').onclick=()=>go(project.views[0].id);$('backBtn').onclick=goBack;$('viewSelect').onchange=e=>go(e.target.value);
   $('cancelTeacherLogin').onclick=()=>closeDialog('teacherLogin');
-  $('teacherLoginForm').onsubmit=e=>{e.preventDefault();if($('teacherPassword').value!=='PROF'){$('teacherLoginError').textContent='Code incorrect.';$('teacherPassword').value='';$('teacherPassword').focus();return;}$('teacherPassword').value='';closeDialog('teacherLogin');applyMode(true);};
+  $('teacherLoginForm').onsubmit=async e=>{e.preventDefault();if($('teacherPassword').value!=='PROF'){$('teacherLoginError').textContent='Code incorrect.';$('teacherPassword').value='';$('teacherPassword').focus();return;}$('teacherPassword').value='';await enterTeacherMode();};
   $('zoomIn').onclick=()=>setZoom(Math.min(4,zoom+.25));$('zoomOut').onclick=()=>setZoom(Math.max(1,zoom-.25));$('zoomFit').onclick=()=>setZoom(1);
   $('tabFiche').onclick=()=>{tabName='fiche';renderSide();};$('tabPieces').onclick=()=>{tabName='pieces';renderSide();};$('searchParts').oninput=renderParts;$('groupFilter').onchange=renderParts;
   $('helpBtn').onclick=openHelp;$('closeHelp').onclick=()=>closeDialog('helpDialog');$('closeMedia').onclick=()=>closeDialog('mediaDialog');$('mediaDialog').addEventListener('close',()=>{stopVideos($('mediaDialog'));$('mediaContent').replaceChildren();});
   $('cancelImport').onclick=()=>{$('importDialog').close();importCandidate=null;};$('backupBeforeImport').onclick=exportProject;$('confirmImport').onclick=applyImport;
-  $('cancelLegacy').onclick=()=>closeDialog('legacyDialog');$('importFile').onchange=onImport;
+  $('cancelLegacy').onclick=()=>closeDialog('legacyDialog');$('importFile').onchange=onImport;$('mediaFileInput').onchange=importMediaFiles;
   $('groupFilter').append(option('','Toutes les familles'));Object.entries(GROUPS).forEach(([k,v])=>$('groupFilter').append(option(k,v)));
   $('footerBuild').textContent=config.build;bindQr();
   new ResizeObserver(()=>fitImage()).observe($('viewport'));
   window.addEventListener('resize',fitImage);
+  window.addEventListener('beforeunload',()=>{for(const item of attachmentUrls.values())URL.revokeObjectURL(item.url);});
 }
 function setZoom(value){zoom=value;fitImage();if(zoom===1){$('viewport').scrollTop=0;$('viewport').scrollLeft=0;}}
 function fitImage(){const box=$('photoBox'),img=$('mainImage'),vp=$('viewport');if(!box||!img||!img.naturalWidth)return;const base=Math.min(Math.max(1,vp.clientWidth-2)/img.naturalWidth,Math.max(1,vp.clientHeight-2)/img.naturalHeight);box.style.width=(img.naturalWidth*base*zoom)+'px';box.style.height=(img.naturalHeight*base*zoom)+'px';$('zoomLabel').textContent=Math.round(zoom*100)+' %';$('zoomOut').disabled=zoom<=1;$('zoomIn').disabled=zoom>=4;}
@@ -2644,7 +2830,7 @@ function field(parent,label,value,type='text'){const l=el('label','',label),inpu
 function renderTeacher(){const box=$('teacherTools');box.hidden=!editor;box.replaceChildren();if(!editor)return;
   const main=el('section','teacher-section');main.append(el('h3','','Préparer le cours'),el('p','muted','Le brouillon reste sur cet appareil. Crée la page élèves pour partager ton contenu.'));
   main.append(btn('Sauvegarder le projet complet',exportProject,'full primary'),btn('Importer un projet',()=>{$('importFile').value='';$('importFile').click();},'full'),btn('Créer la page élèves',exportPage,'full'),btn('Récupérer les anciennes annotations',recoverLocal,'full'));
-  try{if(localStorage.getItem(PREVIOUS_KEY))main.append(btn('Reprendre le brouillon précédent',()=>{try{importCandidate=C.validate(JSON.parse(localStorage.getItem(PREVIOUS_KEY)));$('importSummary').textContent='Reprendre le brouillon conservé avant le dernier import.';showDialog('importDialog');}catch(e){toast('Brouillon précédent indisponible : '+e.message,true);}},'full'));}catch(e){}
+  if(previousDraft)main.append(btn('Reprendre le brouillon précédent',()=>{importCandidate=C.clone(previousDraft);$('importSummary').textContent='Reprendre le brouillon conservé avant le dernier import, avec ses fichiers joints.';showDialog('importDialog');},'full'));
   const undoBtn=btn('Annuler la dernière modification',()=>{requireEditor();if(!undo.length)return;project=undo.pop();if(!project.views.some(v=>v.id===currentId))currentId=project.views[0].id;selectedZoneId='';selectedPartId='';save();renderStage();renderSide();},'full');undoBtn.disabled=!undo.length;main.append(undoBtn);box.append(main);
   if(view().type==='image')main.append(btn('Ajouter un repère sur cette vue',()=>change(()=>{const z={id:C.uid(),x:.4,y:.4,w:.16,h:.15,partId:selectedPartId,linkedViewId:'',nom:'',role:'',desc:''};view().zones.push(z);selectedZoneId=z.id;tabName='fiche';}),'full'));
   const z=zone();if(z){const section=el('section','teacher-section');section.append(el('h3','','Repère sélectionné'));const label=el('label','','Pièce associée'),select=el('select');select.setAttribute('aria-label','Pièce associée au repère');select.append(option('','Aucune pièce'));project.parts.forEach(p=>select.append(option(p.id,p.nom)));select.value=z.partId;select.onchange=()=>change(()=>{z.partId=select.value;selectedPartId=z.partId;});section.append(label,select);
@@ -2652,13 +2838,29 @@ function renderTeacher(){const box=$('teacherTools');box.hidden=!editor;box.repl
     const numbers=el('div','grid2'),inputs={};for(const [key,label] of [['x','Gauche (%)'],['y','Haut (%)'],['w','Largeur (%)'],['h','Hauteur (%)']]){const sub=el('div');inputs[key]=field(sub,label,+(z[key]*100).toFixed(2),'number');inputs[key].step='.1';inputs[key].min='0';inputs[key].max='100';numbers.append(sub);}section.append(numbers,btn('Appliquer les dimensions',()=>{const next=Object.fromEntries(Object.entries(inputs).map(([k,v])=>[k,Number(v.value)/100]));if(!Object.values(next).every(Number.isFinite)||next.x<0||next.y<0||next.w<=0||next.h<=0||next.x+next.w>1.000001||next.y+next.h>1.000001){toast('Le repère doit rester à l’intérieur de l’image.',true);return;}change(()=>Object.assign(z,next));},'full'));
     section.append(btn('Supprimer ce repère',()=>{if(confirm('Supprimer ce repère du brouillon ? La commande Annuler permettra de le rétablir.'))change(()=>{view().zones=view().zones.filter(x=>x.id!==z.id);selectedZoneId='';});},'full danger'));box.append(section);
   }
-  const p=part();if(p){const section=el('section','teacher-section');section.append(el('h3','','Modifier la fiche'));const name=field(section,'Nom',p.nom),role=field(section,'Rôle',p.role),desc=field(section,'Explication',p.desc,'textarea');const group=el('select');group.setAttribute('aria-label','Famille de la pièce');group.append(option('','Autre'));Object.entries(GROUPS).forEach(([k,v])=>group.append(option(k,v)));if(p.circuit&&!GROUPS[p.circuit])group.append(option(p.circuit,p.circuit));group.value=p.circuit;section.append(el('label','','Famille'),group,btn('Enregistrer la fiche',()=>{if(!name.value.trim())return toast('Donne un nom à cette pièce.',true);if(change(()=>Object.assign(p,{nom:name.value.trim(),role:role.value.trim(),desc:desc.value.trim(),circuit:group.value})))toast('Fiche enregistrée.');},'full'));
-    const mediaSelect=el('select');mediaSelect.setAttribute('aria-label','Choisir un média à associer');mediaSelect.append(option('','Choisir une photo, vidéo ou document'));for(const v of project.views)mediaSelect.append(option(v.src,v.label));mediaSelect.append(option('actif/Piston_rod.docx','Document — Piston et bielle'));section.append(el('label','','Médias de la fiche'),mediaSelect,btn('Associer ce média',()=>{if(!mediaSelect.value)return;const src=mediaSelect.value,kind=/\.mp4$/i.test(src)?'videos':/\.docx$/i.test(src)?'documents':'images';if(p.medias[kind].includes(src))return toast('Ce média est déjà associé.');change(()=>p.medias[kind].push(src));},'full'));
-    const mediaList=el('ul','filelist');for(const kind of Object.keys(p.medias))for(const src of p.medias[kind]){const li=el('li','',src.split('/').pop()+' ');li.append(btn('Retirer',()=>change(()=>p.medias[kind]=p.medias[kind].filter(x=>x!==src))));mediaList.append(li);}section.append(mediaList);box.append(section);
+  const p=part();if(p){const section=el('section','teacher-section');section.append(el('h3','','Modifier la fiche'));const name=field(section,'Nom',p.nom),role=field(section,'Rôle',p.role),desc=field(section,'Explication',p.desc,'textarea');const group=el('select');group.setAttribute('aria-label','Famille de la pièce');group.append(option('','Autre'));Object.entries(GROUPS).forEach(([k,v])=>group.append(option(k,v)));if(p.circuit&&!GROUPS[p.circuit])group.append(option(p.circuit,p.circuit));group.value=p.circuit;section.append(el('label','','Famille'),group,btn('Enregistrer la fiche',async()=>{if(!name.value.trim())return toast('Donne un nom à cette pièce.',true);if(await change(()=>Object.assign(p,{nom:name.value.trim(),role:role.value.trim(),desc:desc.value.trim(),circuit:group.value})))toast('Fiche enregistrée.');},'full'));
+    const mediaSelect=el('select');mediaSelect.setAttribute('aria-label','Choisir un média à associer');mediaSelect.append(option('','Choisir une photo, vidéo ou document'));for(const v of project.views)mediaSelect.append(option(v.src,v.label));mediaSelect.append(option('actif/Piston_rod.docx','Document — Piston et bielle'));for(const [id,file] of Object.entries(project.attachments))mediaSelect.append(option('q310-file:'+id,file.name));section.append(el('label','','Médias de la fiche'),mediaSelect,btn('Associer ce média',()=>{if(!mediaSelect.value)return;const src=mediaSelect.value,kind=mediaKind(src);if(p.medias[kind].includes(src))return toast('Ce média est déjà associé.');change(()=>p.medias[kind].push(src));},'full'));
+    const mediaList=el('ul','filelist');for(const kind of Object.keys(p.medias))for(const src of p.medias[kind]){const li=el('li','',mediaName(src)+' ');li.append(btn('Retirer',()=>change(()=>p.medias[kind]=p.medias[kind].filter(x=>x!==src))));mediaList.append(li);}section.append(mediaList);appendMediaImporter(section,p);box.append(section);
   }
   box.append(btn('Créer une nouvelle fiche',()=>{const nom=prompt('Nom du composant :');if(!nom?.trim())return;change(()=>{const p={id:'piece_'+C.uid(),nom:nom.trim(),role:'',desc:'',circuit:'',medias:{images:[],videos:[],documents:[]}};project.parts.push(p);selectedPartId=p.id;if(zone())zone().partId=p.id;tabName='fiche';});},'full'));
 }
-function showMedia(p){$('mediaTitle').textContent=p.nom;const box=$('mediaContent');box.replaceChildren();let count=0;for(const kind of ['images','videos','documents'])for(const src of p.medias[kind]){count++;const block=el('div','media-item');block.append(el('p','muted',src.split('/').pop()));if(kind==='documents'){const a=el('a','button','Ouvrir le document');a.href=asset(src);a.target='_blank';a.rel='noopener noreferrer';block.append(a);}else{const item=el(kind==='images'?'img':'video');item.src=asset(src);if(kind==='images'){item.alt=p.nom;item.loading='lazy';}else{item.controls=true;item.playsInline=true;item.preload='metadata';item.onplay=()=>{box.querySelectorAll('video').forEach(v=>{if(v!==item)v.pause();});};}item.onerror=()=>{item.hidden=true;block.append(el('p','media-error','Média indisponible. Vérifie son adresse et la connexion.'));};block.append(item);}box.append(block);}if(!count)box.append(el('p','empty','Aucun média associé.'));showDialog('mediaDialog');}
+function showMedia(p){
+  $('mediaTitle').textContent=p.nom;const box=$('mediaContent');box.replaceChildren();let count=0;
+  for(const kind of ['images','videos','documents'])for(const src of p.medias[kind]){
+    count++;const block=el('div','media-item'),file=project.attachments[C.fileId(src)];block.append(el('p','muted',mediaName(src)));
+    if(kind==='documents'){
+      const a=el('a','button',file?'Télécharger le document':'Ouvrir le document');a.href=asset(src);a.target='_blank';a.rel='noopener noreferrer';if(file)a.download=file.name;block.append(a);
+      if(file?.mime==='application/pdf'){const open=el('a','button','Ouvrir le PDF');open.href=asset(src);open.target='_blank';open.rel='noopener noreferrer';open.style.marginLeft='8px';block.append(open);}
+    }else{
+      const item=el(kind==='images'?'img':'video');item.src=asset(src);
+      if(kind==='images'){item.alt=file?.name||p.nom;item.loading='lazy';}else{item.controls=true;item.playsInline=true;item.preload='metadata';item.onplay=()=>{box.querySelectorAll('video').forEach(v=>{if(v!==item)v.pause();});};}
+      item.onerror=()=>{item.hidden=true;block.append(el('p','media-error','Média indisponible. Vérifie son adresse et la connexion.'));};block.append(item);
+    }
+    box.append(block);
+  }
+  if(!count)box.append(el('p','empty','Aucun média associé.'));showDialog('mediaDialog');
+}
+
 function appendAirGuide(box){
   const guide=el('section','air-guide');guide.append(el('h2','','Cheminement de l’air — Quincy 310 L'),el('p','','Le même air est comprimé deux fois : dans le gros cylindre basse pression (BP), puis dans le petit cylindre haute pression (HP). Les étapes ci-dessous suivent son trajet; les deux pistons travaillent pendant la rotation du vilebrequin.'));
   const steps=[
@@ -2682,9 +2884,19 @@ function openHelp(){const box=$('helpContent');box.replaceChildren();appendAirGu
   if(editor){box.append(el('h3','','Pour l’enseignant'),el('p','','Le mode enseignant prépare un brouillon sur cet appareil. « Sauvegarder le projet complet » crée un fichier JSON réutilisable. « Créer la page élèves » crée un fichier index.html qui contient le contenu préparé et démarre en consultation. Le code d’accès permet de retrouver le mode enseignant.'),el('p','note','La page élèves et la sauvegarde contiennent les liens des photos, vidéos et documents. Les médias restent hébergés sur ton site GitHub : une connexion Internet est nécessaire.'));}
   box.append(el('p','muted','Les fiches générales doivent être adaptées aux composants présents sur la machine de l’atelier. Référence technique intégrée : manuel Quincy QR-25 modèle 310, Record of Change 106, édition février 2008.'));showDialog('helpDialog');}
 function renderRecovery(){const box=$('recoveryNotice');box.replaceChildren();box.hidden=true;if(config.readonly||!editor)return;try{if(localStorage.getItem('q310_views_v1')){box.hidden=false;box.append(el('p','','Des annotations de l’ancienne application sont présentes sur cet appareil.'),btn('Récupérer mes annotations',recoverLocal));}}catch(e){}}
-async function onImport(e){requireEditor();const f=e.target.files[0];if(!f)return;try{if(f.size>10*1024*1024)throw Error('Ce fichier dépasse 10 Mo.');const raw=JSON.parse(await f.text());if(Array.isArray(raw)){await prepareLegacy({views:{[currentId]:{...C.clone(view()),zones:raw}},parts:[]});return;}if(raw.format==='q310-legacy-backup'){await prepareLegacy(raw);return;}const next=C.validate(raw);importCandidate=next;$('importSummary').textContent=`Ce fichier contient ${next.views.length} vues, ${next.parts.length} fiches et ${next.views.reduce((s,v)=>s+v.zones.length,0)} repères.`;showDialog('importDialog');}catch(e){toast('Import refusé : '+e.message,true);}}
-function replaceProject(next){requireEditor();const checked=C.validate(next);checked.updatedAt=new Date().toISOString();try{localStorage.setItem(PREVIOUS_KEY,JSON.stringify(project));localStorage.setItem(WORK_KEY,JSON.stringify(checked));}catch(e){throw Error('Import non appliqué : espace local insuffisant ou stockage indisponible. Le brouillon actuel est conservé. Sauvegarde-le avant de libérer de l’espace.');}checkpoint();project=checked;currentId=project.views[0].id;history=[];selectedZoneId='';selectedPartId='';$('saveState').textContent='Brouillon enregistré sur cet appareil.';renderStage();renderSide();}
-function applyImport(){if(!importCandidate)return;try{replaceProject(importCandidate);importCandidate=null;closeDialog('importDialog');toast('Projet importé. Les médias sont conservés sous forme de liens.');}catch(e){toast(e.message,true);}}
+async function onImport(e){requireEditor();const f=e.target.files[0];if(!f)return;try{if(f.size>24*1024*1024)throw Error('Ce projet dépasse 24 Mo.');const raw=JSON.parse(await f.text());if(Array.isArray(raw)){await prepareLegacy({views:{[currentId]:{...C.clone(view()),zones:raw}},parts:[]});return;}if(raw.format==='q310-legacy-backup'){await prepareLegacy(raw);return;}const next=C.validate(raw);importCandidate=next;$('importSummary').textContent=`Ce fichier contient ${next.views.length} vues, ${next.parts.length} fiches et ${next.views.reduce((s,v)=>s+v.zones.length,0)} repères.`;showDialog('importDialog');}catch(e){toast('Import refusé : '+e.message,true);}}
+async function replaceProject(next){
+  requireEditor();const checked=C.validate(next);checked.updatedAt=new Date(Math.max(Date.now(),(Date.parse(project.updatedAt)||0)+1,(Date.parse(checked.updatedAt)||0)+1)).toISOString();const previous=C.clone(project);
+  await saveQueue;
+  try{await storeSnapshot(checked,previous);}catch(e){throw Error('Import non appliqué : sauvegarde locale impossible. Le brouillon actuel est conservé.');}
+  checkpoint();previousDraft=previous;project=checked;saveRevision++;cleanAttachmentUrls();currentId=project.views[0].id;history=[];selectedZoneId='';selectedPartId='';
+  $('saveState').textContent='Brouillon enregistré sur cet appareil, fichiers joints inclus.';renderStage();renderSide();
+}
+async function applyImport(){
+  if(!importCandidate)return;const button=$('confirmImport');if(button.disabled)return;button.disabled=true;
+  try{await replaceProject(importCandidate);importCandidate=null;closeDialog('importDialog');toast('Projet importé, fichiers joints inclus.');}catch(e){toast(e.message,true);}finally{button.disabled=false;}
+}
+
 function recoverLocal(){requireEditor();try{const raw=localStorage.getItem('q310_views_v1');if(!raw)return toast('Aucune ancienne annotation dans ce navigateur. Ouvre cette V2 sur le même site et le même appareil que l’ancienne application, ou importe un ancien JSON.',true);const parts=JSON.parse(localStorage.getItem('q310_parts_v1')||'[]');prepareLegacy({format:'q310-legacy-backup',views:JSON.parse(raw),parts});}catch(e){toast('Récupération impossible : '+e.message,true);}}
 let legacySession=null;
 async function prepareLegacy(raw){
@@ -2700,12 +2912,12 @@ async function prepareLegacy(raw){
     $('legacyBackup').onclick=()=>download('q310_anciennes_annotations.json',JSON.stringify(raw,null,2),'application/json');$('legacyApply').onclick=applyLegacy;
   }catch(e){$('legacyError').textContent=e.message;toast(e.message,true);}finally{busy=false;}
 }
-function applyLegacy(){try{requireEditor();if(!legacySession)return;const s=legacySession,next=C.clone(project);next.legacyArchive=s.raw;
+async function applyLegacy(){try{requireEditor();if(!legacySession)return;const s=legacySession,next=C.clone(project);next.legacyArchive=s.raw;
   for(const p of s.raw.parts){if(!p||!p.id)continue;const idx=next.parts.findIndex(x=>x.id===p.id);const fixed={...p,medias:C.media(p.medias)};if(idx>=0)next.parts[idx]=fixed;else next.parts.push(fixed);}
   for(const row of s.rows){const width=Number(row.input.value),height=width*row.ratio;const zones=row.zones.map(z=>{const n=C.normalizeLegacyZone(z,width,height);if(!n.partId&&next.parts.some(p=>p.id===z.id))n.partId=z.id;return n;});let target=next.views.find(v=>v.id===row.id);if(!target){target={id:row.id,label:row.label,type:'image',src:row.src,zones:[]};next.views.push(target);}target.zones=zones;target.src=row.src;}
   // Preserve linked views even when they contained no annotations.
   for(const [id,v] of Object.entries(s.raw.views)){if(next.views.some(x=>x.id===id))continue;const known=seed.views.find(x=>x.id===id);if(v.src||known)next.views.push({id,label:known?.label||id,type:v.type||known?.type||'image',src:C.source(v.src||known.src),zones:[]});}
-  replaceProject(next);closeDialog('legacyDialog');toast('Annotations récupérées. Vérifie leur position sur chaque vue, puis sauvegarde le projet.');
+  await replaceProject(next);closeDialog('legacyDialog');toast('Annotations récupérées. Vérifie leur position sur chaque vue, puis sauvegarde le projet.');
 }catch(e){$('legacyError').textContent=e.message;}}
 build();setMode(false);renderStage();renderSide();if(initialWarning)toast(initialWarning,true);
 })();
