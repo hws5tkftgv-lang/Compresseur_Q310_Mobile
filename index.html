@@ -224,6 +224,7 @@
 }
 .student-report-qr{width:min(100%,390px);margin:16px auto;background:white;padding:8px}.student-report-qr svg{display:block;width:100%;height:auto}.scanned-report{max-width:850px;margin:20px auto;padding:20px;background:white;border-radius:12px}.scanned-report details{margin:14px 0}.scanned-report summary{font-weight:bold;cursor:pointer;padding:12px;background:#eef3f7}.scanned-report li{margin:8px 0}.report-controls{display:grid;gap:12px;margin-top:20px}
 .quiz-celebration{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(10,30,48,.94);color:white;text-align:center;padding:24px;overflow:hidden}.quiz-celebration h2{font-size:clamp(2.5rem,8vw,5rem);color:#ffd740}.quiz-celebration p{font-size:1.5rem}.quiz-celebration button{z-index:2}.quiz-firework{position:absolute;pointer-events:none;left:calc(10% + var(--i)*16%);top:18%;font-size:5rem;color:#ffd740;animation:quizBurst 1.2s ease-out infinite;animation-delay:calc(var(--i)*.15s);text-shadow:28px 20px #ff7ac8,-25px 25px #75dcff,10px -30px #a3ffb5}.quiz-firework:nth-of-type(even){top:65%;color:#75dcff}@keyframes quizBurst{0%{transform:scale(.1);opacity:0}30%{opacity:1}100%{transform:scale(1.8) rotate(45deg);opacity:0}}@media(prefers-reduced-motion:reduce){.quiz-firework{animation:none;opacity:.5;font-size:3rem}}
+.quiz-current-piece{font-size:1.1rem;font-weight:700;line-height:1.4;white-space:normal;overflow-wrap:anywhere;padding:10px 12px;margin:4px 0 10px;background:#fff7d6;border-left:4px solid #ffd740;border-radius:6px}
 </style>
 <style id="DruideCSS">::highlight(Reformulation) {
 		background-color: rgba(220, 110, 0, 0.2) !important;
@@ -3168,7 +3169,7 @@ function answerQuiz(number){
   const correct=r.selected===entry.key,tries=(r.answers.get(entry.zone.id)?.tries||0)+1;
   r.answers.set(entry.zone.id,{correct,tries});r.tone=correct?'is-correct':'is-wrong';
   r.feedback=correct?'✓ Bonne réponse : tu as trouvé « '+selected.name+' ».':'✕ « '+selected.name+' » ne correspond pas à cette zone. Essaie une autre association.';
-  if(correct&&!quizRemaining(r.selected))r.selected='';
+  if(correct){const previous=r.selected,index=r.order.indexOf(previous);const candidates=[...r.order.slice(index+1),...r.order.slice(0,index+1)];r.selected=candidates.find(key=>quizRemaining(key)>0)||'';if(r.selected){const next=v.entries.find(e=>e.key===r.selected);r.feedback+=' À placer maintenant : « '+next.name+' ».';}}
   if(correct&&quizCounts(v).found===v.entries.length){renderQuizZones();celebrateQuizView();return;}
   renderQuizRound();
 }
@@ -3209,6 +3210,7 @@ function renderQuizRound(){
     if(remaining)select.append(option(key,name+(total>1?' — '+detail:'')));
   }
   select.value=r.selected;select.disabled=select.options.length===1;
+  let fullName=$('quizCurrentPieceName');if(!fullName){fullName=el('div','quiz-current-piece');fullName.id='quizCurrentPieceName';fullName.setAttribute('aria-live','polite');select.before(fullName);}fullName.textContent=r.selected?names.get(r.selected):'Toutes les pièces sont identifiées';select.setAttribute('aria-label','Choisir une autre pièce à placer');
   if(select.disabled)select.options[0].textContent='Toutes les pièces sont trouvées';
   $('quizFeedback').textContent=r.feedback;$('quizFeedback').className='quiz-feedback'+(r.tone?' '+r.tone:'');
   const count=quizCounts(v),all=quizViews.reduce((s,v)=>{const c=quizCounts(v);for(const key of Object.keys(s))s[key]+=c[key];return s;},{total:0,found:0,first:0,tries:0});
