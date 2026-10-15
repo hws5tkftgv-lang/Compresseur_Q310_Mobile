@@ -81,8 +81,8 @@
 .quiz-work{min-width:0}.quiz-work .viewbar h3{margin:0;font-size:1rem}
 .quiz-viewport{height:calc(100svh - 340px);min-height:400px;max-height:850px;overscroll-behavior:auto}
 .quiz-viewport .photo-box{isolation:isolate}
-.quiz-zone{position:absolute;min-width:0;min-height:0;padding:0;border:2px solid #056994;border-radius:6px;background:rgba(18,133,179,.09);touch-action:manipulation;line-height:1;text-align:left}
-.quiz-zone:hover{background:rgba(18,133,179,.20)}
+.quiz-zone{position:absolute;min-width:0;min-height:0;padding:0;border:2px solid #ffd740;border-radius:6px;background:rgba(255,215,64,.06);box-shadow:0 0 0 1px #17212b,inset 0 0 0 1px #17212b;touch-action:manipulation;line-height:1;text-align:left}
+.quiz-zone:hover{background:rgba(255,215,64,.16)}
 .quiz-zone>span{position:absolute;left:-2px;top:-2px;display:flex;align-items:center;justify-content:center;min-width:28px;min-height:28px;padding:4px 5px;background:#056994;color:white;border-radius:4px;font-size:12px;font-weight:800;pointer-events:none;white-space:nowrap}
 .quiz-zone.is-correct,.quiz-zone.is-correct:hover{border-color:#14743f;background:rgba(32,170,92,.25);opacity:1;pointer-events:none}
 .quiz-zone.is-correct>span{background:#14743f}
@@ -209,6 +209,7 @@
 #studyExercisePrintHeader{display:none}
 @media print{body.study-printing.study-exercises-printing #studyPage>:not(#studyExercises):not(#studyExercisePrintHeader){display:none!important}body.study-printing.study-exercises-printing #studyExercisePrintHeader{display:block!important;margin-bottom:18pt}body.study-printing.study-exercises-printing #studyExercises{display:block!important;margin-top:0}body.study-printing.study-exercises-printing #studyExercisePrintHeader h2{font-size:18pt}body.study-printing.study-exercises-printing #studyExercisePrintHeader p{font-size:10pt;margin-top:12pt}}
 .mobile-photo-return{display:none}#detail{scroll-margin-top:12px}@media(max-width:650px){.mobile-photo-return{display:inline-block}.top .actions{flex-wrap:wrap}.top .actions>*{white-space:normal}}
+.top .brand .compressor-subtitle{display:block;line-height:1.4}
 </style>
 <style id="DruideCSS">::highlight(Reformulation) {
 		background-color: rgba(220, 110, 0, 0.2) !important;
@@ -3299,7 +3300,7 @@ function bindStudy(){
 }
 
 function build(){
-$('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram">Q310</div><div><div class="badge" id="modeBadge">Consultation</div><h1>Atelier du compresseur</h1><p>Observer les composants. Comprendre leur rôle.</p></div></div><div class="actions"><a id="manualBtn" class="button" href="CompresseurManuel.pdf" target="_blank" rel="noopener noreferrer">Manuel PDF</a><button id="studyBtn" type="button" aria-pressed="false" aria-controls="studyPage">Comprendre et calculer</button><button id="quizBtn" type="button" aria-pressed="false" aria-controls="quizPage">Identifier les pièces</button><button id="helpBtn">Aide</button><button id="modeBtn">Mode enseignant</button></div></header>
+$('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram">Q310</div><div><div class="badge" id="modeBadge">Consultation</div><h1>Atelier du compresseur</h1><p class="compressor-subtitle">Quincy Q310 — Compresseur à pistons à deux étages</p></div></div><div class="actions"><a id="manualBtn" class="button" href="CompresseurManuel.pdf" target="_blank" rel="noopener noreferrer">Manuel PDF</a><button id="studyBtn" type="button" aria-pressed="false" aria-controls="studyPage">Comprendre et calculer</button><button id="quizBtn" type="button" aria-pressed="false" aria-controls="quizPage">Identifier les pièces</button><button id="helpBtn">Aide</button><button id="modeBtn">Mode enseignant</button></div></header>
 <nav id="referenceNav" class="tools" aria-label="Navigation"><button id="homeBtn">Vue générale</button><select id="viewSelect" aria-label="Choisir une vue"></select><button id="backBtn">Retour</button><div id="viewTeacherTools" class="actions" role="group" aria-label="Gestion des vues" hidden><button id="addViewBtn" type="button">Ajouter une vue</button><button id="deleteViewBtn" class="danger" type="button">Supprimer cette vue</button></div><span class="spacer"></span><span class="counter" id="pieceCount"></span></nav>
 <section id="qrCard" class="qr-card" aria-labelledby="qrCardTitle" hidden>
   <div class="qr-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 2h7v7H2zM15 2h7v7h-7zM2 15h7v7H2zM15 15h3v3h4v4h-7v-3M22 12v3M12 3v3M3 12h3M12 12h3M12 21v1"/></svg></div>
