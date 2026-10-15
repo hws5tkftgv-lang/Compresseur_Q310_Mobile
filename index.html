@@ -3182,7 +3182,12 @@ function renderQuizZones(){
   }
   if(focused){const next=[...layer.children].find(b=>b.dataset.quizZone===focused&&!b.disabled);(next||$('quizChoiceSelect')).focus({preventScroll:true});}
 }
+function remainingQuizViews(){return quizViews.filter(v=>{const c=quizCounts(v);return c.found<c.total;});}
 function renderQuizRound(){
+  const remaining=remainingQuizViews(),current=quizView();
+  if(current&&!remaining.includes(current)&&remaining.length){quizCurrentId=remaining[0].view.id;renderQuizView();return;}
+  const picker=$('quizViewSelect');picker.replaceChildren(...remaining.map(v=>option(v.view.id,v.view.label)));picker.disabled=!remaining.length;
+  if(!remaining.length)picker.append(option('','Toutes les vues sont terminées'));else picker.value=quizCurrentId;
   const v=quizView(),r=quizRound();if(!v||!r)return;
   const focused=document.activeElement?.dataset.quizChoice;
   const names=new Map(v.entries.map(e=>[e.key,e.name]));
@@ -3202,7 +3207,7 @@ function renderQuizRound(){
   $('quizProgress').max=all.total;$('quizProgress').value=all.found;
   $('quizStats').textContent=all.first+' du premier coup · '+all.tries+' essai'+(all.tries===1?'':'s');
   $('quizViewProgress').textContent=count.found+' / '+count.total+' zones trouvées sur cette vue';
-  const index=quizViews.indexOf(v);$('quizPrevBtn').disabled=index===0;$('quizNextBtn').disabled=index===quizViews.length-1;
+  const index=remaining.indexOf(v);$('quizPrevBtn').disabled=index<=0;$('quizNextBtn').disabled=index<0||index===remaining.length-1;
   const completion=$('quizCompletion');completion.hidden=count.found!==count.total;
   completion.textContent=all.found===all.total?'✓ Quiz terminé ! Tu as retrouvé les '+all.total+' zones, dont '+all.first+' du premier coup.':'✓ Vue terminée ! '+count.first+' / '+count.total+' du premier coup. Choisis une autre vue pour continuer.';
   renderQuizValidation(all);
@@ -3324,8 +3329,8 @@ function bindQuiz(){
   bindQuizFullscreen();window.addEventListener('afterprint',()=>document.body.classList.remove('quiz-report-printing'));
   $('quizBtn').onclick=()=>setQuizMode(!quizActive);$('quizExitBtn').onclick=()=>setQuizMode(false);
   $('quizViewSelect').onchange=e=>changeQuizView(e.target.value);$('quizChoiceSelect').onchange=e=>selectQuizChoice(e.target.value);
-  $('quizPrevBtn').onclick=()=>changeQuizView(quizViews[quizViews.indexOf(quizView())-1]?.view.id);
-  $('quizNextBtn').onclick=()=>changeQuizView(quizViews[quizViews.indexOf(quizView())+1]?.view.id);
+  $('quizPrevBtn').onclick=()=>changeQuizView(remainingQuizViews()[remainingQuizViews().indexOf(quizView())-1]?.view.id);
+  $('quizNextBtn').onclick=()=>changeQuizView(remainingQuizViews()[remainingQuizViews().indexOf(quizView())+1]?.view.id);
   $('quizResetViewBtn').onclick=()=>resetQuiz(false);$('quizResetAllBtn').onclick=()=>resetQuiz(true);
   $('quizZoomIn').onclick=()=>setQuizZoom(Math.min(4,quizZoom+.25));$('quizZoomOut').onclick=()=>setQuizZoom(Math.max(1,quizZoom-.25));$('quizZoomFit').onclick=()=>setQuizZoom(1);
   new ResizeObserver(fitQuizImage).observe($('quizViewport'));window.addEventListener('resize',fitQuizImage);
