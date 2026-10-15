@@ -223,6 +223,7 @@
  body.quiz-report-printing .quiz-report-control{display:none!important}
 }
 .student-report-qr{width:min(100%,390px);margin:16px auto;background:white;padding:8px}.student-report-qr svg{display:block;width:100%;height:auto}.scanned-report{max-width:850px;margin:20px auto;padding:20px;background:white;border-radius:12px}.scanned-report details{margin:14px 0}.scanned-report summary{font-weight:bold;cursor:pointer;padding:12px;background:#eef3f7}.scanned-report li{margin:8px 0}.report-controls{display:grid;gap:12px;margin-top:20px}
+.quiz-celebration{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(10,30,48,.94);color:white;text-align:center;padding:24px;overflow:hidden}.quiz-celebration h2{font-size:clamp(2.5rem,8vw,5rem);color:#ffd740}.quiz-celebration p{font-size:1.5rem}.quiz-celebration button{z-index:2}.quiz-firework{position:absolute;pointer-events:none;left:calc(10% + var(--i)*16%);top:18%;font-size:5rem;color:#ffd740;animation:quizBurst 1.2s ease-out infinite;animation-delay:calc(var(--i)*.15s);text-shadow:28px 20px #ff7ac8,-25px 25px #75dcff,10px -30px #a3ffb5}.quiz-firework:nth-of-type(even){top:65%;color:#75dcff}@keyframes quizBurst{0%{transform:scale(.1);opacity:0}30%{opacity:1}100%{transform:scale(1.8) rotate(45deg);opacity:0}}@media(prefers-reduced-motion:reduce){.quiz-firework{animation:none;opacity:.5;font-size:3rem}}
 </style>
 <style id="DruideCSS">::highlight(Reformulation) {
 		background-color: rgba(220, 110, 0, 0.2) !important;
@@ -3068,6 +3069,9 @@ function bindViewManager(){
 // Les réponses du quiz sont séparées des fiches et ne modifient jamais le projet.
 let quizActive=false,quizViews=[],quizSignature='',quizCurrentId='',quizZoom=1,quizImageReady=false;
 const quizRounds=new Map();
+let quizCelebrating=false,quizCelebrationTimer=null;
+function finishQuizCelebration(){clearTimeout(quizCelebrationTimer);quizCelebrationTimer=null;quizCelebrating=false;$('quizCelebration')?.remove();if(quizActive)renderQuizRound();}
+function celebrateQuizView(){quizCelebrating=true;const banner=el('div','quiz-celebration');banner.id='quizCelebration';banner.setAttribute('role','status');banner.append(el('h2','','Bravo ! 🎉'),el('p','','Vue complétée !'));for(let i=0;i<6;i++){const burst=el('span','quiz-firework','✦');burst.setAttribute('aria-hidden','true');burst.style.setProperty('--i',i);banner.append(burst);}banner.append(btn(remainingQuizViews().length?'Vue suivante':'Voir mon bilan',finishQuizCelebration));$('quizPage').append(banner);quizCelebrationTimer=setTimeout(finishQuizCelebration,2600);}
 let quizValidation=null,quizStudentName='';
 function getQuizViews(){
   const parts=new Map(project.parts.map(p=>[p.id,p]));
@@ -3096,7 +3100,7 @@ function quizRemaining(key,v=quizView()){
 }
 function setQuizMode(active){
   if(active&&studyActive)setStudyMode(false);
-  if(!active)exitQuizFullscreen();
+  if(!active){clearTimeout(quizCelebrationTimer);quizCelebrationTimer=null;quizCelebrating=false;$('quizCelebration')?.remove();exitQuizFullscreen();}
   if(active){
     if(drag)endDrag(true);stopVideos();touchDragEnabled=false;updateTouchDrag();
     quizViews=getQuizViews();
@@ -3122,6 +3126,7 @@ function renderQuizPage(){
   renderQuizView();
 }
 function changeQuizView(id){
+  if(quizCelebrating)return;
   if(!quizViews.some(v=>v.view.id===id))return;
   quizCurrentId=id;$('quizViewSelect').value=id;renderQuizView();
 }
@@ -3156,7 +3161,7 @@ function selectQuizChoice(key){
   r.feedback=r.selected?'Où se trouve « '+entry.name+' » ? Touche sa zone sur la photo.':'Choisis une pièce, puis touche la zone correspondante.';r.tone='';renderQuizRound();
 }
 function answerQuiz(number){
-  const v=quizView(),r=quizRound();if(!quizActive||!quizImageReady||!v||!r)return;
+  const v=quizView(),r=quizRound();if(!quizActive||quizCelebrating||!quizImageReady||!v||!r)return;
   const entry=v.entries.find(e=>e.number===number);if(!entry||r.answers.get(entry.zone.id)?.correct)return;
   if(!r.selected){r.feedback='Choisis d’abord une pièce dans le menu « Pièce à placer ».';r.tone='';renderQuizRound();return;}
   const selected=v.entries.find(e=>e.key===r.selected);if(!selected||!quizRemaining(r.selected))return;
@@ -3164,6 +3169,7 @@ function answerQuiz(number){
   r.answers.set(entry.zone.id,{correct,tries});r.tone=correct?'is-correct':'is-wrong';
   r.feedback=correct?'✓ Bonne réponse : tu as trouvé « '+selected.name+' ».':'✕ « '+selected.name+' » ne correspond pas à cette zone. Essaie une autre association.';
   if(correct&&!quizRemaining(r.selected))r.selected='';
+  if(correct&&quizCounts(v).found===v.entries.length){renderQuizZones();celebrateQuizView();return;}
   renderQuizRound();
 }
 function renderQuizZones(){
