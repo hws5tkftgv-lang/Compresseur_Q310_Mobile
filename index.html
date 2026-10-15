@@ -3189,6 +3189,10 @@ function renderQuizRound(){
   const picker=$('quizViewSelect');picker.replaceChildren(...remaining.map(v=>option(v.view.id,v.view.label)));picker.disabled=!remaining.length;
   if(!remaining.length)picker.append(option('','Toutes les vues sont terminées'));else picker.value=quizCurrentId;
   const v=quizView(),r=quizRound();if(!v||!r)return;
+  if(!r.selected||!quizRemaining(r.selected)){
+    r.selected=r.order.find(key=>quizRemaining(key)>0)||'';
+    if(r.selected){const next=v.entries.find(e=>e.key===r.selected);r.feedback=(r.tone==='is-correct'?r.feedback+' ':'')+'Où se trouve « '+next.name+' » ? Touche sa zone sur la photo.';}
+  }
   const focused=document.activeElement?.dataset.quizChoice;
   const names=new Map(v.entries.map(e=>[e.key,e.name]));
   const choices=$('quizChoices'),select=$('quizChoiceSelect');choices.replaceChildren();select.replaceChildren(option('','— Choisir une pièce —'));
