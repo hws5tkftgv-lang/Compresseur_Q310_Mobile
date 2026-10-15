@@ -121,7 +121,7 @@
 #modeBtn.teacher-access-hidden{opacity:0}
 #modeBtn.teacher-access-hidden:focus-visible{opacity:1}
 /* Photo dominante en plein écran; repli utilisable sans API Fullscreen. */
-#quizPage.quiz-expanded{position:fixed;inset:0;z-index:100;max-width:none;width:100%;height:100vh;height:100dvh;margin:0;padding:12px;background:#eef3f7;overflow:auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-rows:auto auto minmax(0,1fr) auto auto;gap:12px}
+#quizPage.quiz-expanded{position:fixed;inset:0;z-index:100;max-width:none;width:100%;height:100vh;height:100dvh;margin:0;padding:12px;background:#eef3f7;overflow:auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-rows:auto auto minmax(min-content,1fr) auto auto;gap:12px}
 #quizPage.quiz-expanded .quiz-heading{grid-column:1/-1;grid-row:1;margin:0;gap:10px}
 #quizPage.quiz-expanded .quiz-heading .pill,#quizPage.quiz-expanded .quiz-heading p{display:none}
 #quizPage.quiz-expanded .quiz-heading h2{font-size:1.08rem;margin:0}
@@ -211,7 +211,7 @@
 .mobile-photo-return{display:none}#detail{scroll-margin-top:12px}@media(max-width:650px){.mobile-photo-return{display:inline-block}.top .actions{flex-wrap:wrap}.top .actions>*{white-space:normal}}
 .top .brand .compressor-subtitle{display:block;line-height:1.4}
 
-#quizPage.quiz-expanded #quizValidationPanel{grid-column:1/-1}
+#quizPage.quiz-expanded #quizValidationPanel{grid-column:1/-1;grid-row:6;min-width:0}
 @media print{
  body.quiz-report-printing{overflow:visible!important;background:white!important}
  body.quiz-report-printing #app>*:not(#quizPage){display:none!important}
