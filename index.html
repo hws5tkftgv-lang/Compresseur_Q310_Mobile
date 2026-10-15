@@ -3110,7 +3110,7 @@ function setQuizMode(active){
   $('qrCard').hidden=active||!editor;$('recoveryNotice').hidden=true;
   $('quizBtn').textContent=active?'Consulter les fiches':'Identifier les pièces';$('quizBtn').setAttribute('aria-pressed',String(active));
   $('modeBadge').textContent=active?'Quiz':editor?'Préparation':'Consultation';
-  if(active){renderQuizPage();$('quizTitle').focus({preventScroll:true});}
+  if(active){renderQuizPage();$('quizTitle').focus({preventScroll:true});if(!$('quizPage').classList.contains('quiz-expanded'))toggleQuizFullscreen();}
   else{renderRecovery();fitImage();$('quizBtn').focus({preventScroll:true});}
 }
 function renderQuizPage(){
@@ -3282,7 +3282,6 @@ const quizOutsideInert=new Map();
 function quizFullscreenElement(){return document.fullscreenElement||document.webkitFullscreenElement;}
 function setQuizExpanded(active){
   const page=$('quizPage');page.classList.toggle('quiz-expanded',active);
-  const button=$('quizFullscreenBtn');button.textContent=active?'Réduire':'Plein écran';button.setAttribute('aria-pressed',String(active));
   if(active&&quizBodyOverflow===null){
     quizBodyOverflow=document.body.style.overflow;document.body.style.overflow='hidden';
     for(const child of $('app').children)if(child!==page){quizOutsideInert.set(child,child.inert);child.inert=true;}
@@ -3312,13 +3311,12 @@ async function toggleQuizFullscreen(){
   fitQuizImage();
 }
 function bindQuizFullscreen(){
-  $('quizFullscreenBtn').onclick=toggleQuizFullscreen;
   const changed=()=>{
     if(quizFullscreenElement()===$('quizPage')){quizNativeFullscreen=true;if(quizActive)setQuizExpanded(true);else exitQuizFullscreen();}
     else if(quizNativeFullscreen){quizNativeFullscreen=false;setQuizExpanded(false);}
   };
   document.addEventListener('fullscreenchange',changed);document.addEventListener('webkitfullscreenchange',changed);
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('quizPage').classList.contains('quiz-expanded')&&!quizFullscreenElement()){e.preventDefault();exitQuizFullscreen();$('quizFullscreenBtn').focus({preventScroll:true});}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('quizPage').classList.contains('quiz-expanded')&&!quizFullscreenElement()){e.preventDefault();exitQuizFullscreen();$('quizExitBtn').focus({preventScroll:true});}});
 }
 
 function bindQuiz(){
@@ -3440,7 +3438,7 @@ $('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram"
 <main id="quizPage" class="quiz-page" hidden aria-labelledby="quizTitle">
   <section class="quiz-heading">
     <div><span class="pill">Repérage des composants</span><h2 id="quizTitle" tabindex="-1">Quiz — Repérage des pièces</h2><p>Choisis le nom d’une pièce, puis touche sa zone sur la photo. Cet entraînement vérifie le repérage; les exercices d’Étude vérifient la compréhension. Les résultats sont conservés tant que cette page reste ouverte.</p></div>
-    <div class="actions"><button id="quizFullscreenBtn" type="button" aria-pressed="false">Plein écran</button><button id="quizExitBtn" type="button">Retour aux fiches</button></div>
+    <div class="actions"><button id="quizExitBtn" type="button">Retour aux fiches</button></div>
   </section>
   <div id="quizTools" class="quiz-tools">
     <div class="quiz-view-picker"><label for="quizViewSelect">Vue à identifier</label><select id="quizViewSelect"></select></div>
