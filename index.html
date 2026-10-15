@@ -3198,6 +3198,7 @@ function renderQuizRound(){
   $('quizFeedback').textContent=r.feedback;$('quizFeedback').className='quiz-feedback'+(r.tone?' '+r.tone:'');
   const count=quizCounts(v),all=quizViews.reduce((s,v)=>{const c=quizCounts(v);for(const key of Object.keys(s))s[key]+=c[key];return s;},{total:0,found:0,first:0,tries:0});
   $('quizTotal').textContent=all.found+' / '+all.total+' zones trouvées';
+  let viewsCount=$('quizViewsCompleted');if(!viewsCount){viewsCount=el('span');viewsCount.id='quizViewsCompleted';$('quizTotal').after(viewsCount);}viewsCount.textContent='Vues terminées : '+quizViews.filter(v=>{const c=quizCounts(v);return c.total>0&&c.found===c.total;}).length+' / '+quizViews.length;
   $('quizProgress').max=all.total;$('quizProgress').value=all.found;
   $('quizStats').textContent=all.first+' du premier coup · '+all.tries+' essai'+(all.tries===1?'':'s');
   $('quizViewProgress').textContent=count.found+' / '+count.total+' zones trouvées sur cette vue';
