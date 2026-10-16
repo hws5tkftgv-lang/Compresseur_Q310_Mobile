@@ -254,6 +254,8 @@
 #quizPage.quiz-finished #quizValidationPanel{max-width:820px;margin:0 auto;padding:clamp(16px,3vw,28px);background:white;color:var(--ink);border:1px solid #badcc7}
 #quizPage.quiz-finished #quizValidationPanel>button.primary{display:block;width:100%;margin:14px 0}
 #quizPage.quiz-finished #quizValidationPanel>button:last-child{margin-top:14px}
+
+.inbox-dialog{width:min(900px,96vw);max-height:94dvh}.inbox-create{padding:14px;background:#f0f6fb;border-radius:10px;margin:16px 0}.inbox-create button{margin-top:12px}.inbox-room-info{margin:16px 0;padding:16px;background:#fff7d6;border:1px solid #e3c966;border-radius:10px}.inbox-class-code{display:block;font-size:1.8rem;letter-spacing:.12em;overflow-wrap:anywhere;margin:8px 0}.inbox-report-list{display:grid;gap:12px;margin:16px 0}.inbox-report-card{padding:16px;border:1px solid #b7cad7;border-radius:10px}.inbox-report-card button{margin-top:10px}#inboxContent details{margin:12px 0}#inboxContent summary{padding:10px;background:#eef3f7;cursor:pointer;font-weight:700}#inboxContent li{margin:8px 0}#quizValidationPanel>input{max-width:100%}
 </style>
 <style id="DruideCSS">::highlight(Reformulation) {
 		background-color: rgba(220, 110, 0, 0.2) !important;
@@ -2921,7 +2923,7 @@ function exportPage(){
 }
 function stopVideos(container=document){container.querySelectorAll('video').forEach(v=>v.pause());container.querySelectorAll('iframe[data-embedded-video]').forEach(frame=>{if(frame.src)frame.src=frame.src;});}
 function setMode(value){if(value&&!editor){$('teacherPassword').value='';$('teacherLoginError').textContent='';showDialog('teacherLogin');$('teacherPassword').focus();return;}applyMode(false);}
-function applyMode(value){editor=!!value;if(!editor&&drag)endDrag(true);touchDragEnabled=false;updateTouchDrag();$('modeBtn').textContent=editor?'Terminer la préparation':'Mode enseignant';$('modeBtn').classList.toggle('teacher-access-hidden',!editor);$('modeBadge').textContent=editor?'Préparation':'Consultation';$('teacherBar').hidden=!editor;$('saveState').hidden=!editor;$('qrCard').hidden=!editor;updateViewTools();if(!editor){if($('qrDialog').open)closeDialog('qrDialog');if($('addViewDialog').open)closeDialog('addViewDialog');if($('deleteViewDialog').open)closeDialog('deleteViewDialog');qrShare=null;document.body.classList.remove('qr-printing');}renderSide();renderZones();renderRecovery();updateImageHint();}
+function applyMode(value){editor=!!value;if(!editor&&drag)endDrag(true);touchDragEnabled=false;updateTouchDrag();$('modeBtn').textContent=editor?'Terminer la préparation':'Mode enseignant';$('modeBtn').classList.toggle('teacher-access-hidden',!editor);$('teacherInboxBtn').hidden=!editor;if(!editor){inboxTeacherCode='';if($('teacherInboxDialog').open)closeDialog('teacherInboxDialog');} $('modeBadge').textContent=editor?'Préparation':'Consultation';$('teacherBar').hidden=!editor;$('saveState').hidden=!editor;$('qrCard').hidden=!editor;updateViewTools();if(!editor){if($('qrDialog').open)closeDialog('qrDialog');if($('addViewDialog').open)closeDialog('addViewDialog');if($('deleteViewDialog').open)closeDialog('deleteViewDialog');qrShare=null;document.body.classList.remove('qr-printing');}renderSide();renderZones();renderRecovery();updateImageHint();}
 function go(id,push=true){if(drag)endDrag(true);if(!project.views.some(v=>v.id===id))return;stopVideos();if(push&&id!==currentId)history.push(currentId);currentId=id;selectedZoneId='';selectedPartId='';zoom=1;renderStage();renderSide();}
 function goBack(){if(history.length)go(history.pop(),false);}
 function showDialog(id){stopVideos();$(id).showModal();}
@@ -3140,7 +3142,7 @@ function setQuizMode(active){
   }
   quizActive=active;
   $('referenceNav').hidden=active;$('referencePage').hidden=active;$('quizPage').hidden=!active;
-  for(const id of ['manualBtn','helpBtn','modeBtn'])$(id).hidden=active;
+  for(const id of ['manualBtn','helpBtn','modeBtn'])$(id).hidden=active;$('teacherInboxBtn').hidden=active||!editor;
   $('qrCard').hidden=active||!editor;$('recoveryNotice').hidden=true;
   $('quizBtn').textContent=active?'Consulter les fiches':'Quiz Identification de pièces';$('quizBtn').setAttribute('aria-pressed',String(active));
   $('modeBadge').textContent=active?'Quiz':editor?'Préparation':'Consultation';
@@ -3278,15 +3280,8 @@ async function validationRequest(body){
 }
 function setRelayNotice(s,message,error=false){
   s.notice=message;s.error=error;
+  if(relaySessionIsCurrent(s)&&s.stopped){const button=$('studentSendReportBtn');if(button){button.disabled=false;button.textContent='Renvoyer mon bilan';$('quizValidationPanel').querySelectorAll('input').forEach(input=>input.disabled=false);}}
   if(relaySessionIsCurrent(s)){const status=$('quizRelayStatus');if(status){status.textContent=message;status.className=error?'media-error':'muted';}}
-}
-function drawStudentReportQr(s,container){
-  const url=publicAppUrl()+'#bilan='+encodeReport(s.payload),qr=qrcode(0,'M');qr.addData(url,'Byte');qr.make();
-  container.replaceChildren(el('h3','','Présente ce QR à ton enseignant'));
-  const code=el('div','student-report-qr');code.innerHTML=qr.createSvgTag({cellSize:8,margin:32,scalable:true});code.firstElementChild.setAttribute('aria-label','QR du bilan de '+s.payload.n);
-  const status=el('p',s.error?'media-error':'muted',s.notice);status.id='quizRelayStatus';status.setAttribute('role','status');
-  container.append(code,el('p','',s.ready?'Garde cette page ouverte et connectée à Internet. Un message apparaîtra ici après la validation de ton enseignant.':'Ton enseignant peut consulter et enregistrer ce bilan. Le retour automatique vers ton appareil est indisponible.'),status);
-  code.dataset.reportUrl=url;
 }
 function showQuizApprovalNotice(){
   $('quizApprovalNotice')?.remove();
@@ -3298,7 +3293,7 @@ async function pollQuizApproval(){
   const s=quizRelaySession;if(!s?.ready||s.polling||s.stopped)return;
   clearTimeout(quizRelayTimer);
   if(!relaySessionIsCurrent(s)){cancelQuizRelay();return;}
-  if(Date.now()>=s.expires){s.stopped=true;setRelayNotice(s,'Ce QR a expiré. Appuie de nouveau sur « Faire valider mon bilan ».',true);return;}
+  if(Date.now()>=s.expires){s.stopped=true;setRelayNotice(s,'Cette demande a expiré. Appuie sur « Renvoyer mon bilan ».',true);return;}
   if(document.hidden||navigator.onLine===false){if(navigator.onLine===false)setRelayNotice(s,'Connexion interrompue. La vérification reprendra automatiquement au retour d’Internet.',true);quizRelayTimer=setTimeout(pollQuizApproval,15000);return;}
   s.polling=true;let delay=4000;
   try{
@@ -3312,34 +3307,135 @@ async function pollQuizApproval(){
     setRelayNotice(s,'En attente de la validation de ton enseignant…');
   }catch(error){
     if(!relaySessionIsCurrent(s))return;
-    if(error.status===410||error.status===403){s.stopped=true;setRelayNotice(s,'Ce QR n’est plus disponible. Appuie de nouveau sur « Faire valider mon bilan ».',true);}
+    if(error.status===410||error.status===403){s.stopped=true;setRelayNotice(s,'Cette demande n’est plus disponible. Appuie sur « Renvoyer mon bilan ».',true);}
     else{delay=15000;setRelayNotice(s,'Connexion interrompue. Nouvelle vérification automatique dans quelques secondes.',true);}
   }finally{s.polling=false;if(relaySessionIsCurrent(s)&&!s.stopped)quizRelayTimer=setTimeout(pollQuizApproval,delay);}
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollQuizApproval();});
 window.addEventListener('online',pollQuizApproval);
-async function showStudentReportQr(name,container,button){
-  if(!name.trim()){toast('Inscris ton nom avant de montrer le bilan.',true);return;}
-  if(button){button.disabled=true;button.textContent='Préparation du QR…';}
-  let s;
+const INBOX_URL='https://q310-validation-relay.berrygnome36.chatgpt.site/api/inbox';
+let inboxTeacherCode='',inboxRoomCode='',inboxVersion=0,inboxTimer=null;
+let quizClassCode='';try{quizClassCode=localStorage.getItem('q310-class-code')||'';}catch(e){}
+async function inboxRequest(body){
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
   try{
-    cancelQuizRelay();
-    const views=getQuizViews(),tries=views.map(v=>v.entries.map(e=>{const a=quizRounds.get(v.view.id)?.answers.get(e.zone.id);if(!a?.correct)throw Error('Termine toutes les vues avant de créer le bilan.');return a.tries;}));
-    const payload={v:1,n:name.trim().slice(0,120),d:new Date().toISOString(),m:reportFingerprint(reportManifest()),t:tries};
-    s={payload,signature:quizReportSignature(),ready:false,notice:'Préparation de la notification…'};quizRelaySession=s;
-    container.replaceChildren(el('p','','Préparation du QR et de la notification…'));
-    try{
-      s.id=relayRandom(16);s.token=relayRandom(32);s.digest=await reportDigest(payload);
-      if(!relaySessionIsCurrent(s))return;
-      const result=await validationRequest({action:'create',id:s.id,token:s.token,digest:s.digest});
-      if(!relaySessionIsCurrent(s))return;
-      if(!Number.isFinite(result.expires)||result.expires<=Date.now())throw Error('Session indisponible.');
-      s.expires=result.expires;s.ready=true;payload.s=s.id;setRelayNotice(s,'En attente de la validation de ton enseignant…');
-    }catch(error){if(!relaySessionIsCurrent(s))return;setRelayNotice(s,'Notification indisponible. Pour réessayer, reconnecte-toi puis appuie de nouveau sur « Faire valider mon bilan ».',true);}
+    const response=await fetch(INBOX_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'omit',cache:'no-store',signal:controller.signal});
+    let data;try{data=await response.json();}catch(e){throw Error('Le service ne répond pas correctement. Réessaie.');}
+    if(!response.ok){
+      const messages={teacher_code:'Code privé incorrect.',class_unavailable:'Code de classe introuvable ou expiré. Vérifie-le avec ton enseignant.',expired:'Ce bilan a expiré. Demande à l’élève de le renvoyer.',conflict:'Cette demande ne correspond plus au bilan. Recommence l’envoi.',full:'La boîte est temporairement pleine. Réessaie plus tard.',invalid_report:'Le bilan est incomplet ou incompatible.',label:'Inscris un nom de groupe de 60 caractères maximum.'};
+      const error=Error(messages[data.error]||'Envoi impossible. Vérifie la connexion et réessaie.');error.status=response.status;throw error;
+    }
+    return data;
+  }catch(error){if(error.status)throw error;throw Error('Connexion au service impossible. Vérifie Internet et réessaie.');}
+  finally{clearTimeout(timeout);}
+}
+function drawStudentSubmission(s,container){
+  container.replaceChildren(el('h3','','✓ Bilan envoyé à l’enseignant'),el('p','','Garde cette page ouverte et connectée à Internet. Ton enseignant peut maintenant consulter et approuver ton bilan depuis son téléphone.'));
+  const status=el('p',s.error?'media-error':'muted',s.notice||'En attente de la validation de ton enseignant…');status.id='quizRelayStatus';status.setAttribute('role','status');container.append(status);
+}
+async function sendStudentReport(name,classCode,container,button){
+  const roomCode=classCode.trim().toUpperCase().replace(/[\s-]/g,'');
+  if(!name.trim()){toast('Inscris ton nom avant d’envoyer le bilan.',true);return;}
+  if(!/^[A-Z2-9]{8}$/.test(roomCode)){toast('Inscris le code de classe de 8 caractères fourni par ton enseignant.',true);return;}
+  button.disabled=true;button.textContent='Envoi en cours…';let s=quizRelaySession;
+  try{
+    if(!s||!relaySessionIsCurrent(s)||s.roomCode!==roomCode||s.stopped){
+      cancelQuizRelay();
+      const tries=getQuizViews().map(v=>v.entries.map(e=>{const a=quizRounds.get(v.view.id)?.answers.get(e.zone.id);if(!a?.correct)throw Error('Termine toutes les vues avant d’envoyer ton bilan.');return a.tries;}));
+      const payload={v:1,n:name.trim().slice(0,120),d:new Date().toISOString(),m:reportFingerprint(reportManifest()),t:tries};
+      s={payload,signature:quizReportSignature(),id:relayRandom(16),token:relayRandom(32),roomCode,ready:false,sent:false,notice:'Envoi en cours…'};quizRelaySession=s;
+    }
+    container.replaceChildren(el('p','','Envoi du bilan…'));
+    const result=await inboxRequest({action:'submit',id:s.id,token:s.token,roomCode,payload:s.payload,manifest:reportManifest()});
     if(!relaySessionIsCurrent(s))return;
-    drawStudentReportQr(s,container);if(s.ready)quizRelayTimer=setTimeout(pollQuizApproval,4000);
-  }catch(error){if(s&&quizRelaySession===s)cancelQuizRelay();toast(error.message,true);}
-  finally{if(button){button.disabled=false;button.textContent='Faire valider mon bilan';}}
+    if(!['pending','approved'].includes(result.state)||!Number.isFinite(result.expires))throw Error('Envoi non confirmé. Réessaie.');
+    s.ready=true;s.sent=true;s.expires=result.expires;quizClassCode=roomCode;try{localStorage.setItem('q310-class-code',roomCode);}catch(e){}
+    s.notice='En attente de la validation de ton enseignant…';drawStudentSubmission(s,container);
+    $('quizValidationPanel').querySelectorAll('input').forEach(input=>input.disabled=true);
+    pollQuizApproval();
+  }catch(error){if(!s||quizRelaySession===s){const message=el('p','media-error',error.message+' Ton bilan reste sur cet appareil; tu peux réessayer.');message.setAttribute('role','alert');container.replaceChildren(message);}}
+  finally{button.disabled=!!(s?.sent&&!s.stopped);button.textContent=s?.sent&&!s.stopped?'Bilan envoyé':'Envoyer mon bilan à l’enseignant';}
+}
+function stopInboxRefresh(){clearTimeout(inboxTimer);inboxTimer=null;inboxVersion++;}
+function inboxLogin(message=''){
+  stopInboxRefresh();inboxTeacherCode='';const box=$('inboxContent');box.replaceChildren();
+  const form=el('form'),password=field(form,'Code privé des bilans','','password');password.autocomplete='current-password';password.required=true;
+  const error=el('p','media-error',message);error.setAttribute('role','alert');const submit=btn('Ouvrir mes bilans',()=>{},'primary');submit.type='submit';
+  form.append(el('p','muted','Utilise le code privé remis pour les bilans. Le code PROF sert uniquement à ouvrir le mode enseignant.'),error,submit);box.append(form);
+  form.onsubmit=async event=>{
+    event.preventDefault();if(submit.disabled)return;const version=inboxVersion,code=password.value.trim().toUpperCase();password.value='';submit.disabled=true;error.textContent='';
+    try{const data=await inboxRequest({action:'rooms',teacherCode:code});if(version!==inboxVersion)return;inboxTeacherCode=code;renderInboxRooms(data.rooms);}
+    catch(e){if(version===inboxVersion){error.textContent=e.message;password.focus();}}
+    finally{submit.disabled=false;}
+  };
+}
+async function openTeacherInbox(){
+  requireEditor();showDialog('teacherInboxDialog');if(!inboxTeacherCode){inboxLogin();return;}
+  await loadInboxRooms();
+}
+async function loadInboxRooms(){
+  stopInboxRefresh();const version=inboxVersion;$('inboxContent').replaceChildren(el('p','','Chargement des groupes…'));
+  try{const data=await inboxRequest({action:'rooms',teacherCode:inboxTeacherCode});if(version===inboxVersion)renderInboxRooms(data.rooms);}
+  catch(e){if(version===inboxVersion)inboxLogin(e.message);}
+}
+function renderInboxRooms(rooms){
+  stopInboxRefresh();const version=inboxVersion,box=$('inboxContent');box.replaceChildren();
+  box.append(el('p','muted','Crée un groupe et donne son code aux élèves. Les bilans sont consultables pendant 24 heures : enregistre ceux que tu veux conserver.'),btn('Verrouiller les bilans',()=>inboxLogin(),'inbox-lock'));
+  const create=el('form','inbox-create'),label=field(create,'Nom du groupe','','text');label.maxLength=60;label.placeholder='Ex. : Groupe du soir';label.required=true;
+  const error=el('p','media-error');error.setAttribute('role','alert');const add=btn('Créer un code de classe',()=>{},'primary');add.type='submit';create.append(add,error);box.append(create);
+  create.onsubmit=async event=>{event.preventDefault();if(add.disabled)return;add.disabled=true;error.textContent='';try{const data=await inboxRequest({action:'create_room',teacherCode:inboxTeacherCode,label:label.value.trim()});if(version!==inboxVersion)return;inboxRoomCode=data.room.code;renderInboxRooms([data.room,...rooms]);}catch(e){if(version===inboxVersion)error.textContent=e.message;}finally{add.disabled=false;}};
+  if(!rooms.length){box.append(el('p','','Crée ton premier groupe pour recevoir les bilans.'));return;}
+  const select=el('select');select.id='inboxClassSelect';const selectLabel=el('label','','Groupe à consulter');selectLabel.htmlFor=select.id;
+  rooms.forEach(room=>select.append(option(room.code,room.label+(room.expires<=Date.now()?' — code expiré':''))));
+  if(!rooms.some(r=>r.code===inboxRoomCode))inboxRoomCode=rooms[0].code;select.value=inboxRoomCode;
+  const roomInfo=el('div','inbox-room-info'),status=el('p','muted'),list=el('div','inbox-report-list');list.id='inboxReports';status.setAttribute('role','status');
+  const refresh=btn('Actualiser',()=>refreshReports());box.append(selectLabel,select,roomInfo,refresh,status,list);
+  let busy=false;
+  async function refreshReports(){
+    if(busy||version!==inboxVersion||!$('teacherInboxDialog').open)return;
+    clearTimeout(inboxTimer);busy=true;refresh.disabled=true;const roomCode=inboxRoomCode;
+    try{
+      const data=await inboxRequest({action:'list',teacherCode:inboxTeacherCode,roomCode});if(version!==inboxVersion||roomCode!==inboxRoomCode)return;
+      const pending=data.reports.filter(r=>!r.approvedAt).length;status.textContent=pending+' bilan(s) à valider · Mise à jour automatique toutes les 10 secondes.';list.replaceChildren();
+      if(!data.reports.length)list.append(el('p','','Aucun bilan reçu pour ce groupe pour le moment.'));
+      data.reports.forEach(report=>{const card=el('article','inbox-report-card');card.append(el('h3','',report.name),el('p','',report.total+' zones identifiées · '+report.first+' au premier essai'),el('p','muted','Reçu le '+new Date(report.submittedAt).toLocaleString('fr-CA')),el('p',report.approvedAt?'validation-approved':'',report.approvedAt?'✓ Validé':'En attente de validation'),btn('Consulter le bilan',()=>openInboxReport(report.id,roomCode),'primary'));list.append(card);});
+    }catch(e){if(version===inboxVersion){if(e.status===401){inboxLogin(e.message);return;}status.textContent=e.message+' La vérification reprendra automatiquement.';}}
+    finally{busy=false;refresh.disabled=false;if(version===inboxVersion&&$('teacherInboxDialog').open)inboxTimer=setTimeout(refreshReports,10000);}
+  }
+  function chooseRoom(){
+    inboxRoomCode=select.value;const room=rooms.find(r=>r.code===inboxRoomCode);roomInfo.replaceChildren(el('h3','',room.label),el('p','','Code à donner aux élèves :'),el('strong','inbox-class-code',room.code),el('p','muted','Code valable jusqu’au '+new Date(room.expires).toLocaleString('fr-CA')));list.replaceChildren();status.textContent='Chargement…';
+    // A fresh view invalidates a request for the previously selected group.
+    if(busy){renderInboxRooms(rooms);return;}refreshReports();
+  }
+  select.onchange=chooseRoom;chooseRoom();
+}
+async function saveInboxReport(report,content,notice){
+  const copy=content.cloneNode(true);copy.querySelectorAll('details').forEach(d=>d.open=true);
+  const body='<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bilan Quincy Q310</title><style>body{font:16px Arial;max-width:850px;margin:30px auto;padding:20px;line-height:1.5}h1{font-size:24px}details{margin:16px 0}summary{font-weight:bold}.validation-approved{padding:14px;background:#e6f5eb}.muted{color:#444}</style><body>'+copy.outerHTML+'</body></html>';
+  const filename='Bilan_Quincy_Q310_'+report.payload.n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_')+'_'+report.payload.d.slice(0,10)+'.html',file=new File([body],filename,{type:'text/html'});
+  if(navigator.canShare?.({files:[file]})&&navigator.share){try{await navigator.share({files:[file],title:'Bilan de '+report.payload.n});return;}catch(e){if(e.name==='AbortError')return;}}
+  download(filename,body,'text/html');notice.textContent='Bilan téléchargé. Tu peux le déplacer dans ton dossier de suivi ou le partager vers OneDrive.';
+}
+async function openInboxReport(id,roomCode){
+  stopInboxRefresh();const version=inboxVersion,box=$('inboxContent');box.replaceChildren(el('p','','Chargement du bilan…'));
+  try{
+    const data=await inboxRequest({action:'read',teacherCode:inboxTeacherCode,id,roomCode});if(version!==inboxVersion)return;
+    const report=data.report,p=report.payload,tries=p.t.flat(),content=el('section'),controls=el('div','report-controls'),notice=el('p','muted');notice.setAttribute('role','status');
+    box.replaceChildren(btn('Retour aux bilans',loadInboxRooms),content,controls);
+    content.append(el('h2','','Quincy Q310 — Bilan du repérage'),el('h3','',p.n),el('p','','Quiz terminé le '+new Date(p.d).toLocaleString('fr-CA')),el('p','',tries.length+' / '+tries.length+' zones identifiées · '+tries.filter(t=>t===1).length+' au premier essai · '+tries.reduce((n,t)=>n+t-1,0)+' erreur(s).'));
+    const status=el('p','','En attente de validation');status.setAttribute('role','status');content.append(status);
+    report.manifest.forEach((v,i)=>{const details=el('details'),list=el('ul');details.append(el('summary','',v.label+' — '+v.entries.length+' zones'));v.entries.forEach((e,j)=>list.append(el('li','',e.name+' : '+p.t[i][j]+' essai(s), '+(p.t[i][j]-1)+' erreur(s)')));details.append(list);content.append(details);});
+    content.append(el('p','muted','Résultats déclarés par la session de l’élève. Ce bilan porte sur le repérage; le passage en pratique reste soumis aux consignes et à la vérification de l’enseignant.'));
+    function approved(date){report.approvedAt=date;status.className='validation-approved';status.textContent='Repérage validé le '+new Date(date).toLocaleString('fr-CA');controls.replaceChildren(el('p','','Validation transmise. L’élève recevra la confirmation dans sa page ouverte et connectée.'),btn('Enregistrer / partager le bilan',()=>saveInboxReport(report,content,notice),'primary'),notice);}
+    if(report.approvedAt)approved(report.approvedAt);
+    else{
+      const approve=btn('Approuver le bilan',async()=>{if(approve.disabled)return;approve.disabled=true;notice.textContent='Validation en cours…';try{const result=await inboxRequest({action:'approve',teacherCode:inboxTeacherCode,id,roomCode});if(version!==inboxVersion)return;if(result.state!=='approved')throw Error('Validation non confirmée.');notice.textContent='';approved(result.approvedAt);}catch(e){if(version===inboxVersion){notice.textContent=e.message;approve.disabled=false;}}},'primary');controls.append(approve,notice);
+    }
+  }catch(e){if(version===inboxVersion){box.replaceChildren(el('p','media-error',e.message),btn('Retour aux bilans',loadInboxRooms));}}
+}
+function bindTeacherInbox(){
+  $('teacherInboxBtn').onclick=openTeacherInbox;$('closeTeacherInbox').onclick=()=>closeDialog('teacherInboxDialog');
+  $('teacherInboxDialog').addEventListener('close',stopInboxRefresh);
 }
 
 function openScannedReport(){
@@ -3407,9 +3503,12 @@ function renderQuizValidation(all){
     panel.append(btn('Imprimer le bilan',()=>{document.body.classList.add('quiz-report-printing');window.print();},'quiz-report-control'));
   }else{
     const name=field(panel,'Nom de l’élève',quizStudentName);name.maxLength=120;
-    const qrBox=el('div','quiz-report-control'),showQr=btn('Faire valider mon bilan',()=>showStudentReportQr(name.value,qrBox,showQr),'primary quiz-report-control');
+    const classCode=field(panel,'Code de classe fourni par l’enseignant',quizClassCode);classCode.maxLength=12;classCode.autocomplete='off';classCode.autocapitalize='characters';classCode.spellcheck=false;
+    const qrBox=el('div','quiz-report-control'),showQr=btn('Envoyer mon bilan à l’enseignant',()=>sendStudentReport(name.value,classCode.value,qrBox,showQr),'primary quiz-report-control');showQr.id='studentSendReportBtn';
     name.oninput=()=>{quizStudentName=name.value;cancelQuizRelay();qrBox.replaceChildren();};
-    panel.append(showQr,qrBox);if(quizRelaySession?.ready)drawStudentReportQr(quizRelaySession,qrBox);
+    classCode.oninput=()=>{quizClassCode=classCode.value.toUpperCase().replace(/[\s-]/g,'');cancelQuizRelay();qrBox.replaceChildren();};
+    panel.append(el('p','muted','Ton nom et ton bilan seront transmis à l’enseignant et consultables pendant 24 heures.'),showQr,qrBox);
+    if(quizRelaySession?.sent){drawStudentSubmission(quizRelaySession,qrBox);showQr.disabled=!quizRelaySession.stopped;showQr.textContent=quizRelaySession.stopped?'Renvoyer mon bilan':'Bilan envoyé';name.disabled=classCode.disabled=!quizRelaySession.stopped;}
 
   }
   panel.append(el('p','muted','Ce bilan valide le repérage des composants. Le passage en pratique reste soumis aux consignes de l’enseignant. La validation est conservée pendant cette session seulement; imprime le bilan avant de fermer ou recharger la page.'));
@@ -3481,7 +3580,7 @@ function setStudyMode(active){
   if(active){if(drag)endDrag(true);stopVideos();touchDragEnabled=false;updateTouchDrag();}
   studyActive=active;$('studyPage').hidden=!active;$('referenceNav').hidden=active;$('referencePage').hidden=active;
   $('studyBtn').setAttribute('aria-pressed',String(active));
-  for(const id of ['manualBtn','helpBtn','modeBtn'])$(id).hidden=active;
+  for(const id of ['manualBtn','helpBtn','modeBtn'])$(id).hidden=active;$('teacherInboxBtn').hidden=active||!editor;
   $('qrCard').hidden=active||!editor;$('recoveryNotice').hidden=true;
   $('modeBadge').textContent=active?'Étude':editor?'Préparation':'Consultation';
   if(active){
@@ -3573,7 +3672,7 @@ function bindStudy(){
 }
 
 function build(){
-$('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram">Q310</div><div><div class="badge" id="modeBadge">Consultation</div><h1>Atelier du compresseur</h1><p class="compressor-subtitle">Quincy Q310 — Compresseur à pistons à deux étages</p></div></div><div class="actions"><a id="manualBtn" class="button" href="CompresseurManuel.pdf" target="_blank" rel="noopener noreferrer">Manuel PDF</a><button id="studyBtn" type="button" aria-pressed="false" aria-controls="studyPage">Comprendre et calculer</button><button id="quizBtn" type="button" aria-pressed="false" aria-controls="quizPage">Quiz Identification de pièces</button><button id="helpBtn">Aide</button><button id="modeBtn">Mode enseignant</button></div></header>
+$('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram">Q310</div><div><div class="badge" id="modeBadge">Consultation</div><h1>Atelier du compresseur</h1><p class="compressor-subtitle">Quincy Q310 — Compresseur à pistons à deux étages</p></div></div><div class="actions"><a id="manualBtn" class="button" href="CompresseurManuel.pdf" target="_blank" rel="noopener noreferrer">Manuel PDF</a><button id="studyBtn" type="button" aria-pressed="false" aria-controls="studyPage">Comprendre et calculer</button><button id="quizBtn" type="button" aria-pressed="false" aria-controls="quizPage">Quiz Identification de pièces</button><button id="helpBtn">Aide</button><button id="teacherInboxBtn" type="button" hidden>Bilans à valider</button><button id="modeBtn">Mode enseignant</button></div></header>
 <nav id="referenceNav" class="tools" aria-label="Navigation"><select id="viewSelect" aria-label="Choisir une vue"></select><div id="viewTeacherTools" class="actions" role="group" aria-label="Gestion des vues" hidden><button id="addViewBtn" type="button">Ajouter une vue</button><button id="deleteViewBtn" class="danger" type="button">Supprimer cette vue</button></div><span class="spacer"></span><span class="counter" id="pieceCount"></span></nav>
 <section id="qrCard" class="qr-card" aria-labelledby="qrCardTitle" hidden>
   <div class="qr-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 2h7v7H2zM15 2h7v7h-7zM2 15h7v7H2zM15 15h3v3h4v4h-7v-3M22 12v3M12 3v3M3 12h3M12 12h3M12 21v1"/></svg></div>
@@ -3702,6 +3801,7 @@ $('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram"
 </dialog>
 
 <dialog id="mediaDialog"><div class="dialog-head"><h2 id="mediaTitle">Médias</h2><button id="closeMedia">Fermer</button></div><div id="mediaContent"></div></dialog>
+<dialog id="teacherInboxDialog" class="inbox-dialog"><div class="dialog-head"><h2>Bilans à valider</h2><button id="closeTeacherInbox" type="button">Fermer</button></div><div id="inboxContent"></div></dialog>
 <dialog id="helpDialog"><div class="dialog-head"><h2>Comprendre le compresseur</h2><div class="actions"><button id="helpPrintBtn" type="button">Imprimer</button><button id="closeHelp">Fermer</button></div></div><div id="helpContent"></div></dialog>
 <dialog id="teacherLogin"><form id="teacherLoginForm"><h2>Mode enseignant</h2><label for="teacherPassword">Code d’accès</label><input id="teacherPassword" type="password" autocomplete="off" autocapitalize="none" required style="display:block;width:100%;margin:12px 0"><p id="teacherLoginError" role="alert"></p><div class="actions"><button type="submit">Déverrouiller</button><button type="button" id="cancelTeacherLogin">Annuler</button></div></form></dialog>
 <dialog id="importDialog"><div class="dialog-head"><h2>Importer un projet</h2><button id="cancelImport">Annuler</button></div><p id="importSummary"></p><p>Le brouillon actuel sera remplacé. Une copie de retour sera conservée sur cet appareil si l’espace disponible le permet.</p><div class="actions"><button id="backupBeforeImport">Sauvegarder le projet actuel</button><button id="confirmImport" class="primary">Importer ce projet</button></div></dialog>
@@ -3717,7 +3817,7 @@ $('app').innerHTML=`<header class="top"><div class="brand"><div class="monogram"
   $('cancelImport').onclick=()=>{$('importDialog').close();importCandidate=null;};$('backupBeforeImport').onclick=exportProject;$('confirmImport').onclick=applyImport;
   $('cancelLegacy').onclick=()=>closeDialog('legacyDialog');$('importFile').onchange=onImport;$('mediaFileInput').onchange=importMediaFiles;
   $('groupFilter').append(option('','Toutes les familles'));Object.entries(GROUPS).forEach(([k,v])=>$('groupFilter').append(option(k,v)));
-  $('footerBuild').textContent=config.build;bindQr();bindViewManager();bindQuiz();bindStudy();
+  $('footerBuild').textContent=config.build;bindQr();bindViewManager();bindQuiz();bindStudy();bindTeacherInbox();
   new ResizeObserver(()=>fitImage()).observe($('viewport'));
   window.addEventListener('resize',fitImage);
   window.addEventListener('beforeunload',()=>{for(const item of attachmentUrls.values())URL.revokeObjectURL(item.url);});
